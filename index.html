@@ -763,27 +763,27 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
       </div>
       <div class="exc-list">
-        <div class="exc-row" id="exc-fortune" onclick="doExchange('fortune',1)">
+        <div class="exc-row" id="exc-fortune" onclick="event.stopPropagation();doExchange('fortune',1)">
           <div class="exc-ico" style="background:#2e2a1a;">🗣️</div>
           <div class="exc-info"><div class="exc-name">구걸 멘트 뽑기</div><div class="exc-cost">동전 1개</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-lotto" onclick="doExchange('lotto',2)">
+        <div class="exc-row" id="exc-lotto" onclick="event.stopPropagation();doExchange('lotto',2)">
           <div class="exc-ico" style="background:#3a1520;">🎟</div>
           <div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-letter" onclick="doExchange('letter',5)">
+        <div class="exc-row" id="exc-letter" onclick="event.stopPropagation();doExchange('letter',5)">
           <div class="exc-ico" style="background:#1a2030;">📜</div>
           <div class="exc-info"><div class="exc-name">구걸 탄원서 작성하기</div><div class="exc-cost">동전 5개</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-score" onclick="doExchange('score',5)">
+        <div class="exc-row" id="exc-score" onclick="event.stopPropagation();doExchange('score',5)">
           <div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+1</div>
           <div class="exc-info"><div class="exc-name">거지력 +1점 올리기</div><div class="exc-cost">동전 5개 · 랭킹 점수에 반영</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-point" onclick="openConvert()">
+        <div class="exc-row" id="exc-point" onclick="event.stopPropagation();openConvert()">
           <div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div>
           <div class="exc-info"><div class="exc-name">전부 토스 포인트로 바꾸기</div><div class="exc-cost">동전 5개 = 토스포인트 1P</div></div>
           <div class="exc-arr">›</div>
@@ -1958,6 +1958,7 @@ function updateMyRankUI() {
 
 function doExchange(type,cost) {
   if(coins<cost){showToast('동전이 ' + cost + '개 필요해요');return;}
+  tapCount = 0; // 깡통 탭 카운트 리셋
   coins-=cost; updatePiggy();
   if(type==='fortune'){
     document.getElementById('fortune-msg').innerHTML=FORTUNES[Math.floor(Math.random()*FORTUNES.length)].replace('\n','<br>');
@@ -1965,8 +1966,11 @@ function doExchange(type,cost) {
   } else if(type==='score'){
     myMonthScore += 1;
     myTotalScore += 1;
-    document.getElementById('my-score-display').textContent = myMonthScore;
     updateMyRankUI();
+    // Firebase 점수 저장
+    if(window.GJ?.ready && myProfile.uid) {
+      window.GJ.updateScore(myProfile.uid, 1, 1).catch(()=>{});
+    }
     showToast('🙇 거지력 +1점! 월 랭킹 & 누적 반영됨');
   } else if(type==='lotto'){
     const beggingLevels=['상','중','하','최하','바닥'];
