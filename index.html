@@ -1173,11 +1173,41 @@ window.GJ.getTopRankers = async (yearMonth, topN = 5) => {
   return snap.docs.map((d, i) => ({ rank: i + 1, uid: d.id, ...d.data() }));
 };
 
+// 실시간 랭킹 리스너
+window.GJ.listenRanking = (callback) => {
+  const q = query(COLS.users(), orderBy('monthScore', 'desc'), limit(5));
+  return onSnapshot(q, snap => {
+    const rankers = snap.docs.map((d, i) => ({ rank: i+1, uid: d.id, ...d.data() }));
+    callback(rankers);
+  });
+};
+
 // ── 앱 초기화 연동 ───────────────────────────────────
 window.GJ.ready = true;
 console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 
-// 피드 실시간 리슨 — 온보딩 완료 후 시작
+// 앱 시작 시 랭킹 실시간 리스너 바로 시작 (온보딩 여부 무관)
+if (window.GJ?.ready) {
+  window.GJ.listenRanking((rankers) => {
+    // RANKS 배열 업데이트
+    RANKS.length = 0;
+    rankers.forEach((r, i) => {
+      RANKS.push({
+        name:  r.nick || '익명',
+        desc:  '거지력 ' + (r.monthScore || 0) + '점',
+        score: (r.monthScore || 0) + '점',
+        monthScore: r.monthScore || 0,
+        bg:    r.avatarBg    || '#3a1520',
+        c:     r.avatarColor || '#e8527a',
+        init:  (r.nick || '익')[0]
+      });
+    });
+    buildRank();
+    updateMyRankUI();
+  });
+}
+
+// 앱 시작 시 피드 리스너 시작
 window.GJ.startFeedListener = () => {
 window.GJ.listenPosts(async (posts) => {
   const feed = document.getElementById('tab-feed');
@@ -1673,14 +1703,12 @@ const REWARD_INFO = [
 function buildLiveRewardList() {
   const el = document.getElementById('live-reward-list');
   if (!el) return;
-  if (!RANKS.length) {
-    el.innerHTML = '<div style="text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">아직 랭킹 데이터가 없어요</div>';
-    return;
-  }
-  el.innerHTML = RANKS.slice(0, 5).map((r, i) => {
+  el.innerHTML = Array.from({length: 5}).map((_, i) => {
+    const r = RANKS[i];
     const info = REWARD_INFO[i];
-    const isLast = i === Math.min(RANKS.length, 5) - 1;
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;' + (isLast ? '' : 'border-bottom:1px solid var(--border);') + '">' +
+    const isLast = i === 4;
+    const nameStr = r ? r.name + ' · 거지력 ' + r.score : '—';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;' + (isLast ? '' : 'border-bottom:1px solid var(--border);') + (r ? '' : 'opacity:.4;') + '">' +
       '<div style="display:flex;align-items:center;gap:8px;">' +
         '<span style="font-size:16px;">' + info.medal + '</span>' +
         '<div>' +
@@ -1688,9 +1716,7 @@ function buildLiveRewardList() {
             (i+1) + '위 ' +
             '<span style="font-family:\'Black Han Sans\',sans-serif;color:' + info.titleColor + ';">' + info.title + '</span>' +
           '</div>' +
-          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">' +
-            r.name + ' · 거지력 ' + r.score +
-          '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">' + nameStr + '</div>' +
         '</div>' +
       '</div>' +
       '<span style="font-size:13px;font-weight:700;color:' + info.ptsColor + ';">' + info.pts + '</span>' +
@@ -1700,16 +1726,25 @@ function buildLiveRewardList() {
 
 function buildRank() {
   const list = document.getElementById('rank-list');
-  if (!RANKS.length) {
-    list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--text3);font-size:13px;">아직 랭킹 데이터가 없어요<br>피드에 지출을 올리고 거지력을 쌓아보세요 🥫</div>';
-    buildLiveRewardList();
-    return;
-  }
-  list.innerHTML = RANKS.map((r,i) => {
+  // 항상 5자리 표시 — 유저 없으면 공란
+  list.innerHTML = Array.from({length: 5}).map((_, i) => {
+    const r = RANKS[i];
     const tb = RANK_TITLE_BADGE[i];
     const badge = tb
       ? '<span style="font-size:10px;background:' + tb.bg + ';color:' + tb.color + ';padding:2px 8px;border-radius:20px;font-weight:700;margin-left:4px;">' + tb.text + '</span>'
       : '';
+    if (!r) {
+      // 공란 자리
+      return '<div class="rank-row" style="opacity:.35;">' +
+        '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
+        '<div class="rank-av" style="background:var(--surface2);color:var(--text3);">?</div>' +
+        '<div class="rank-info">' +
+          '<div class="rank-name" style="color:var(--text3);">— ' + badge + '</div>' +
+          '<div class="rank-desc" style="color:var(--text3);">거지력 0점</div>' +
+        '</div>' +
+        '<div class="rank-score" style="color:var(--text3);">0점</div>' +
+        '</div>';
+    }
     return '<div class="rank-row">' +
       '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
       '<div class="rank-av" style="background:' + r.bg + ';color:' + r.c + ';">' + r.init + '</div>' +
