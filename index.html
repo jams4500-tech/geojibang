@@ -712,7 +712,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="pac-title">출석 복권</div>
           <div class="pac-note" id="pac-lotto-note">오늘 1회 무료</div>
         </div>
-        <div class="pac" onclick="showToast('친구에게 링크가 복사됐어요!')">
+        <div class="pac" onclick="sharePiggyLink()">
           <div class="pac-icon">⚡</div>
           <div class="pac-small">광고 없애려면</div>
           <div class="pac-title">공유하기</div>
@@ -730,19 +730,19 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-letter" onclick="event.stopPropagation();doExchange('letter',5)">
-          <div class="exc-ico" style="background:#1a2030;">📜</div>
-          <div class="exc-info"><div class="exc-name">구걸 탄원서 작성하기</div><div class="exc-cost">동전 5개</div></div>
+        <div class="exc-row" id="exc-letter" onclick="event.stopPropagation();doExchange('letter',3)">
+          <div class="exc-ico" style="background:#1a2030;">🧑‍⚕️</div>
+          <div class="exc-info"><div class="exc-name">거지 고민상담소</div><div class="exc-cost">동전 3개 · AI 거지 상담사가 답변</div></div>
           <div class="exc-arr">›</div>
         </div>
         <div class="exc-row" id="exc-score" onclick="event.stopPropagation();doExchange('score',5)">
-          <div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+1</div>
-          <div class="exc-info"><div class="exc-name">거지력 +1점 올리기</div><div class="exc-cost">동전 5개 · 랭킹 점수에 반영</div></div>
+          <div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+10</div>
+          <div class="exc-info"><div class="exc-name">거지력 +10점 올리기</div><div class="exc-cost">동전 5개 · 월 랭킹 & 누적 반영</div></div>
           <div class="exc-arr">›</div>
         </div>
         <div class="exc-row" id="exc-point" onclick="event.stopPropagation();openConvert()">
           <div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div>
-          <div class="exc-info"><div class="exc-name">전부 토스 포인트로 바꾸기</div><div class="exc-cost">동전 5개 = 토스포인트 1P</div></div>
+          <div class="exc-info"><div class="exc-name">전부 토스 포인트로 바꾸기</div><div class="exc-cost">동전 5개 = 토스포인트 5P</div></div>
           <div class="exc-arr">›</div>
         </div>
       </div>
@@ -860,10 +860,48 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 <div class="overlay" id="ov-letter" onclick="closeOverlayOut(event,'ov-letter')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">구걸 탄원서 📜</div>
-    <div class="sheet-sub">깡통에 구걸 사연을 담아두세요</div>
-    <textarea class="memo-input" id="letter-input" placeholder="오늘의 구걸 사연을 적어주세요..." style="height:90px;margin-bottom:16px;"></textarea>
-    <button class="btn-pink" onclick="sendLetter()">깡통에 넣기</button>
+    <div class="sheet-title">🧑‍⚕️ 거지 고민상담소</div>
+    <div class="sheet-sub">AI 거지 상담사가 거지식으로 답변해드려요</div>
+    <div id="counseling-input-area">
+      <div class="input-group">
+        <label class="input-label">고민을 털어놓으세요</label>
+        <textarea class="memo-input" id="counseling-input" placeholder="예) 월급이 모자라요... 배달비가 너무 많이 나와요... 친구가 밥을 안 사줘요..." style="height:100px;margin-bottom:12px;"></textarea>
+      </div>
+      <button class="btn-pink" onclick="submitCounseling()">상담 받기</button>
+    </div>
+    <div id="counseling-result-area" style="display:none;">
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--pink-light);font-weight:700;margin-bottom:8px;">🧑‍⚕️ 거지 상담사의 조언</div>
+        <div id="counseling-answer" style="font-size:13px;color:var(--text2);line-height:1.8;">
+          <div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+      </div>
+      <button class="btn-pink" onclick="resetCounseling()">다시 상담하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 유저 프로필 보기 -->
+<div class="overlay" id="ov-user-profile" onclick="closeOverlayOut(event,'ov-user-profile')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 20px;">
+      <div id="view-profile-av" style="width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;margin:0 auto 12px;background:#3a1520;color:#e8527a;">?</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--text);margin-bottom:4px;" id="view-profile-nick">닉네임</div>
+      <div id="view-profile-grade" style="font-size:12px;margin-bottom:8px;"></div>
+      <div style="font-size:13px;color:var(--text3);line-height:1.6;" id="view-profile-bio">한 줄 소개가 없어요</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:var(--pink);" id="view-profile-month">0</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">월 거지력</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:var(--gold);" id="view-profile-total">0</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">누적 거지력</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;padding:8px;background:var(--surface2);border-radius:var(--radius-sm);">🚧 프로필 꾸미기 · 아이템 상점은 준비 중이에요</div>
   </div>
 </div>
 
@@ -1517,8 +1555,11 @@ function makePost(p) {
     : '';
 
   el.innerHTML=`<div class="post-header">
-    <div class="avatar" style="background:${p.abg};color:${p.ac};">${p.init}</div>
-    <div style="flex:1;"><div class="post-name">${p.name} · 거지력 ${p.score}점</div><div class="post-time">${p.time}</div></div>
+    <div class="avatar" style="background:${p.abg};color:${p.ac};cursor:pointer;" onclick="viewUserProfileByUid('${p.authorUid}','${p.name}','${p.abg}','${p.ac}',${p.score})">${p.init}</div>
+    <div style="flex:1;">
+      <div class="post-name" style="cursor:pointer;" onclick="viewUserProfileByUid('${p.authorUid}','${p.name}','${p.abg}','${p.ac}',${p.score})">${p.name} · 거지력 ${p.score}점</div>
+      <div class="post-time">${p.time}</div>
+    </div>
     ${myPostBtns}
   </div>
     <div class="post-desc" id="post-desc-${p.id}">${p.desc}</div><div class="post-amount" id="post-amount-${p.id}">${p.item} ${p.amount}</div>
@@ -1868,7 +1909,7 @@ function updatePiggy() {
   // exchange locks
   document.getElementById('exc-fortune').classList.toggle('locked',coins<1);
   document.getElementById('exc-lotto').classList.toggle('locked',coins<2);
-  document.getElementById('exc-letter').classList.toggle('locked',coins<5);
+  document.getElementById('exc-letter').classList.toggle('locked',coins<3);
   document.getElementById('exc-score').classList.toggle('locked',coins<5);
   document.getElementById('exc-point').classList.toggle('locked',coins<5);
   // bottom banner
@@ -1994,14 +2035,13 @@ function doExchange(type,cost) {
     document.getElementById('fortune-msg').innerHTML=FORTUNES[Math.floor(Math.random()*FORTUNES.length)].replace('\n','<br>');
     openOverlay('ov-fortune');
   } else if(type==='score'){
-    myMonthScore += 1;
-    myTotalScore += 1;
+    myMonthScore += 10;
+    myTotalScore += 10;
     updateMyRankUI();
-    // Firebase 점수 저장
     if(window.GJ?.ready && myProfile.uid) {
-      window.GJ.updateScore(myProfile.uid, 1, 1).catch(()=>{});
+      window.GJ.updateScore(myProfile.uid, 10, 10).catch(()=>{});
     }
-    showToast('🙇 거지력 +1점! 월 랭킹 & 누적 반영됨');
+    showToast('🙇 거지력 +10점! 월 랭킹 & 누적 반영됨');
   } else if(type==='lotto'){
     const beggingLevels=['상','중','하','최하','바닥'];
     const emoji=['🌟','✨','😐','😢','💀'];
@@ -2010,7 +2050,7 @@ function doExchange(type,cost) {
     document.getElementById('lotto-balls').innerHTML='<div style="text-align:center;width:100%;"><div style="font-size:48px;margin-bottom:8px;">'+emoji[idx]+'</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;">구걸운 '+beggingLevels[idx]+'급</div><div style="font-size:13px;color:var(--text2);line-height:1.6;">'+msgs[idx]+'</div></div>';
     openOverlay('ov-lotto');
   } else if(type==='letter'){
-    openOverlay('ov-letter');
+    openCounseling();
   }
 }
 
@@ -2026,15 +2066,93 @@ function convertTotalScore() {
   if (convDisp) convDisp.textContent = myTotalScore + '점';
 }
 
-function sendLetter() {
-  const t=document.getElementById('letter-input').value.trim(); if(!t)return;
-  document.getElementById('letter-input').value=''; closeOverlay('ov-letter'); showToast('📜 구걸 탄원서를 깡통에 넣었어요!');
+function sharePiggyLink() {
+  const url = window.location.href.split('?')[0];
+  const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n우리는 거지다 앱 같이 해요 👉 ' + url;
+  if (navigator.share) {
+    navigator.share({ title: '우리는 거지다', text, url }).catch(()=>{});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('📋 링크가 복사됐어요!');
+  }
+}
+
+function openCounseling() {
+  document.getElementById('counseling-input').value = '';
+  document.getElementById('counseling-input-area').style.display = 'block';
+  document.getElementById('counseling-result-area').style.display = 'none';
+  openOverlay('ov-letter');
+}
+
+async function submitCounseling() {
+  const q = document.getElementById('counseling-input').value.trim();
+  if (!q) { showToast('고민을 입력해주세요'); return; }
+  document.getElementById('counseling-input-area').style.display = 'none';
+  document.getElementById('counseling-result-area').style.display = 'block';
+  document.getElementById('counseling-answer').innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  try {
+    const r = await fetch('/api/roast', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ context: '[고민상담] ' + q })
+    });
+    const d = await r.json();
+    document.getElementById('counseling-answer').textContent = d?.text || '...말문이 막힙니다.';
+  } catch {
+    document.getElementById('counseling-answer').textContent = '상담 중 오류가 발생했어요. 다시 시도해주세요.';
+  }
+}
+
+function resetCounseling() {
+  document.getElementById('counseling-input-area').style.display = 'block';
+  document.getElementById('counseling-result-area').style.display = 'none';
+}
+
+// 유저 프로필 보기 (uid로 Firebase 조회)
+function viewUserProfile(nick, bg, c, bio, monthScore, totalScore) {
+  const av = document.getElementById('view-profile-av');
+  av.textContent = nick.charAt(0);
+  av.style.background = bg || '#3a1520';
+  av.style.color = c || '#e8527a';
+  document.getElementById('view-profile-nick').textContent = nick;
+  document.getElementById('view-profile-bio').textContent = bio || '한 줄 소개가 없어요';
+  document.getElementById('view-profile-month').textContent = monthScore || 0;
+  document.getElementById('view-profile-total').textContent = totalScore || 0;
+  const grade = getGrade(parseInt(totalScore) || 0);
+  const gradeEl = document.getElementById('view-profile-grade');
+  gradeEl.textContent = grade.label;
+  gradeEl.style.color = grade.color;
+  openOverlay('ov-user-profile');
+}
+
+async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
+  // 먼저 알고 있는 정보로 바로 표시
+  viewUserProfile(nick, bg, c, '', monthScore, 0);
+  // Firebase에서 추가 정보 조회
+  if (uid && window.GJ?.ready) {
+    try {
+      const data = await window.GJ.loadUser(uid);
+      if (data) {
+        viewUserProfile(
+          data.nick || nick,
+          data.avatarBg || bg,
+          data.avatarColor || c,
+          data.bio || '',
+          data.monthScore || monthScore,
+          data.totalScore || 0
+        );
+      }
+    } catch(e) {}
+  }
 }
 
 function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
 function doConvert() {
-  const sets=Math.floor(coins/5), pts=sets*1; coins=coins%5; updatePiggy(); closeOverlay('ov-convert');
-  showToast(`🎉 토스 포인트 ${pts}P 전환 완료!`);
+  const sets=Math.floor(coins/5), pts=sets*5; coins=coins%5; updatePiggy(); closeOverlay('ov-convert');
+  showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
 }
 
 /* lottery */
@@ -2463,20 +2581,6 @@ window.addToFeed = async function(where, amount, memo) {
     try {
       await window.GJ.publishPost(where, amount, memo);
     } catch(e) { console.warn('[거지방] 게시물 Firebase 저장 실패:', e); }
-  }
-};
-
-// addCmt — Firebase 연동 버전으로 교체
-const _origAddCmt = addCmt;
-window.addCmt = function(pid) {
-  const inp = document.getElementById('ci-' + pid);
-  const text = inp?.value?.trim();
-  if (!text) return;
-  _origAddCmt(pid); // 로컬 렌더
-  if (window.GJ?.ready) {
-    window.GJ.submitComment(pid, text).catch(e =>
-      console.warn('[거지방] 댓글 Firebase 저장 실패:', e)
-    );
   }
 };
 
