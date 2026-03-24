@@ -328,6 +328,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .mine-action-btn:hover { border-color: var(--pink); background: var(--pink-dim); }
 .mine-action-btn:active { transform: scale(.97); }
 
+.post-edit-btn, .post-del-btn { font-size:11px; padding:3px 10px; border-radius:20px; border:1px solid var(--border2); background:transparent; cursor:pointer; font-family:inherit; transition:all .15s; }
+.post-edit-btn { color:var(--text3); }
+.post-edit-btn:hover { border-color:var(--pink); color:var(--pink-light); background:var(--pink-dim); }
+.post-del-btn { color:var(--red); }
+.post-del-btn:hover { border-color:var(--red); background:rgba(255,85,85,.1); }
+
 .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 30px; z-index: 999; transition: transform .3s ease; white-space: nowrap; pointer-events: none; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -586,23 +592,47 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
               <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:16px;">🥇</span>
-                <span style="font-size:13px;color:var(--text);">1위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--gold);">거지왕</span></span>
+                <div>
+                  <div style="font-size:13px;color:var(--text);">1위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--gold);">거지왕 👑</span></div>
+                </div>
               </div>
               <span style="font-size:14px;font-weight:700;color:var(--gold);">100,000P</span>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
               <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:16px;">🥈</span>
-                <span style="font-size:13px;color:var(--text);">2위</span>
+                <div>
+                  <div style="font-size:13px;color:var(--text);">2위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text2);">거지대장 🎖</span></div>
+                </div>
               </div>
               <span style="font-size:14px;font-weight:700;color:var(--text2);">30,000P</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🥉</span>
+                <div>
+                  <div style="font-size:13px;color:var(--text);">3위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
+                </div>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🥉</span>
+                <div>
+                  <div style="font-size:13px;color:var(--text);">4위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
+                </div>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;">
               <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:16px;">🥉</span>
-                <span style="font-size:13px;color:var(--text);">3위 · 4위 · 5위</span>
+                <div>
+                  <div style="font-size:13px;color:var(--text);">5위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
+                </div>
               </div>
-              <span style="font-size:14px;font-weight:700;color:var(--text2);">각 10,000P</span>
+              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
             </div>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표<br>리워드는 발표 후 24시간 내 자동 지급돼요</div>
@@ -955,6 +985,32 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
   </div>
 </div>
 
+<!-- 글 수정 오버레이 -->
+<div class="overlay" id="ov-edit-post" onclick="closeOverlayOut(event,'ov-edit-post')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">게시물 수정 ✏️</div>
+    <div class="sheet-sub">내용을 수정할 수 있어요</div>
+    <input type="hidden" id="edit-post-id">
+    <div class="input-group">
+      <label class="input-label">어디서 썼어요?</label>
+      <input class="text-input" id="edit-post-item" placeholder="가맹점명">
+    </div>
+    <div class="input-group">
+      <label class="input-label">얼마 썼어요?</label>
+      <div class="amount-wrap">
+        <input class="text-input" id="edit-post-amount" type="number" placeholder="0">
+        <span class="amount-suffix">원</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">한 줄 변명</label>
+      <textarea class="memo-input" id="edit-post-desc" placeholder="이유가 있다면..."></textarea>
+    </div>
+    <button class="btn-pink" onclick="submitEditPost()">수정 완료</button>
+  </div>
+</div>
+
 <div class="overlay" id="ov-profile" onclick="closeOverlayOut(event,'ov-profile')">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -1026,7 +1082,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, onSnapshot, query, orderBy, limit, serverTimestamp, increment
+  updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, serverTimestamp, increment
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const GJ_CONFIG = {
@@ -1100,6 +1156,17 @@ window.GJ.updateRxn = async (postId, rxnArr) => {
   await updateDoc(doc(db, 'geojibang_posts', postId), { rxn: rxnArr });
 };
 
+window.GJ.deletePost = async (postId) => {
+  await deleteDoc(doc(db, 'geojibang_posts', postId));
+};
+
+window.GJ.editPost = async (postId, desc, item, amount) => {
+  await updateDoc(doc(db, 'geojibang_posts', postId), {
+    desc, item, amount,
+    updatedAt: serverTimestamp()
+  });
+};
+
 // ── 댓글 ────────────────────────────────────────────
 window.GJ.addComment = async (postId, commentData) => {
   await addDoc(COLS.comments(postId), {
@@ -1156,18 +1223,34 @@ console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 // 피드 실시간 리슨 — 온보딩 완료 후 시작
 window.GJ.startFeedListener = () => {
 window.GJ.listenPosts(async (posts) => {
-  if (!posts.length) return;
   const feed = document.getElementById('tab-feed');
   if (!feed) return;
 
+  // 빈 상태 처리
+  const emptyEl = document.getElementById('feed-empty');
+  if (!posts.length) {
+    if (!emptyEl) {
+      const e = document.createElement('div');
+      e.id = 'feed-empty';
+      e.style.cssText = 'text-align:center;padding:48px 24px;color:var(--text3);';
+      e.innerHTML = '<div style="font-size:48px;margin-bottom:12px;">🥫</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">아직 게시물이 없어요</div><div style="font-size:13px;line-height:1.7;">첫 번째 거지가 되어보세요!<br>✏️ 버튼을 눌러 지출을 올리면<br>AI 거지방장이 혼내드립니다 😂</div>';
+      const banner = document.getElementById('feed-cb');
+      if (banner) feed.insertBefore(e, banner.nextSibling);
+      else feed.appendChild(e);
+    }
+    return;
+  }
+  if (emptyEl) emptyEl.remove();
+
+  // 기존 Firebase 게시물 제거 후 최신순 재렌더링
+  feed.querySelectorAll('.post[data-firebase="1"]').forEach(el => el.remove());
+
+  // createdAt 기준 최신순 (Firebase orderBy('createdAt','desc') 이미 최신순이지만 로컬 게시물과 합쳐서 정렬)
+  const banner = document.getElementById('feed-cb');
+  let insertAfter = banner;
+
   posts.forEach(p => {
-    const existing = document.getElementById('post-' + p.id);
-    if (existing) return;
-
-    const timeStr = p.createdAt?.toDate
-      ? timeAgo(p.createdAt.toDate())
-      : '방금 전';
-
+    const timeStr = p.createdAt?.toDate ? timeAgo(p.createdAt.toDate()) : '방금 전';
     const postObj = {
       id: p.id,
       name: p.authorName || '익명',
@@ -1180,17 +1263,26 @@ window.GJ.listenPosts(async (posts) => {
       item: p.item || '',
       amount: p.amount || '0원',
       comments: [],
-      rxn: p.rxn || [0, 0, 0]
+      rxn: p.rxn || [0, 0, 0],
+      authorUid: p.authorUid || ''
     };
 
     const el = window.makePost(postObj);
-    const empty = document.getElementById('feed-empty');
-    if (empty) empty.remove();
-    const banner = document.getElementById('feed-cb');
-    if (banner) feed.insertBefore(el, banner.nextSibling);
-    else feed.appendChild(el);
+    el.dataset.firebase = '1';
+    el.dataset.createdAt = p.createdAt?.toDate?.()?.getTime?.() || 0;
 
-    window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+    if (insertAfter && insertAfter.nextSibling) {
+      feed.insertBefore(el, insertAfter.nextSibling);
+    } else {
+      feed.appendChild(el);
+    }
+    insertAfter = el;
+
+    // AI 핀잔 (이미 있으면 스킵)
+    const rt = document.getElementById('rt-' + p.id);
+    if (rt && rt.querySelector('.roast-loading')) {
+      window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+    }
   });
 });
 };
@@ -1416,7 +1508,7 @@ function buildFeed() {
 
 function makePost(p) {
   const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
-  const savedRxn = getSavedRxn(p.id); // -1이면 미투표
+  const savedRxn = getSavedRxn(p.id);
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
   const rxnBtns = [0,1,2].map(i => {
     const isActive = savedRxn === i;
@@ -1427,8 +1519,22 @@ function makePost(p) {
       ${labels[i]} ${p.rxn[i]}
     </button>`;
   }).join('');
-  el.innerHTML=`<div class="post-header"><div class="avatar" style="background:${p.abg};color:${p.ac};">${p.init}</div><div><div class="post-name">${p.name} · 거지력 ${p.score}점</div><div class="post-time">${p.time}</div></div></div>
-    <div class="post-desc">${p.desc}</div><div class="post-amount">${p.item} ${p.amount}</div>
+
+  // 내 글이면 수정/삭제 버튼 표시
+  const isMyPost = p.authorUid && myProfile.uid && p.authorUid === myProfile.uid;
+  const myPostBtns = isMyPost
+    ? `<div style="display:flex;gap:6px;">
+        <button class="post-edit-btn" data-pid="${p.id}" onclick="openEditPostFromBtn(this)">수정</button>
+        <button class="post-del-btn" onclick="deleteMyPost('${p.id}')">삭제</button>
+       </div>`
+    : '';
+
+  el.innerHTML=`<div class="post-header">
+    <div class="avatar" style="background:${p.abg};color:${p.ac};">${p.init}</div>
+    <div style="flex:1;"><div class="post-name">${p.name} · 거지력 ${p.score}점</div><div class="post-time">${p.time}</div></div>
+    ${myPostBtns}
+  </div>
+    <div class="post-desc" id="post-desc-${p.id}">${p.desc}</div><div class="post-amount" id="post-amount-${p.id}">${p.item} ${p.amount}</div>
     <div class="roast-box"><div class="roast-label">AI 거지방장</div><div class="roast-text" id="rt-${p.id}"><div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
       <div class="reactions" id="rxn-${p.id}" style="margin-top:0;">${rxnBtns}</div>
@@ -1439,7 +1545,6 @@ function makePost(p) {
       <div id="cml-${p.id}">${p.comments.map(c=>`<div class="comment-row"><div class="comment-av" style="background:${c.bg};color:${c.c};">${c.av}</div><div><div class="comment-name">${c.name}</div><div class="comment-bubble">${c.text}</div></div></div>`).join('')}</div>
       <div class="comment-input-row"><input class="comment-input" placeholder="따끔한 한마디..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="csend-btn" onclick="addCmt('${p.id}')">전송</button></div>
     </div>`;
-  // Firebase 댓글 실시간 리슨
   if (window.GJ?.ready) {
     window.GJ.listenComments(p.id, (comments) => {
       const cml = document.getElementById('cml-' + p.id);
@@ -1808,12 +1913,18 @@ function getGrade(score) {
 
 function updateMyRankUI() {
   const grade = getGrade(myTotalScore);
+  // 월 거지력
   document.getElementById('my-score-display').textContent = myMonthScore;
+  // 누적 거지력
   const totalEl = document.getElementById('my-total-score-display');
   if (totalEl) totalEl.textContent = myTotalScore;
+  // 환전 카드
+  const convDisp = document.getElementById('total-conv-display');
+  if (convDisp) convDisp.textContent = myTotalScore + '점';
+  // 계급
   const gradeEl = document.getElementById('my-grade-display');
   if (gradeEl) { gradeEl.textContent = grade.label; gradeEl.style.color = grade.color; }
-  // 환전 버튼 활성화
+  // 환전 버튼
   const convBtn = document.getElementById('total-score-conv-btn');
   if (convBtn) {
     const convertable = myTotalScore >= 1000;
@@ -1830,6 +1941,19 @@ function updateMyRankUI() {
       ? '다음 계급까지 ' + (nextGrade.min - myTotalScore) + '점'
       : '최고 계급 달성!';
   }
+  // 랭킹 순위 계산 (RANKS 기반 간이 계산)
+  const rankPosEl = document.getElementById('my-rank-pos');
+  if (rankPosEl) {
+    if (RANKS.length === 0) {
+      rankPosEl.textContent = '1위'; // 아무도 없으면 1위
+    } else {
+      const myPos = RANKS.filter(r => r.monthScore > myMonthScore).length + 1;
+      rankPosEl.textContent = myPos + '위';
+    }
+  }
+  // window 변수 동기화
+  window.myMonthScore = myMonthScore;
+  window.myTotalScore = myTotalScore;
 }
 
 function doExchange(type,cost) {
@@ -1939,7 +2063,62 @@ function watchAd(cb) {
   },100);
 }
 
-/* overlay helpers */
+function openEditPostFromBtn(btn) {
+  const pid = btn.dataset.pid;
+  const post = document.getElementById('post-' + pid);
+  const desc = document.getElementById('post-desc-' + pid)?.textContent || '';
+  const amountEl = document.getElementById('post-amount-' + pid)?.textContent || '';
+  // "스타벅스 6,500원" → item="스타벅스", amount="6500"
+  const parts = amountEl.trim().split(' ');
+  const amountRaw = (parts.pop() || '').replace(/[^0-9]/g, '');
+  const item = parts.join(' ');
+  openEditPost(pid, desc, item, amountRaw);
+}
+function deleteMyPost(pid) {
+  if (!confirm('이 게시물을 삭제할까요?')) return;
+  // 로컬에서 즉시 제거
+  document.getElementById('post-' + pid)?.remove();
+  // Firebase에서 삭제
+  if (window.GJ?.ready) {
+    window.GJ.deletePost(pid)
+      .then(() => showToast('게시물이 삭제됐어요'))
+      .catch(() => showToast('삭제 중 오류가 발생했어요'));
+  } else {
+    showToast('게시물이 삭제됐어요');
+  }
+  // 반응 기록 삭제
+  localStorage.removeItem(getRxnKey(pid));
+}
+
+/* 글 수정 */
+function openEditPost(pid, desc, item, amount) {
+  document.getElementById('edit-post-id').value = pid;
+  document.getElementById('edit-post-item').value = item;
+  document.getElementById('edit-post-amount').value = amount;
+  document.getElementById('edit-post-desc').value = desc;
+  openOverlay('ov-edit-post');
+}
+
+function submitEditPost() {
+  const pid = document.getElementById('edit-post-id').value;
+  const item = document.getElementById('edit-post-item').value.trim();
+  const amount = document.getElementById('edit-post-amount').value;
+  const desc = document.getElementById('edit-post-desc').value.trim();
+  if (!item || !amount) { showToast('가맹점과 금액을 입력해주세요'); return; }
+  const amountStr = parseInt(amount).toLocaleString() + '원';
+  // 로컬 즉시 반영
+  const descEl = document.getElementById('post-desc-' + pid);
+  const amountEl = document.getElementById('post-amount-' + pid);
+  if (descEl) descEl.textContent = desc || '그냥 썼음';
+  if (amountEl) amountEl.textContent = item + ' ' + amountStr;
+  closeOverlay('ov-edit-post');
+  showToast('수정됐어요!');
+  // Firebase 업데이트
+  if (window.GJ?.ready) {
+    window.GJ.editPost(pid, desc || '그냥 썼음', item, amountStr)
+      .catch(() => console.warn('[거지방] 수정 저장 실패'));
+  }
+}
 function openOverlay(id){document.getElementById(id).classList.add('open');}
 function closeOverlay(id){document.getElementById(id)?.classList.remove('open');}
 function closeOverlayOut(e,id){if(e.target===document.getElementById(id))closeOverlay(id);}
