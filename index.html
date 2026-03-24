@@ -1359,7 +1359,7 @@ function submitWriteToss() {
   const memo = document.getElementById('write-toss-memo').value.trim();
   closeOverlay('ov-write');
   addToFeed(selectedTxName, selectedTxAmount, memo);
-  // reset
+  addSpendRecord(selectedTxName, selectedTxAmount, ''); // 가계부 반영
   document.querySelectorAll('.wtx-row').forEach(r => r.classList.remove('selected'));
   document.getElementById('write-toss-memo').value = '';
   document.getElementById('write-toss-btn').disabled = true;
@@ -1371,8 +1371,11 @@ function submitWriteManual() {
   const amount = document.getElementById('write-amount').value;
   const memo = document.getElementById('write-memo').value.trim();
   if (!where || !amount) return;
+  // 선택된 카테고리 chip 확인
+  const activeCat = document.querySelector('#write-manual-view .cat-chip.active')?.textContent || '';
   closeOverlay('ov-write');
   addToFeed(where, amount, memo);
+  addSpendRecord(where, amount, activeCat); // 가계부 반영
   document.getElementById('write-where').value = '';
   document.getElementById('write-amount').value = '';
   document.getElementById('write-memo').value = '';
@@ -2016,28 +2019,95 @@ let isPremium = false;
 let spendChart = null;
 
 const CAT_DATA = [
-  { emoji:'🛍', label:'쇼핑', amt:0, color:'#e8527a' },
-  { emoji:'🍜', label:'배달', amt:0, color:'#f0849f' },
-  { emoji:'🎮', label:'엔터', amt:0, color:'#7ab4f0' },
-  { emoji:'☕', label:'카페', amt:0, color:'#d4a844' },
-  { emoji:'🚕', label:'교통', amt:0, color:'#44cc88' },
+  { emoji:'🛍', label:'쇼핑',  keywords:['쇼핑','무신사','쿠팡','옷','신발','가방','마켓'], amt:0, color:'#e8527a' },
+  { emoji:'🍜', label:'배달',  keywords:['배달','배민','요기요','쿠팡이츠','음식','먹','치킨','피자'], amt:0, color:'#f0849f' },
+  { emoji:'🎮', label:'엔터',  keywords:['게임','포인트','엔터','영화','넷플릭스','유튜브','스트리밍'], amt:0, color:'#7ab4f0' },
+  { emoji:'☕', label:'카페',  keywords:['카페','커피','스타벅스','이디야','투썸','음료','버블티'], amt:0, color:'#d4a844' },
+  { emoji:'🚕', label:'교통',  keywords:['택시','카카오t','버스','지하철','교통','기름','주유'], amt:0, color:'#44cc88' },
+  { emoji:'🍔', label:'식비',  keywords:['식비','밥','점심','저녁','아침','편의점','마트','식당'], amt:0, color:'#b07ae8' },
+  { emoji:'📦', label:'기타',  keywords:[], amt:0, color:'#888780' },
 ];
-const TOTAL = 0;
+
+function getTotal() { return CAT_DATA.reduce((s,c) => s+c.amt, 0); }
+
+// 카테고리 자동 분류
+function detectCategory(where, selectedCat) {
+  if (selectedCat) {
+    const found = CAT_DATA.find(c => selectedCat.includes(c.label));
+    if (found) return found;
+  }
+  const w = (where || '').toLowerCase();
+  for (const c of CAT_DATA) {
+    if (c.keywords.some(k => w.includes(k))) return c;
+  }
+  return CAT_DATA[CAT_DATA.length - 1]; // 기타
+}
+
+// 지출 기록 추가 → 가계부에 반영
+function addSpendRecord(where, amount, selectedCat) {
+  const amt = parseInt(amount) || 0;
+  if (!amt) return;
+  const cat = detectCategory(where, selectedCat);
+  cat.amt += amt;
+  // 주간 차트 데이터 업데이트 (오늘 요일에 추가)
+  const dayIdx = new Date().getDay(); // 0=일,1=월,...
+  const chartIdx = dayIdx === 0 ? 6 : dayIdx - 1; // 월~일 순서로
+  WEEK_DATA.data[chartIdx] += amt;
+  // 이번달 주차 계산
+  const weekOfMonth = Math.ceil(new Date().getDate() / 7) - 1;
+  MONTH_DATA.data[Math.min(weekOfMonth, 3)] += amt;
+  // summary-total 업데이트
+  const totalEl = document.getElementById('summary-total');
+  if (totalEl) totalEl.innerHTML = getTotal().toLocaleString() + '<span style="font-size:14px;font-weight:400;color:var(--text3);">원</span>';
+  // 내 지출 탭이 열려있으면 즉시 차트 재빌드
+  if (document.getElementById('tab-mine')?.classList.contains('active')) {
+    buildCatBars(); buildChart('week');
+  }
+  // localStorage에 저장
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7); // 2026-03
+  const saved = JSON.parse(localStorage.getItem(key) || '[]');
+  saved.push({ where, amt, cat: cat.label, ts: Date.now() });
+  localStorage.setItem(key, JSON.stringify(saved));
+}
+
+// 앱 시작 시 이번달 지출 복원
+function restoreSpendData() {
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  const saved = JSON.parse(localStorage.getItem(key) || '[]');
+  // CAT_DATA 초기화 후 재합산
+  CAT_DATA.forEach(c => c.amt = 0);
+  WEEK_DATA.data.fill(0);
+  MONTH_DATA.data.fill(0);
+  saved.forEach(s => {
+    const cat = CAT_DATA.find(c => c.label === s.cat) || CAT_DATA[CAT_DATA.length-1];
+    cat.amt += s.amt;
+    const d = new Date(s.ts);
+    const dayIdx = d.getDay();
+    const chartIdx = dayIdx === 0 ? 6 : dayIdx - 1;
+    WEEK_DATA.data[chartIdx] += s.amt;
+    const weekOfMonth = Math.ceil(d.getDate() / 7) - 1;
+    MONTH_DATA.data[Math.min(weekOfMonth, 3)] += s.amt;
+  });
+  const totalEl = document.getElementById('summary-total');
+  if (totalEl && getTotal() > 0) totalEl.innerHTML = getTotal().toLocaleString() + '<span style="font-size:14px;font-weight:400;color:var(--text3);">원</span>';
+}
+
 const WEEK_DATA = { labels:['월','화','수','목','금','토','일'], data:[0,0,0,0,0,0,0] };
 const MONTH_DATA = { labels:['1주','2주','3주','4주'], data:[0,0,0,0] };
 
 function buildCatBars() {
   const el = document.getElementById('cat-bars');
   if (!el) return;
-  el.innerHTML = CAT_DATA.map(c => {
-    const pct = Math.round(c.amt / TOTAL * 100);
+  const total = getTotal();
+  el.innerHTML = CAT_DATA.filter(c => c.amt > 0).map(c => {
+    const pct = total > 0 ? Math.round(c.amt / total * 100) : 0;
     return '<div class="cat-bar-row">' +
       '<span class="cat-bar-emoji">' + c.emoji + '</span>' +
       '<span class="cat-bar-label">' + c.label + '</span>' +
       '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + c.color + ';"></div></div>' +
       '<span class="cat-bar-amt">' + c.amt.toLocaleString() + '원</span>' +
       '</div>';
-  }).join('');
+  }).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0;">아직 지출 내역이 없어요</div>';
 }
 
 function buildChart(period) {
@@ -2094,8 +2164,8 @@ function updateFinance() {
   const saving = parseInt(document.getElementById('saving-input').value) || 0;
   if (!income) { document.getElementById('finance-summary').style.display = 'none'; return; }
   document.getElementById('finance-summary').style.display = 'block';
-  const avail = income - saving - TOTAL;
-  const pct = Math.min(100, Math.round(TOTAL / (income - saving) * 100));
+  const avail = income - saving - getTotal();
+  const pct = Math.min(100, Math.round(getTotal() / (income - saving) * 100));
   document.getElementById('avail-budget').textContent = avail.toLocaleString() + '원';
   document.getElementById('avail-budget').style.color = avail >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('budget-bar').style.width = pct + '%';
@@ -2129,7 +2199,7 @@ async function generateReport() {
   }
 }
 
-buildFeed(); buildRank(); updatePiggy(); updateMyRankUI();
+buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
 
 // 오늘 복권 사용 상태 UI 반영
 if (lotteryUsed) {
