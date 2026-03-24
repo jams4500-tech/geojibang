@@ -1513,7 +1513,7 @@ function selectCat(el) { document.querySelectorAll('.cat-chip').forEach(c=>c.cla
 function checkManualForm() { document.getElementById('manual-share-btn').disabled=!(parseInt(document.getElementById('m-amount').value)>0); }
 function addToFeed(where,amount,memo) {
   const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
-  const p={id:pid,name:myProfile.nick,score:myScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0]};
+  const p={id:pid,name:myProfile.nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0]};
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
   showToast('피드에 올렸어요. 혼나는 중...'); showTab('feed');
 }
