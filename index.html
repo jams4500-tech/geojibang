@@ -585,57 +585,14 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div style="font-size:28px;">⏳</div>
         </div>
 
-        <!-- 리워드 안내 -->
+        <!-- 이달의 랭킹/리워드 -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">🏆 이달의 리워드</div>
-          <div style="display:flex;flex-direction:column;gap:0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">🥇</span>
-                <div>
-                  <div style="font-size:13px;color:var(--text);">1위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--gold);">거지왕 👑</span></div>
-                </div>
-              </div>
-              <span style="font-size:14px;font-weight:700;color:var(--gold);">100,000P</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">🥈</span>
-                <div>
-                  <div style="font-size:13px;color:var(--text);">2위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text2);">거지대장 🎖</span></div>
-                </div>
-              </div>
-              <span style="font-size:14px;font-weight:700;color:var(--text2);">30,000P</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">🥉</span>
-                <div>
-                  <div style="font-size:13px;color:var(--text);">3위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
-                </div>
-              </div>
-              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">🥉</span>
-                <div>
-                  <div style="font-size:13px;color:var(--text);">4위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
-                </div>
-              </div>
-              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">🥉</span>
-                <div>
-                  <div style="font-size:13px;color:var(--text);">5위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--text3);">거지반장 📛</span></div>
-                </div>
-              </div>
-              <span style="font-size:14px;font-weight:700;color:var(--text2);">10,000P</span>
-            </div>
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">🏆 이달의 랭킹/리워드</div>
+          <div id="live-reward-list">
+            <!-- buildLiveRewardList()로 채워짐 -->
+            <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">아직 랭킹 데이터가 없어요</div>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표<br>리워드는 발표 후 24시간 내 자동 지급돼요</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 리워드는 발표 후 24시간 내 자동 지급돼요</div>
         </div>
 
         <div class="rank-header"><div class="rank-title">3월 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
@@ -1705,10 +1662,47 @@ function shareManual() {
 }
 
 /* rank */
+const REWARD_INFO = [
+  { medal:'🥇', title:'거지왕 👑',    titleColor:'var(--gold)',     pts:'100,000P', ptsColor:'var(--gold)' },
+  { medal:'🥈', title:'거지대장 🎖', titleColor:'var(--text2)',    pts:'30,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+];
+
+function buildLiveRewardList() {
+  const el = document.getElementById('live-reward-list');
+  if (!el) return;
+  if (!RANKS.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">아직 랭킹 데이터가 없어요</div>';
+    return;
+  }
+  el.innerHTML = RANKS.slice(0, 5).map((r, i) => {
+    const info = REWARD_INFO[i];
+    const isLast = i === Math.min(RANKS.length, 5) - 1;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;' + (isLast ? '' : 'border-bottom:1px solid var(--border);') + '">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:16px;">' + info.medal + '</span>' +
+        '<div>' +
+          '<div style="font-size:13px;color:var(--text);">' +
+            (i+1) + '위 ' +
+            '<span style="font-family:\'Black Han Sans\',sans-serif;color:' + info.titleColor + ';">' + info.title + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">' +
+            r.name + ' · 거지력 ' + r.score +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<span style="font-size:13px;font-weight:700;color:' + info.ptsColor + ';">' + info.pts + '</span>' +
+    '</div>';
+  }).join('');
+}
+
 function buildRank() {
   const list = document.getElementById('rank-list');
   if (!RANKS.length) {
     list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--text3);font-size:13px;">아직 랭킹 데이터가 없어요<br>피드에 지출을 올리고 거지력을 쌓아보세요 🥫</div>';
+    buildLiveRewardList();
     return;
   }
   list.innerHTML = RANKS.map((r,i) => {
@@ -1726,6 +1720,7 @@ function buildRank() {
       '<div class="rank-score">거지력 ' + r.score + '</div>' +
       '</div>';
   }).join('');
+  buildLiveRewardList();
 }
 
 /* ── 거지왕 발표 로직 ── */
