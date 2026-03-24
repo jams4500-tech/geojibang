@@ -605,7 +605,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
               <span style="font-size:14px;font-weight:700;color:var(--text2);">각 10,000P</span>
             </div>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 토스 인증 연동 필수<br>리워드는 발표 후 24시간 내 자동 지급돼요</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표<br>리워드는 발표 후 24시간 내 자동 지급돼요</div>
         </div>
 
         <div class="rank-header"><div class="rank-title">3월 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
@@ -614,8 +614,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
           <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
           <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
-          <div class="formula-row"><div class="formula-key">유효 조건</div><div class="formula-val">토스 인증 + 7일 이상</div></div>
-          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 수동 입력은 피드에만 반영</div>
+          <div class="formula-row"><div class="formula-key">유효 조건</div><div class="formula-val">피드에 지출 올린 후 반응 획득</div></div>
+          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 영구 보존</div>
         </div>
         <div id="rank-list"></div>
         <div class="my-rank">
@@ -1416,15 +1416,22 @@ function buildFeed() {
 
 function makePost(p) {
   const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
+  const savedRxn = getSavedRxn(p.id); // -1이면 미투표
+  const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
+  const rxnBtns = [0,1,2].map(i => {
+    const isActive = savedRxn === i;
+    const isSachi = i === 2;
+    return `<button class="rxn-btn${isActive?' active':''}${isSachi?' rxn-sachi':''}"
+      onclick="castRxn(this,'${p.id}',${i})"
+      ${savedRxn >= 0 ? 'disabled style="opacity:0.6;cursor:not-allowed;"' : ''}>
+      ${labels[i]} ${p.rxn[i]}
+    </button>`;
+  }).join('');
   el.innerHTML=`<div class="post-header"><div class="avatar" style="background:${p.abg};color:${p.ac};">${p.init}</div><div><div class="post-name">${p.name} · 거지력 ${p.score}점</div><div class="post-time">${p.time}</div></div></div>
     <div class="post-desc">${p.desc}</div><div class="post-amount">${p.item} ${p.amount}</div>
     <div class="roast-box"><div class="roast-label">AI 거지방장</div><div class="roast-text" id="rt-${p.id}"><div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
-      <div class="reactions" id="rxn-${p.id}" style="margin-top:0;">
-        <button class="rxn-btn" onclick="castRxn(this,'${p.id}',0)">🙇 거지ㅇㅈ ${p.rxn[0]}</button>
-        <button class="rxn-btn" onclick="castRxn(this,'${p.id}',1)">🤔 애매한데 ${p.rxn[1]}</button>
-        <button class="rxn-btn rxn-sachi" onclick="castRxn(this,'${p.id}',2)">💸 사치 ${p.rxn[2]}</button>
-      </div>
+      <div class="reactions" id="rxn-${p.id}" style="margin-top:0;">${rxnBtns}</div>
       <button class="share-post-btn" data-name="${p.name}" data-item="${p.item}" data-amount="${p.amount}" onclick="sharePost(this)">&#8599; 공유</button>
     </div>
     <div class="comment-toggle" onclick="toggleCmt('cm-${p.id}')">💬 댓글 <span id="cmt-count-${p.id}">${p.comments.length>0?p.comments.length+'개 보기':'달기'}</span></div>
@@ -1468,7 +1475,21 @@ function sharePost(btn) {
   }
 }
 
+function getRxnKey(pid) { return 'gj_rxn_' + pid; }
+function getSavedRxn(pid) {
+  const v = localStorage.getItem(getRxnKey(pid));
+  return v !== null ? parseInt(v) : -1;
+}
+function saveRxn(pid, idx) {
+  localStorage.setItem(getRxnKey(pid), String(idx));
+}
+
 function castRxn(btn,id,idx) {
+  // 이미 이 게시물에 반응한 경우 차단
+  if (getSavedRxn(id) >= 0) {
+    showToast('이미 반응했어요 (변경 불가)');
+    return;
+  }
   const btns=document.querySelectorAll(`#rxn-${id} .rxn-btn`);
   const scores=[3,0.5,-1];
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
@@ -1481,16 +1502,15 @@ function castRxn(btn,id,idx) {
     const s=scores[idx];
     if(s > 0) { myMonthScore += s; myTotalScore += s; }
     if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); }
-    // 즉시 UI 반영
     updateMyRankUI();
     window.myMonthScore = myMonthScore;
     window.myTotalScore = myTotalScore;
-    // Firebase 점수 저장
+    // 반응 localStorage 저장 (중복 방지)
+    saveRxn(id, idx);
     if(window.GJ?.ready && myProfile.uid) {
       window.GJ.updateScore(myProfile.uid, s > 0 ? s : (s < 0 ? s : 0), s > 0 ? s : 0)
         .catch(e => console.warn('[거지방] 점수 저장 실패:', e));
     }
-    // Firebase 반응 저장
     if(window.GJ?.ready) {
       window.GJ.updateRxn(id, counts).catch(()=>{});
     }
@@ -1595,7 +1615,7 @@ function buildRank() {
       '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
       '<div class="rank-av" style="background:' + r.bg + ';color:' + r.c + ';">' + r.init + '</div>' +
       '<div class="rank-info">' +
-        '<div class="rank-name">' + r.name + badge + ' <span class="badge-valid">토스인증</span></div>' +
+        '<div class="rank-name">' + r.name + badge + '</div>' +
         '<div class="rank-desc">' + r.desc + '</div>' +
       '</div>' +
       '<div class="rank-score">거지력 ' + r.score + '</div>' +
