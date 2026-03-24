@@ -334,6 +334,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* Onboarding */
 .onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
+body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hidden; }
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
 .ob-sub { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
 .ob-can { font-size: 72px; margin-bottom: 24px; line-height: 1; }
@@ -361,6 +362,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <body>
 <div class="app">
 
+  <!-- Onboarding backdrop -->
+  <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);"></div>
   <!-- Onboarding -->
   <div class="onboarding" id="onboarding">
     <div class="ob-can">🥫</div>
@@ -1278,8 +1281,19 @@ setTimeout(() => window.GJ.initProfile(), 500);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
-let coins = 0, todayEarned = 0, lotteryUsed = false, adCb = null;
+let coins = 0, todayEarned = 0, adCb = null;
 const MAX_DAILY = 5;
+const MAX_GOLDEN_DAILY = 3; // 꽝없는 복권 하루 3회 제한
+
+// 오늘 날짜 키 (자정마다 초기화)
+const _todayKey = new Date().toISOString().slice(0,10);
+const _dayState = JSON.parse(localStorage.getItem('gj_day_' + _todayKey) || '{}');
+let lotteryUsed    = _dayState.lotteryUsed    || false;
+let goldenUsedCount = _dayState.goldenUsedCount || 0;
+
+function saveDayState() {
+  localStorage.setItem('gj_day_' + _todayKey, JSON.stringify({ lotteryUsed, goldenUsedCount }));
+}
 
 const POSTS = []; // Firebase에서 실시간으로 불러옴
 
@@ -1404,17 +1418,29 @@ function makePost(p) {
     <div class="roast-box"><div class="roast-label">AI 거지방장</div><div class="roast-text" id="rt-${p.id}"><div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
       <div class="reactions" id="rxn-${p.id}" style="margin-top:0;">
-        <button class="rxn-btn active" onclick="castRxn(this,'${p.id}',0)">🙇 거지ㅇㅈ ${p.rxn[0]}</button>
+        <button class="rxn-btn" onclick="castRxn(this,'${p.id}',0)">🙇 거지ㅇㅈ ${p.rxn[0]}</button>
         <button class="rxn-btn" onclick="castRxn(this,'${p.id}',1)">🤔 애매한데 ${p.rxn[1]}</button>
         <button class="rxn-btn rxn-sachi" onclick="castRxn(this,'${p.id}',2)">💸 사치 ${p.rxn[2]}</button>
       </div>
       <button class="share-post-btn" data-name="${p.name}" data-item="${p.item}" data-amount="${p.amount}" onclick="sharePost(this)">&#8599; 공유</button>
     </div>
-    <div class="comment-toggle" onclick="toggleCmt('cm-${p.id}')">💬 댓글 ${p.comments.length>0?p.comments.length+'개 보기':'달기'}</div>
+    <div class="comment-toggle" onclick="toggleCmt('cm-${p.id}')">💬 댓글 <span id="cmt-count-${p.id}">${p.comments.length>0?p.comments.length+'개 보기':'달기'}</span></div>
     <div class="comment-section" id="cm-${p.id}">
       <div id="cml-${p.id}">${p.comments.map(c=>`<div class="comment-row"><div class="comment-av" style="background:${c.bg};color:${c.c};">${c.av}</div><div><div class="comment-name">${c.name}</div><div class="comment-bubble">${c.text}</div></div></div>`).join('')}</div>
       <div class="comment-input-row"><input class="comment-input" placeholder="따끔한 한마디..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="csend-btn" onclick="addCmt('${p.id}')">전송</button></div>
     </div>`;
+  // Firebase 댓글 실시간 리슨
+  if (window.GJ?.ready) {
+    window.GJ.listenComments(p.id, (comments) => {
+      const cml = document.getElementById('cml-' + p.id);
+      if (!cml) return;
+      cml.innerHTML = comments.map(c =>
+        `<div class="comment-row"><div class="comment-av" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};">${(c.authorName||'익')[0]}</div><div><div class="comment-name">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
+      ).join('');
+      const countEl = document.getElementById('cmt-count-' + p.id);
+      if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
+    });
+  }
   return el;
 }
 
@@ -1443,31 +1469,49 @@ function castRxn(btn,id,idx) {
   const btns=document.querySelectorAll(`#rxn-${id} .rxn-btn`);
   const scores=[3,0.5,-1];
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
-  // get current counts from text
   const counts=Array.from(btns).map(b=>parseInt(b.textContent.match(/\d+/)?.[0])||0);
   const prevActive=Array.from(btns).findIndex(b=>b.classList.contains('active'));
-  // undo prev
   if(prevActive>=0 && prevActive!==idx) counts[prevActive]=Math.max(0,counts[prevActive]-1);
-  // apply new
   if(prevActive!==idx) counts[idx]++;
   btns.forEach((b,i)=>{ b.classList.toggle('active',i===idx); b.textContent=labels[i]+' '+counts[i]; });
-  // score feedback toast
   if(prevActive!==idx){
     const s=scores[idx];
-    if(s > 0) { myMonthScore += s; myTotalScore += s; updateMyRankUI(); }
-    if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); updateMyRankUI(); }
+    if(s > 0) { myMonthScore += s; myTotalScore += s; }
+    if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); }
+    // 즉시 UI 반영
+    updateMyRankUI();
+    window.myMonthScore = myMonthScore;
+    window.myTotalScore = myTotalScore;
+    // Firebase 점수 저장
+    if(window.GJ?.ready && myProfile.uid) {
+      window.GJ.updateScore(myProfile.uid, s > 0 ? s : (s < 0 ? s : 0), s > 0 ? s : 0)
+        .catch(e => console.warn('[거지방] 점수 저장 실패:', e));
+    }
+    // Firebase 반응 저장
+    if(window.GJ?.ready) {
+      window.GJ.updateRxn(id, counts).catch(()=>{});
+    }
     const msg=s>0?'+'+s+'점 거지력 인정!':s<0?s+'점 사치로 판정됨':'0.5점 애매 판정';
     showToast(msg);
   }
 }
 function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
-const cmC=[{bg:'#3a1520',c:'#e8527a'},{bg:'#1a2030',c:'#7ab4f0'},{bg:'#1a2e22',c:'#44cc88'},{bg:'#2e2a1a',c:'#d4a844'}];
-let cmI=0;
 function addCmt(pid) {
   const inp=document.getElementById('ci-'+pid), txt=inp.value.trim(); if(!txt) return;
-  const row=document.createElement('div'); row.className='comment-row'; row.style.marginTop='8px';
-  row.innerHTML='<div class="comment-av" style="background:'+myProfile.bg+';color:'+myProfile.c+';">'+myProfile.nick.charAt(0)+'</div><div><div class="comment-name">'+myProfile.nick+'</div><div class="comment-bubble">'+txt.replace(/</g,'&lt;')+'</div></div>';
-  document.getElementById('cml-'+pid).appendChild(row); inp.value='';
+  inp.value='';
+  // Firebase에 댓글 저장 (Firebase가 listenComments로 UI 자동 업데이트)
+  if(window.GJ?.ready) {
+    window.GJ.submitComment(pid, txt).catch(e => {
+      // Firebase 실패 시 로컬 렌더 폴백
+      const row=document.createElement('div'); row.className='comment-row'; row.style.marginTop='8px';
+      row.innerHTML='<div class="comment-av" style="background:'+myProfile.bg+';color:'+myProfile.c+';">'+myProfile.nick.charAt(0)+'</div><div><div class="comment-name">'+myProfile.nick+'</div><div class="comment-bubble">'+txt.replace(/</g,'&lt;')+'</div></div>';
+      document.getElementById('cml-'+pid)?.appendChild(row);
+    });
+  } else {
+    const row=document.createElement('div'); row.className='comment-row'; row.style.marginTop='8px';
+    row.innerHTML='<div class="comment-av" style="background:'+myProfile.bg+';color:'+myProfile.c+';">'+myProfile.nick.charAt(0)+'</div><div><div class="comment-name">'+myProfile.nick+'</div><div class="comment-bubble">'+txt.replace(/</g,'&lt;')+'</div></div>';
+    document.getElementById('cml-'+pid)?.appendChild(row);
+  }
 }
 
 async function genRoast(pid,ctx) {
@@ -1514,6 +1558,9 @@ function checkManualForm() { document.getElementById('manual-share-btn').disable
 function addToFeed(where,amount,memo) {
   const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
   const p={id:pid,name:myProfile.nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0]};
+  // 빈 상태 메시지 제거
+  const empty = document.getElementById('feed-empty');
+  if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
   showToast('피드에 올렸어요. 혼나는 중...'); showTab('feed');
 }
@@ -1811,12 +1858,32 @@ function doConvert() {
 
 /* lottery */
 function playLottery(type) {
-  if(type==='normal'&&lotteryUsed){showToast('오늘 무료 복권을 이미 사용했어요');return;}
-  if(type==='golden'){closeOverlay('ov-lottery'); watchAd(()=>{openOverlay('ov-lottery');revealPrize(GOLDEN_P);}); return;}
-  lotteryUsed=true; document.getElementById('lc-normal').classList.add('used');
-  document.getElementById('pac-lotto-note').textContent='오늘 사용 완료';
-  document.getElementById('strip-lotto-sub').textContent='오늘 무료 사용 완료';
-  revealPrize(NORMAL_P);
+  if (type === 'normal') {
+    if (lotteryUsed) { showToast('오늘 무료 복권을 이미 사용했어요'); return; }
+    lotteryUsed = true;
+    saveDayState();
+    document.getElementById('lc-normal').classList.add('used');
+    document.getElementById('pac-lotto-note').textContent = '오늘 사용 완료';
+    document.getElementById('strip-lotto-sub').textContent = '오늘 무료 사용 완료';
+    revealPrize(NORMAL_P);
+    return;
+  }
+  if (type === 'golden') {
+    if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
+      showToast('꽝없는 복권은 하루 3회까지만 가능해요');
+      return;
+    }
+    closeOverlay('ov-lottery');
+    watchAd(() => {
+      goldenUsedCount++;
+      saveDayState();
+      openOverlay('ov-lottery');
+      revealPrize(GOLDEN_P);
+      // 3회 다 쓰면 버튼 비활성화
+      const goldenBtn = document.querySelector('.lc:not(#lc-normal)');
+      if (goldenUsedCount >= MAX_GOLDEN_DAILY && goldenBtn) goldenBtn.classList.add('used');
+    });
+  }
 }
 function revealPrize(pool) {
   const p = pool[Math.floor(Math.random() * pool.length)];
@@ -1881,6 +1948,8 @@ function completeOnboarding() {
   document.getElementById('onboarding').classList.add('hidden');
   setTimeout(() => {
     document.getElementById('onboarding').style.display = 'none';
+    const bd = document.getElementById('ob-backdrop');
+    if (bd) bd.style.display = 'none';
     // 온보딩 완료 후 피드 리스너 시작
     if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
   }, 300);
@@ -2062,6 +2131,16 @@ async function generateReport() {
 
 buildFeed(); buildRank(); updatePiggy(); updateMyRankUI();
 
+// 오늘 복권 사용 상태 UI 반영
+if (lotteryUsed) {
+  document.getElementById('lc-normal')?.classList.add('used');
+  document.getElementById('pac-lotto-note') && (document.getElementById('pac-lotto-note').textContent = '오늘 사용 완료');
+  document.getElementById('strip-lotto-sub') && (document.getElementById('strip-lotto-sub').textContent = '오늘 무료 사용 완료');
+}
+if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
+  document.querySelector('.lc:not(#lc-normal)')?.classList.add('used');
+}
+
 // window에 노출 (Firebase module에서 접근)
 window.makePost = makePost;
 window.genRoast = genRoast;
@@ -2139,6 +2218,8 @@ if (_saved) {
     applyProfile();
     const ob = document.getElementById('onboarding');
     ob.style.display = 'none';
+    const bd = document.getElementById('ob-backdrop');
+    if (bd) bd.style.display = 'none';
     // 기존 프로필 로드 시 피드 리스너 바로 시작
     setTimeout(() => {
       if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
