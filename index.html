@@ -436,13 +436,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
             </div>
           </div>
           <div id="mine-tx-list" style="display:none;border-top:1px solid var(--border);">
-            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🚕</div><div class="tx-info"><div class="tx-name">카카오T</div><div class="tx-cat">교통 · 오늘</div></div><div class="tx-amount">3,800원</div></div>
-            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">☕</div><div class="tx-info"><div class="tx-name">스타벅스</div><div class="tx-cat">카페 · 오늘</div></div><div class="tx-amount">6,500원</div></div>
-            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🎮</div><div class="tx-info"><div class="tx-name">게임 포인트</div><div class="tx-cat">엔터 · 어제</div></div><div class="tx-amount">10,000원</div></div>
-            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🍜</div><div class="tx-info"><div class="tx-name">배달의민족</div><div class="tx-cat">배달 · 어제</div></div><div class="tx-amount">18,500원</div></div>
-            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🛍</div><div class="tx-info"><div class="tx-name">무신사</div><div class="tx-cat">쇼핑 · 3일 전</div></div><div class="tx-amount">49,000원</div></div>
-            <div style="padding:12px 14px;">
-              <button class="share-btn" id="toss-share-btn" onclick="shareToss()" disabled style="margin-top:0;">선택해서 피드에 올리기</button>
+            <div style="text-align:center;padding:24px 16px;color:var(--text3);font-size:13px;line-height:1.7;">
+              💳 토스 미니앱 연동 후<br>실제 결제 내역이 여기에 표시돼요
             </div>
           </div>
         </div>
@@ -559,7 +554,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div id="king-banner" style="display:none;background:linear-gradient(135deg,#2a1020,#1a0a18);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:14px;text-align:center;">
           <div style="font-size:32px;margin-bottom:6px;">👑</div>
           <div style="font-size:11px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">이달의 거지왕 발표</div>
-          <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--text);margin-bottom:2px;" id="king-name">1일0식</div>
+          <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--text);margin-bottom:2px;" id="king-name">-</div>
           <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="king-score">거지력 214점 · 피드 31개</div>
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
             <div style="background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--gold);font-weight:700;">🥇 1위 토스포인트 100,000P</div>
@@ -910,30 +905,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div id="write-toss-view">
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">최근 결제 내역 · 하나 선택하세요</div>
       <div class="write-tx-list" id="write-tx-list">
-        <div class="wtx-row" onclick="selectTx(this,'카카오T','3800','교통 · 오늘')">
-          <div class="wtx-radio"></div><div class="wtx-icon">🚕</div>
-          <div class="wtx-info"><div class="wtx-name">카카오T</div><div class="wtx-cat">교통 · 오늘</div></div>
-          <div class="wtx-amount">3,800원</div>
-        </div>
-        <div class="wtx-row" onclick="selectTx(this,'스타벅스','6500','카페 · 오늘')">
-          <div class="wtx-radio"></div><div class="wtx-icon">☕</div>
-          <div class="wtx-info"><div class="wtx-name">스타벅스</div><div class="wtx-cat">카페 · 오늘</div></div>
-          <div class="wtx-amount">6,500원</div>
-        </div>
-        <div class="wtx-row" onclick="selectTx(this,'게임 포인트','10000','엔터 · 어제')">
-          <div class="wtx-radio"></div><div class="wtx-icon">🎮</div>
-          <div class="wtx-info"><div class="wtx-name">게임 포인트</div><div class="wtx-cat">엔터 · 어제</div></div>
-          <div class="wtx-amount">10,000원</div>
-        </div>
-        <div class="wtx-row" onclick="selectTx(this,'배달의민족','18500','배달 · 어제')">
-          <div class="wtx-radio"></div><div class="wtx-icon">🍜</div>
-          <div class="wtx-info"><div class="wtx-name">배달의민족</div><div class="wtx-cat">배달 · 어제</div></div>
-          <div class="wtx-amount">18,500원</div>
-        </div>
-        <div class="wtx-row" onclick="selectTx(this,'무신사','49000','쇼핑 · 3일 전')">
-          <div class="wtx-radio"></div><div class="wtx-icon">🛍</div>
-          <div class="wtx-info"><div class="wtx-name">무신사</div><div class="wtx-cat">쇼핑 · 3일 전</div></div>
-          <div class="wtx-amount">49,000원</div>
+        <div style="text-align:center;padding:24px 16px;color:var(--text3);font-size:13px;line-height:1.7;">
+          💳 토스 미니앱 연동 후<br>실제 결제 내역이 여기에 표시돼요<br>
+          <span style="font-size:11px;color:var(--text3);margin-top:4px;display:block;">지금은 직접 입력을 이용해주세요</span>
         </div>
       </div>
       <div class="input-group">
@@ -2065,20 +2039,15 @@ async function generateReport() {
   el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   const income = parseInt(document.getElementById('income-input')?.value) || 0;
   const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
+  const totalSpend = CAT_DATA.reduce((s,c) => s + c.amt, 0);
   try {
     const res = await fetch('/api/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         spendData: {
-          total: 312400,
-          categories: [
-            { label: '쇼핑', amt: 49000 },
-            { label: '배달', amt: 18500 },
-            { label: '엔터테인먼트', amt: 10000 },
-            { label: '카페', amt: 6500 },
-            { label: '교통', amt: 3800 }
-          ]
+          total: totalSpend,
+          categories: CAT_DATA.map(c => ({ label: c.label, amt: c.amt }))
         },
         income: income || undefined,
         savingGoal: saving || undefined
