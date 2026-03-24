@@ -169,8 +169,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .my-rank { background: var(--surface); border: 1px solid var(--pink-dim2); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; }
 
 /* ── Piggy full page ── */
-.page { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; max-width: 420px; left: 50%; transform: translateX(-50%); background: var(--bg); opacity: 0; pointer-events: none; transition: opacity .25s; }
+.page { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; max-width: 420px; width: 100%; left: 50%; transform: translateX(-50%); background: var(--bg); opacity: 0; pointer-events: none; transition: opacity .25s; overflow: hidden; }
 .page.open { opacity: 1; pointer-events: all; }
+
 .page-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .page-back { font-size: 22px; cursor: pointer; color: var(--text2); background: none; border: none; font-family: inherit; padding: 0; line-height: 1; }
 .page-title { font-size: 16px; font-weight: 700; color: var(--text); }
@@ -331,7 +332,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* Onboarding */
-.onboarding { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; }
+.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
 .ob-sub { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
@@ -457,11 +458,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;">
             <div>
               <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">이번달 총 지출</div>
-              <div style="font-size:28px;font-weight:700;color:var(--text);">312,400<span style="font-size:14px;font-weight:400;color:var(--text3);">원</span></div>
+              <div style="font-size:28px;font-weight:700;color:var(--text);" id="summary-total">0<span style="font-size:14px;font-weight:400;color:var(--text3);">원</span></div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:11px;color:var(--red);">▲ 지난달 대비</div>
-              <div style="font-size:16px;font-weight:700;color:var(--red);">+47,000원</div>
+              <div style="font-size:11px;color:var(--text3);">▲ 지난달 대비</div>
+              <div style="font-size:16px;font-weight:700;color:var(--text3);" id="summary-diff">데이터 없음</div>
             </div>
           </div>
           <!-- 카테고리별 바 -->
@@ -623,15 +624,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div style="flex:1;">
             <div style="font-size:12px;color:var(--pink-light);margin-bottom:4px;">내 거지력 순위</div>
             <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-              <div style="font-family:'Black Han Sans',sans-serif;font-size:26px;color:var(--pink);">23위</div>
-              <div style="font-size:12px;color:var(--text3);">월 거지력 <span id="my-score-display">76</span>점</div>
+              <div style="font-family:'Black Han Sans',sans-serif;font-size:26px;color:var(--pink);" id="my-rank-pos">-위</div>
+              <div style="font-size:12px;color:var(--text3);">월 거지력 <span id="my-score-display">0</span>점</div>
             </div>
             <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                <div style="font-size:11px;color:var(--text3);">누적 거지력 <b id="my-total-score-display" style="color:var(--gold);">320</b>점</div>
-                <div style="font-size:11px;font-weight:700;" id="my-grade-display">프로 거지 🎯</div>
+                <div style="font-size:11px;color:var(--text3);">누적 거지력 <b id="my-total-score-display" style="color:var(--gold);">0</b>점</div>
+                <div style="font-size:11px;font-weight:700;" id="my-grade-display">거지 새싹 🌱</div>
               </div>
-              <div style="font-size:10px;color:var(--text3);" id="my-grade-next">다음 계급까지 280점</div>
+              <div style="font-size:10px;color:var(--text3);" id="my-grade-next">다음 계급까지 100점</div>
             </div>
           </div>
         </div>
@@ -649,7 +650,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;">
             <span style="font-size:12px;color:var(--text2);">현재 누적 거지력</span>
-            <span style="font-size:16px;font-weight:700;color:var(--gold);" id="total-conv-display">320점</span>
+            <span style="font-size:16px;font-weight:700;color:var(--gold);" id="total-conv-display">0점</span>
           </div>
           <button class="btn-gold" id="total-score-conv-btn" onclick="convertTotalScore()" disabled style="font-size:13px;padding:12px;">1000점 이상 모이면 환전 가능</button>
         </div>
@@ -1175,7 +1176,8 @@ window.GJ.getTopRankers = async (yearMonth, topN = 5) => {
 window.GJ.ready = true;
 console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 
-// 피드 실시간 리슨 시작
+// 피드 실시간 리슨 — 온보딩 완료 후 시작
+window.GJ.startFeedListener = () => {
 window.GJ.listenPosts(async (posts) => {
   if (!posts.length) return;
   const feed = document.getElementById('tab-feed');
@@ -1183,7 +1185,7 @@ window.GJ.listenPosts(async (posts) => {
 
   posts.forEach(p => {
     const existing = document.getElementById('post-' + p.id);
-    if (existing) return; // 이미 있으면 스킵
+    if (existing) return;
 
     const timeStr = p.createdAt?.toDate
       ? timeAgo(p.createdAt.toDate())
@@ -1205,7 +1207,8 @@ window.GJ.listenPosts(async (posts) => {
     };
 
     const el = window.makePost(postObj);
-    // 피드 배너 다음에 삽입
+    const empty = document.getElementById('feed-empty');
+    if (empty) empty.remove();
     const banner = document.getElementById('feed-cb');
     if (banner) feed.insertBefore(el, banner.nextSibling);
     else feed.appendChild(el);
@@ -1213,6 +1216,7 @@ window.GJ.listenPosts(async (posts) => {
     window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
   });
 });
+};
 
 // 프로필 로드 (Firebase 우선, localStorage 폴백)
 window.GJ.initProfile = async () => {
@@ -1303,38 +1307,15 @@ const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
 let coins = 0, todayEarned = 0, lotteryUsed = false, adCb = null;
 const MAX_DAILY = 5;
 
-const POSTS = [
-  {id:'p1',name:'김절약',score:88,abg:'#3a1520',ac:'#e8527a',init:'김',time:'방금 전',
-   desc:'저를 운반 해준 어르신께 감사의 인사로',item:'택시',amount:'3,800원',
-   comments:[{av:'이',bg:'#1a2e22',c:'#44cc88',name:'이탕진',text:'택시 타셨군요 🐶'},
-             {av:'벼',bg:'#2e2a1a',c:'#d4a844',name:'벼룩5200',text:'두 정거장이면 걸어도 되지 않나요?'},
-             {av:'병',bg:'#2a1a2e',c:'#b07ae8',name:'병찐튜브',text:'감사 인사는 목례로도 충분합니다'}],rxn:[18,7,3]},
-  {id:'p2',name:'이탕진',score:23,abg:'#1a2e22',ac:'#44cc88',init:'이',time:'12분 전',
-   desc:'버블티 마시고 싶어서',item:'버블티',amount:'4,700원',
-   comments:[{av:'김',bg:'#3a1520',c:'#e8527a',name:'김절약',text:'버블티 사먹고싶은데 돈없을때 꿀팁: 흑임자 스티커 사세요'},
-             {av:'박',bg:'#1a2030',c:'#7ab4f0',name:'박포인트',text:'4700원이면 쌀 1kg 삽니다'}],rxn:[99,16,5]},
-  {id:'p3',name:'박포인트',score:61,abg:'#1a2030',ac:'#7ab4f0',init:'박',time:'34분 전',
-   desc:'포타 게임 포인트 충전했어요',item:'포인트 충전',amount:'10,000원',
-   comments:[{av:'이',bg:'#1a2e22',c:'#44cc88',name:'이탕진',text:'포타를 왜 보조로 합니까. 직접 연성하세요'},
-             {av:'벼',bg:'#2e2a1a',c:'#d4a844',name:'벼룩5200',text:'죄송해요 국어 47점 맞았어요'},
-             {av:'김',bg:'#3a1520',c:'#e8527a',name:'김절약',text:'국어 47점도 연성은 됩니다. 무료입니다'}],rxn:[7,3,9]},
-  {id:'p4',name:'니뽀',score:44,abg:'#1e2a14',ac:'#7acc44',init:'니',time:'1시간 전',
-   desc:'퍼컬 진단 받으러 갔다가',item:'미용실',amount:'40,000원',
-   comments:[{av:'박',bg:'#1a2030',c:'#7ab4f0',name:'박포인트',text:'퍼컬 진단이 왜 필요한가요. 색종이 얼굴 옆에 대보세요'},
-             {av:'병',bg:'#2a1a2e',c:'#b07ae8',name:'병찐튜브',text:'예약금 제외 40000원... 말문이 막힘'}],rxn:[6,2,11]},
-];
+const POSTS = []; // Firebase에서 실시간으로 불러옴
+
 const ADS = [
   {emoji:'🏦',bg:'#1a2030',title:'토스뱅크 파킹통장',desc:'쓸 돈 없으면 모으세요. 연 3.5% 이자는 공짜입니다.',cta:'개설하기'},
   {emoji:'🛒',bg:'#1e2a14',title:'컬리 첫 주문 30% 할인',desc:'배달 시키지 말고 직접 해 드세요. 재료값이 훨씬 쌉니다.',cta:'할인받기'},
   {emoji:'🚲',bg:'#2e2a1a',title:'따릉이 정기권 30,000원',desc:'택시 10번 탈 돈으로 1년 탑니다. 계산기 없어도 압니다.',cta:'가입하기'},
 ];
-const RANKS = [
-  {name:'1일0식',desc:'거지력 214점 · 피드 31개 · 거지ㅇㅈ 68회',score:'214점',bg:'#2a1020',c:'#e8527a',init:'1'},
-  {name:'좌절하는 제이지',desc:'거지력 187점 · 피드 27개 · 거지ㅇㅈ 59회',score:'187점',bg:'#1a2030',c:'#7ab4f0',init:'제'},
-  {name:'눈물바다 라이언',desc:'거지력 143점 · 피드 22개 · 거지ㅇㅈ 44회',score:'143점',bg:'#1a2e22',c:'#44cc88',init:'눈'},
-  {name:'벼룩 5200',desc:'거지력 98점 · 피드 18개 · 거지ㅇㅈ 31회',score:'98점',bg:'#2e2a1a',c:'#d4a844',init:'벼'},
-  {name:'병찐 튜브',desc:'거지력 61점 · 피드 11개 · 사치 판정 많음',score:'61점',bg:'#2a1a2e',c:'#b07ae8',init:'병'},
-];
+const RANKS = []; // Firebase에서 실시간으로 불러옴
+
 const FORTUNES = [
   '"죄송합니다, 사흘째 굶었습니다.\n따뜻한 말 한마디라도 부탁드립니다."',
   '"저는 지금 월세가 3개월 밀렸습니다.\n동전 하나가 희망입니다."',
@@ -1423,14 +1404,22 @@ function showTab(n) {
 /* feed */
 let adI=0;
 function buildFeed() {
-  const feed=document.getElementById('tab-feed'); feed.innerHTML='';
+  const feed = document.getElementById('tab-feed'); feed.innerHTML = '';
   // coin banner slot
-  const bannerWrap=document.createElement('div'); bannerWrap.id='feed-cb'; bannerWrap.style.display='none';
-  bannerWrap.innerHTML=`<div class="coin-banner" onclick="openConvert()"><div class="cb-left"><div class="cb-pig">🥫</div><div><div class="cb-title">깡통에 동전 <b id="fcb-n" style="color:var(--gold);">0</b>개 구걸했어요</div><div class="cb-sub">토스 포인트로 바꿀 수 있어요 <b>(5개 = 1P)</b></div></div></div><div style="font-size:14px;color:var(--text3);">›</div></div>`;
+  const bannerWrap = document.createElement('div'); bannerWrap.id = 'feed-cb'; bannerWrap.style.display = 'none';
+  bannerWrap.innerHTML = `<div class="coin-banner" onclick="openConvert()"><div class="cb-left"><div class="cb-pig">🥫</div><div><div class="cb-title">깡통에 동전 <b id="fcb-n" style="color:var(--gold);">0</b>개 구걸했어요</div><div class="cb-sub">토스 포인트로 바꿀 수 있어요 <b>(5개 = 1P)</b></div></div></div><div style="font-size:14px;color:var(--text3);">›</div></div>`;
   feed.appendChild(bannerWrap);
-  POSTS.forEach((p,i)=>{
-    feed.appendChild(makePost(p)); genRoast(p.id,`${p.desc} ${p.item} ${p.amount}`);
-    if((i+1)%3===0) feed.appendChild(makeAd(adI++));
+  // 빈 상태 안내
+  const emptyEl = document.createElement('div');
+  emptyEl.id = 'feed-empty';
+  emptyEl.style.cssText = 'text-align:center;padding:48px 24px;color:var(--text3);';
+  emptyEl.innerHTML = '<div style="font-size:48px;margin-bottom:12px;">🥫</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">아직 게시물이 없어요</div><div style="font-size:13px;line-height:1.7;">첫 번째 거지가 되어보세요!<br>✏️ 버튼을 눌러 지출을 올리면<br>AI 거지방장이 혼내드립니다 😂</div>';
+  feed.appendChild(emptyEl);
+  // POSTS는 Firebase에서 실시간으로 채워짐
+  POSTS.forEach((p,i) => {
+    if (document.getElementById('feed-empty')) document.getElementById('feed-empty').remove();
+    feed.appendChild(makePost(p)); genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+    if ((i+1) % 3 === 0) feed.appendChild(makeAd(adI++));
   });
 }
 
@@ -1568,7 +1557,12 @@ function shareManual() {
 
 /* rank */
 function buildRank() {
-  document.getElementById('rank-list').innerHTML = RANKS.map((r,i) => {
+  const list = document.getElementById('rank-list');
+  if (!RANKS.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--text3);font-size:13px;">아직 랭킹 데이터가 없어요<br>피드에 지출을 올리고 거지력을 쌓아보세요 🥫</div>';
+    return;
+  }
+  list.innerHTML = RANKS.map((r,i) => {
     const tb = RANK_TITLE_BADGE[i];
     const badge = tb
       ? '<span style="font-size:10px;background:' + tb.bg + ';color:' + tb.color + ';padding:2px 8px;border-radius:20px;font-weight:700;margin-left:4px;">' + tb.text + '</span>'
@@ -1749,8 +1743,8 @@ function tapPiggy() {
   }
 }
 
-let myMonthScore = 76;   // 월 거지력 — 랭킹용, 매달 초기화
-let myTotalScore = 320;  // 누적 거지력 — 영구 누적, 환전용
+let myMonthScore = 0;   // 월 거지력 — 랭킹용, 매달 초기화
+let myTotalScore = 0;   // 누적 거지력 — 영구 누적, 환전용
 
 // 누적 거지력 계급 테이블
 const TOTAL_GRADES = [
@@ -1911,9 +1905,12 @@ function completeOnboarding() {
   localStorage.setItem('gj_profile', JSON.stringify(myProfile));
   applyProfile();
   document.getElementById('onboarding').classList.add('hidden');
-  setTimeout(() => document.getElementById('onboarding').style.display = 'none', 300);
+  setTimeout(() => {
+    document.getElementById('onboarding').style.display = 'none';
+    // 온보딩 완료 후 피드 리스너 시작
+    if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+  }, 300);
   showToast('환영해요, ' + nick + '님! 거지방에 입장했어요 🥫');
-  // Firebase에 새 유저 저장
   if (window.GJ?.ready) {
     window.GJ.saveUser(uid, {
       nick, bio,
@@ -1976,16 +1973,15 @@ let isPremium = false;
 let spendChart = null;
 
 const CAT_DATA = [
-  { emoji:'🛍', label:'쇼핑', amt:49000, color:'#e8527a' },
-  { emoji:'🍜', label:'배달', amt:18500, color:'#f0849f' },
-  { emoji:'🎮', label:'엔터', amt:10000, color:'#7ab4f0' },
-  { emoji:'☕', label:'카페', amt:6500,  color:'#d4a844' },
-  { emoji:'🚕', label:'교통', amt:3800,  color:'#44cc88' },
+  { emoji:'🛍', label:'쇼핑', amt:0, color:'#e8527a' },
+  { emoji:'🍜', label:'배달', amt:0, color:'#f0849f' },
+  { emoji:'🎮', label:'엔터', amt:0, color:'#7ab4f0' },
+  { emoji:'☕', label:'카페', amt:0, color:'#d4a844' },
+  { emoji:'🚕', label:'교통', amt:0, color:'#44cc88' },
 ];
-const TOTAL = CAT_DATA.reduce((s,c)=>s+c.amt,0);
-
-const WEEK_DATA = { labels:['월','화','수','목','금','토','일'], data:[12000,0,28000,6500,18500,49000,3800] };
-const MONTH_DATA = { labels:['1주','2주','3주','4주'], data:[42000,88000,124000,58400] };
+const TOTAL = 0;
+const WEEK_DATA = { labels:['월','화','수','목','금','토','일'], data:[0,0,0,0,0,0,0] };
+const MONTH_DATA = { labels:['1주','2주','3주','4주'], data:[0,0,0,0] };
 
 function buildCatBars() {
   const el = document.getElementById('cat-bars');
@@ -2174,6 +2170,10 @@ if (_saved) {
     applyProfile();
     const ob = document.getElementById('onboarding');
     ob.style.display = 'none';
+    // 기존 프로필 로드 시 피드 리스너 바로 시작
+    setTimeout(() => {
+      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+    }, 600);
   } catch(e) { localStorage.removeItem('gj_profile'); }
 }
 </script>
