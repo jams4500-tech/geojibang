@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>거지방</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0a0c;
+  --surface: #1a1216;
+  --surface2: #231820;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --pink: #e8527a;
+  --pink-light: #f0849f;
+  --pink-dim: rgba(232,82,122,0.15);
+  --pink-dim2: rgba(232,82,122,0.25);
+  --text: #f0e8ec;
+  --text2: #b89aa6;
+  --text3: #7a5f68;
+  --gold: #f0c040;
+  --gold-dim: rgba(240,192,64,0.15);
+  --green: #44cc88;
+  --red: #ff5555;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
+.app { width: 100%; max-width: 420px; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 18px 12px; position: sticky; top: 0; z-index: 100; }
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.header-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; color: var(--pink); }
+.header-badge { font-size: 11px; background: var(--pink-dim); color: var(--pink-light); border: 1px solid var(--pink-dim2); padding: 3px 10px; border-radius: 20px; }
+.header-sub { font-size: 11px; color: var(--text3); }
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 64px; z-index: 99; }
+.tab { flex: 1; padding: 11px 0; text-align: center; font-size: 13px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; font-weight: 500; }
+.tab.active { color: var(--pink); border-bottom-color: var(--pink); }
+.reward-strip { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.reward-strip::-webkit-scrollbar { display: none; }
+.reward-pill { display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 6px 10px 6px 8px; cursor: pointer; flex-shrink: 0; transition: border-color .15s; font-family: inherit; }
+.reward-pill:hover { border-color: var(--pink); }
+.rp-icon { font-size: 17px; line-height: 1; }
+.rp-info { display: flex; flex-direction: column; gap: 1px; }
+.rp-label { font-size: 11px; color: var(--text2); font-weight: 500; }
+.rp-sub { font-size: 10px; color: var(--text3); }
+.rp-cta { font-size: 10px; font-weight: 700; color: #fff; background: var(--pink); padding: 3px 8px; border-radius: 20px; margin-left: 2px; }
+.strip-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+.content { flex: 1; overflow-y: auto; }
+.content::-webkit-scrollbar { width: 3px; }
+.content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.section { display: none; padding: 14px; }
+.section.active { display: block; }
+.post { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; animation: fu .3s ease; }
+@keyframes fu { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+.post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.post-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.post-time { font-size: 11px; color: var(--text3); }
+.post-desc { font-size: 14px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+.post-amount { display: inline-flex; align-items: center; gap: 6px; background: var(--pink-dim); border: 1px solid var(--pink-dim2); color: var(--pink-light); font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 20px; }
+.roast-box { margin-top: 10px; background: var(--surface2); border-left: 3px solid var(--pink); padding: 10px 12px; border-radius: 0 10px 10px 0; }
+.roast-label { font-size: 10px; color: var(--pink); font-weight: 700; letter-spacing: .5px; margin-bottom: 4px; }
+.roast-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.roast-loading { display: flex; gap: 4px; align-items: center; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--pink); animation: b 1s infinite; }
+.dot:nth-child(2){animation-delay:.15s;} .dot:nth-child(3){animation-delay:.3s;}
+@keyframes b{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+.reactions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.rxn-btn { font-size: 12px; color: var(--text3); border: 1px solid var(--border2); padding: 4px 10px; border-radius: 20px; cursor: pointer; background: transparent; transition: all .15s; font-family: inherit; }
+.rxn-btn.active { background: var(--pink-dim); border-color: var(--pink); color: var(--pink-light); }
+.rxn-btn.rxn-sachi.active { background: rgba(255,85,85,0.15); border-color: var(--red); color: var(--red); }
+.share-post-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--text3);
+  background: transparent; border: 1px solid var(--border2);
+  padding: 4px 10px; border-radius: 20px; cursor: pointer;
+  font-family: inherit; transition: all .15s; flex-shrink: 0;
+}
+.share-post-btn:hover { border-color: var(--pink-light); color: var(--pink-light); }
+.comment-toggle { font-size: 12px; color: var(--text3); margin-top: 10px; cursor: pointer; display: inline-block; }
+.comment-toggle:hover { color: var(--pink-light); }
+.comment-section { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
+.comment-section.open { display: block; }
+.comment-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.comment-av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.comment-name { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+.comment-bubble { font-size: 13px; color: var(--text2); background: var(--surface2); padding: 6px 10px; border-radius: 0 10px 10px 10px; display: inline-block; line-height: 1.5; }
+.comment-input-row { display: flex; gap: 8px; margin-top: 8px; }
+.comment-input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 7px 12px; font-size: 13px; color: var(--text); outline: none; font-family: inherit; }
+.comment-input:focus { border-color: var(--pink); }
+.comment-input::placeholder { color: var(--text3); }
+.csend-btn { background: var(--pink); color: #fff; border: none; border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.coin-banner { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s; }
+.coin-banner:hover { border-color: var(--gold); }
+.cb-left { display: flex; align-items: center; gap: 10px; }
+.cb-pig { font-size: 28px; }
+.cb-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.cb-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.cb-sub b { color: var(--gold); }
+.ad-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; background: var(--surface); position: relative; overflow: hidden; }
+.ad-card::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:linear-gradient(90deg,var(--pink),#7ab4f0,#44cc88); }
+.ad-sponsor { font-size: 10px; color: var(--text3); font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+.ad-tag { font-size: 9px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
+.ad-inner { display: flex; align-items: center; gap: 12px; }
+.ad-img { width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.ad-copy { flex: 1; }
+.ad-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.ad-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.ad-cta { font-size: 12px; font-weight: 700; color: var(--pink); background: var(--pink-dim); border: 1px solid var(--pink-dim2); padding: 5px 12px; border-radius: 20px; cursor: pointer; flex-shrink: 0; font-family: inherit; }
+.source-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 14px; gap: 4px; }
+.src-btn { flex: 1; padding: 9px; text-align: center; font-size: 13px; color: var(--text3); border-radius: 8px; cursor: pointer; border: none; background: transparent; font-family: inherit; font-weight: 500; transition: all .15s; }
+.src-btn.active { background: var(--pink-dim); color: var(--pink-light); border: 1px solid var(--pink-dim2); }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.stat-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+.stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
+.stat-sub { font-size: 12px; color: var(--red); margin-top: 3px; }
+.list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.list-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+.refresh-btn { font-size: 11px; color: var(--pink-light); background: var(--pink-dim); border: none; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+.tx-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.tx-row:last-child { border-bottom: none; }
+.tx-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .15s; }
+.tx-check.checked { background: var(--pink); border-color: var(--pink); }
+.tx-check.checked::after { content:''; display:block; width:5px; height:9px; border:2px solid #fff; border-top:none; border-left:none; transform:rotate(45deg) translate(-1px,-1px); }
+.tx-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.tx-info { flex: 1; }
+.tx-name { font-size: 13px; color: var(--text); }
+.tx-cat { font-size: 11px; color: var(--text3); }
+.tx-amount { font-size: 13px; font-weight: 700; color: var(--text); }
+.input-group { margin-bottom: 14px; }
+.input-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; display: block; }
+.text-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 14px; font-size: 14px; color: var(--text); outline: none; font-family: inherit; transition: border-color .15s; }
+.text-input:focus { border-color: var(--pink); }
+.text-input::placeholder { color: var(--text3); }
+.amount-wrap { position: relative; }
+.amount-wrap .text-input { padding-right: 30px; }
+.amount-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
+.cat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.cat-chip { padding: 9px 4px; text-align: center; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; color: var(--text3); background: var(--surface); transition: all .15s; font-family: inherit; }
+.cat-chip.active { background: var(--pink-dim); border-color: var(--pink); color: var(--pink-light); }
+.memo-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13px; color: var(--text); outline: none; font-family: inherit; resize: none; height: 70px; line-height: 1.5; transition: border-color .15s; }
+.memo-input:focus { border-color: var(--pink); }
+.memo-input::placeholder { color: var(--text3); }
+.share-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,var(--pink),#c2355a); color: #fff; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; transition: opacity .15s, transform .1s; }
+.share-btn:active { transform: scale(.98); }
+.share-btn:disabled { opacity: .35; cursor: not-allowed; }
+.rank-header { text-align: center; padding: 16px 0 20px; }
+.rank-title { font-family: 'Black Han Sans', sans-serif; font-size: 20px; color: var(--text); }
+.rank-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.formula-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+.formula-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.formula-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.formula-row:last-child { border-bottom: none; }
+.formula-key { font-size: 12px; color: var(--text2); }
+.formula-val { font-size: 12px; font-weight: 700; color: var(--pink-light); }
+.formula-note { font-size: 11px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
+.badge-valid { font-size: 10px; background: rgba(68,204,136,.15); color: var(--green); border: 1px solid rgba(68,204,136,.3); padding: 2px 8px; border-radius: 20px; }
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.rank-row:last-child { border-bottom: none; }
+.rank-num { font-size: 15px; font-weight: 700; width: 24px; text-align: center; color: var(--text3); }
+.rank-num.top { color: var(--pink); }
+.rank-av { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.rank-info { flex: 1; }
+.rank-name { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rank-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.rank-score { font-size: 13px; font-weight: 700; color: var(--pink); }
+.my-rank { background: var(--surface); border: 1px solid var(--pink-dim2); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+/* ── Piggy full page ── */
+.page { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; max-width: 420px; left: 50%; transform: translateX(-50%); background: var(--bg); opacity: 0; pointer-events: none; transition: opacity .25s; }
+.page.open { opacity: 1; pointer-events: all; }
+.page-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.page-back { font-size: 22px; cursor: pointer; color: var(--text2); background: none; border: none; font-family: inherit; padding: 0; line-height: 1; }
+.page-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.page-body { flex: 1; overflow-y: auto; }
+.page-body::-webkit-scrollbar { width: 3px; }
+.page-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.piggy-hero { display: flex; flex-direction: column; align-items: center; padding: 20px 20px 12px; }
+.piggy-count-badge { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 6px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text2); }
+.piggy-count-badge b { color: var(--gold); }
+.piggy-tap-wrap { position: relative; display: inline-block; margin-bottom: 8px; }
+.piggy-tap { cursor: pointer; transition: transform .15s; display: block; }
+.beg-bubble {
+  position: absolute; top: 8px; left: -110px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 8px 14px;
+  font-size: 15px; font-weight: 700; color: var(--text);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateY(6px) scale(0.9);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.beg-bubble::after {
+  content: '';
+  position: absolute; right: -8px; top: 50%; transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: var(--border2);
+}
+.beg-bubble::before {
+  content: '';
+  position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: var(--surface);
+  z-index: 1;
+}
+.beg-bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+.piggy-tap:active { transform: scale(.93); }
+.piggy-hint { background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 8px 16px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.piggy-limit { font-size: 11px; color: var(--text3); text-align: center; }
+.coin-slots { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; }
+.coin-slot { width: 44px; height: 44px; border-radius: 50%; border: 2px dashed var(--border2); display: flex; align-items: center; justify-content: center; font-size: 22px; transition: all .3s; }
+.coin-slot.filled { border-color: var(--gold); background: var(--gold-dim); }
+.piggy-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 12px; }
+.pac { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 12px; cursor: pointer; transition: border-color .15s; }
+.pac:hover { border-color: var(--pink-light); }
+.pac-icon { font-size: 24px; margin-bottom: 6px; }
+.pac-small { font-size: 12px; color: var(--text3); margin-bottom: 2px; }
+.pac-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.pac-note { font-size: 11px; color: var(--gold); margin-top: 2px; }
+.exc-list { margin: 0 16px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.exc-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+.exc-row:last-child { border-bottom: none; }
+.exc-row:hover { background: var(--surface2); }
+.exc-row.locked { opacity: .4; pointer-events: none; }
+.exc-ico { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.exc-info { flex: 1; }
+.exc-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.exc-cost { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.exc-arr { font-size: 14px; color: var(--text3); }
+.piggy-bottom { padding: 10px 16px 24px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; }
+
+/* ── Overlays ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.overlay.open { opacity: 1; pointer-events: all; }
+.sheet { width: 100%; max-width: 420px; background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px 36px; transform: translateY(40px); transition: transform .3s ease; }
+.overlay.open .sheet { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title { font-family: 'Black Han Sans', sans-serif; font-size: 20px; color: var(--text); margin-bottom: 4px; }
+.sheet-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.ad-watch { text-align: center; padding: 16px 0; }
+.ad-emoji { font-size: 52px; display: block; margin-bottom: 14px; }
+.ad-prog-wrap { background: var(--surface2); border-radius: 20px; height: 6px; overflow: hidden; margin-bottom: 10px; }
+.ad-prog-bar { height: 100%; background: var(--pink); border-radius: 20px; width: 0%; transition: width .1s linear; }
+.ad-countdown { font-size: 13px; color: var(--text3); }
+.lottery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.lc { border: 1px solid var(--border2); border-radius: var(--radius); padding: 16px 12px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; position: relative; }
+.lc:hover { border-color: var(--pink); background: var(--pink-dim); }
+.lc.used { opacity: .4; pointer-events: none; }
+.lc-badge { position: absolute; top: -8px; right: -4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.lb-free { background: rgba(68,204,136,.2); color: var(--green); border: 1px solid rgba(68,204,136,.4); }
+.lb-ad { background: var(--pink-dim2); color: var(--pink-light); border: 1px solid var(--pink-dim2); }
+.lc-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+.lc-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.lc-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+.scratch-area { text-align: center; padding: 16px 0 8px; }
+.scratch-icon { font-size: 60px; display: block; margin-bottom: 8px; }
+.scratch-label { font-size: 22px; font-weight: 700; color: var(--text); }
+.scratch-sub { font-size: 13px; color: var(--text3); margin-top: 6px; }
+.convert-top { text-align: center; padding: 8px 0 16px; }
+.cv-coins { font-family: 'Black Han Sans', sans-serif; font-size: 48px; color: var(--gold); }
+.cv-label { font-size: 13px; color: var(--text3); margin-top: 2px; }
+.cv-table { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; }
+.cv-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+.btn-pink { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--pink),#c2355a); color: #fff; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+.btn-pink:disabled { opacity: .35; cursor: not-allowed; }
+.btn-gold { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--gold),#c08000); color: #1a1200; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-gold:disabled { opacity: .35; cursor: not-allowed; }
+/* FAB */
+.fab {
+  position: fixed; bottom: 28px; right: calc(50% - 210px + 16px);
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--pink), #c2355a);
+  color: #fff; border: none; cursor: pointer;
+  font-size: 24px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 90; transition: transform .15s, opacity .2s;
+  font-family: inherit;
+}
+.fab:active { transform: scale(.92); }
+.fab.hidden { opacity: 0; pointer-events: none; }
+
+/* Write sheet */
+.write-source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.write-src-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 16px 12px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.write-src-card:hover, .write-src-card.active { border-color: var(--pink); background: var(--pink-dim); }
+.wsc-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+.wsc-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.wsc-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+.write-tx-list { max-height: 220px; overflow-y: auto; margin-bottom: 14px; background: var(--surface2); border-radius: var(--radius-sm); }
+.write-tx-list::-webkit-scrollbar { width: 3px; }
+.write-tx-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.wtx-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
+.wtx-row:last-child { border-bottom: none; }
+.wtx-row:hover { background: var(--surface); }
+.wtx-row.selected { background: var(--pink-dim); }
+.wtx-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.wtx-row.selected .wtx-radio { background: var(--pink); border-color: var(--pink); }
+.wtx-row.selected .wtx-radio::after { content:''; display:block; width:6px; height:6px; border-radius:50%; background:#fff; }
+.wtx-icon { font-size: 15px; }
+.wtx-info { flex: 1; }
+.wtx-name { font-size: 13px; color: var(--text); }
+.wtx-cat { font-size: 11px; color: var(--text3); }
+.wtx-amount { font-size: 13px; font-weight: 700; color: var(--text); }
+
+/* Ledger styles */
+.cat-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.cat-bar-row:last-child { margin-bottom:0; }
+.cat-bar-emoji { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
+.cat-bar-label { font-size:12px; color:var(--text2); width:52px; flex-shrink:0; }
+.cat-bar-track { flex:1; height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+.cat-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+.cat-bar-amt { font-size:11px; color:var(--text3); width:54px; text-align:right; flex-shrink:0; }
+.chart-period-btn { font-size:11px; padding:3px 10px; border-radius:20px; border:1px solid var(--border2); background:transparent; color:var(--text3); cursor:pointer; font-family:inherit; transition:all .15s; }
+.chart-period-btn.active { background:var(--pink-dim); border-color:var(--pink); color:var(--pink-light); }
+.premium-feat { font-size:11px; background:rgba(232,82,122,.12); color:var(--pink-light); border:1px solid var(--pink-dim2); padding:4px 10px; border-radius:20px; }
+.btn-subscribe { background:var(--pink); color:#fff; border:none; border-radius:20px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; transition:opacity .15s; }
+.btn-subscribe:hover { opacity:.85; }
+
+/* Mine action buttons */
+.mine-action-btn {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 16px 12px; text-align: center;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  font-family: inherit; width: 100%;
+}
+.mine-action-btn:hover { border-color: var(--pink); background: var(--pink-dim); }
+.mine-action-btn:active { transform: scale(.97); }
+
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 30px; z-index: 999; transition: transform .3s ease; white-space: nowrap; pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Onboarding */
+.onboarding { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; }
+.onboarding.hidden { opacity: 0; pointer-events: none; }
+.ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
+.ob-sub { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
+.ob-can { font-size: 72px; margin-bottom: 24px; line-height: 1; }
+.ob-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; align-self: flex-start; width: 100%; }
+.ob-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 15px; color: var(--text); outline: none; font-family: inherit; margin-bottom: 12px; transition: border-color .15s; }
+.ob-input:focus { border-color: var(--pink); }
+.ob-input::placeholder { color: var(--text3); }
+.ob-char { font-size: 11px; color: var(--text3); align-self: flex-end; margin-top: -8px; margin-bottom: 12px; }
+.ob-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,var(--pink),#c2355a); color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; transition: opacity .15s; }
+.ob-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Profile button in header */
+.profile-btn { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 5px 10px 5px 6px; cursor: pointer; transition: border-color .15s; }
+.profile-btn:hover { border-color: var(--pink-light); }
+.profile-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.profile-name { font-size: 12px; font-weight: 500; color: var(--text2); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Profile sheet */
+.profile-sheet-av { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; margin: 0 auto 12px; }
+.profile-edit-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.profile-edit-label { font-size: 12px; color: var(--text3); }
+.profile-edit-count { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Onboarding -->
+  <div class="onboarding" id="onboarding">
+    <div class="ob-can">🥫</div>
+    <div class="ob-logo">거지방</div>
+    <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요<br>입장 전 닉네임을 설정해주세요</div>
+    <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
+    <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()">
+    <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
+    <div class="ob-label">한 줄 소개 <span style="color:var(--text3);">(선택)</span></div>
+    <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()">
+    <div class="ob-char"><span id="ob-bio-len">0</span>/30</div>
+    <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled>거지방 입장하기 🚪</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div class="header">
+      <div class="header-top">
+        <div class="header-title">거지방</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="header-badge">247명 참여중</div>
+          <div class="profile-btn" id="header-profile-btn" onclick="openOverlay('ov-profile')">
+            <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
+            <span class="profile-name" id="header-profile-name">거지</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('feed')">피드</div>
+      <div class="tab" onclick="showTab('mine')">내 지출</div>
+      <div class="tab" onclick="showTab('rank')">거지 랭킹</div>
+    </div>
+    <div class="reward-strip">
+      <div class="reward-pill" onclick="openPiggy()">
+        <span class="rp-icon">🥫</span>
+        <div class="rp-info"><span class="rp-label">동전 구걸하기</span><span class="rp-sub">동전 <span id="strip-coins">0</span>개 모음</span></div>
+        <span class="rp-cta">구걸</span>
+      </div>
+      <div class="strip-dot"></div>
+      <div class="reward-pill" onclick="openOverlay('ov-lottery')">
+        <span class="rp-icon">🎰</span>
+        <div class="rp-info"><span class="rp-label">출석 복권</span><span class="rp-sub" id="strip-lotto-sub">오늘 1회 무료</span></div>
+        <span class="rp-cta">도전</span>
+      </div>
+    </div>
+    <div class="content">
+      <div id="tab-feed" class="section active"></div>
+      <div id="tab-mine" class="section">
+
+        <!-- 지출 입력 버튼 영역 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <button class="mine-action-btn" onclick="openTossSync()">
+            <span style="font-size:20px;display:block;margin-bottom:6px;">💳</span>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">토스 연동하기</div>
+            <div style="font-size:11px;color:var(--text3);">최근 결제 불러오기</div>
+          </button>
+          <button class="mine-action-btn" onclick="openManualInput()">
+            <span style="font-size:20px;display:block;margin-bottom:6px;">✏️</span>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">직접 입력하기</div>
+            <div style="font-size:11px;color:var(--text3);">가맹점·금액 직접 쓰기</div>
+          </button>
+        </div>
+
+        <!-- 최근 지출 내역 (접힘/펼침) -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;" onclick="toggleTxList()">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">최근 지출 내역</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="refresh-btn" onclick="event.stopPropagation();syncAnim(this)">새로고침</button>
+              <span style="font-size:14px;color:var(--text3);" id="tx-toggle-icon">›</span>
+            </div>
+          </div>
+          <div id="mine-tx-list" style="display:none;border-top:1px solid var(--border);">
+            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🚕</div><div class="tx-info"><div class="tx-name">카카오T</div><div class="tx-cat">교통 · 오늘</div></div><div class="tx-amount">3,800원</div></div>
+            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">☕</div><div class="tx-info"><div class="tx-name">스타벅스</div><div class="tx-cat">카페 · 오늘</div></div><div class="tx-amount">6,500원</div></div>
+            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🎮</div><div class="tx-info"><div class="tx-name">게임 포인트</div><div class="tx-cat">엔터 · 어제</div></div><div class="tx-amount">10,000원</div></div>
+            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🍜</div><div class="tx-info"><div class="tx-name">배달의민족</div><div class="tx-cat">배달 · 어제</div></div><div class="tx-amount">18,500원</div></div>
+            <div class="tx-row"><div class="tx-check" onclick="toggleCheck(this)"></div><div class="tx-icon">🛍</div><div class="tx-info"><div class="tx-name">무신사</div><div class="tx-cat">쇼핑 · 3일 전</div></div><div class="tx-amount">49,000원</div></div>
+            <div style="padding:12px 14px;">
+              <button class="share-btn" id="toss-share-btn" onclick="shareToss()" disabled style="margin-top:0;">선택해서 피드에 올리기</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 내 소비 모아보기 (무료) -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-family:'Black Han Sans',sans-serif;font-size:18px;color:var(--text);">내 소비 모아보기</div>
+          <div style="font-size:11px;color:var(--text3);">3월 기준</div>
+        </div>
+
+        <!-- 이번달 요약 카드 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;">
+            <div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">이번달 총 지출</div>
+              <div style="font-size:28px;font-weight:700;color:var(--text);">312,400<span style="font-size:14px;font-weight:400;color:var(--text3);">원</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:var(--red);">▲ 지난달 대비</div>
+              <div style="font-size:16px;font-weight:700;color:var(--red);">+47,000원</div>
+            </div>
+          </div>
+          <!-- 카테고리별 바 -->
+          <div id="cat-bars"></div>
+        </div>
+
+        <!-- 주간 트렌드 차트 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">주간 지출 트렌드</div>
+            <div style="display:flex;gap:4px;">
+              <button class="chart-period-btn active" id="cp-week" onclick="setChartPeriod('week',this)">주간</button>
+              <button class="chart-period-btn" id="cp-month" onclick="setChartPeriod('month',this)">월간</button>
+            </div>
+          </div>
+          <canvas id="spend-chart" height="140"></canvas>
+        </div>
+
+        <!-- 구독 업셀 카드 -->
+        <div style="background:linear-gradient(135deg,#2a1020,#1a1230);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card">
+          <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:.08;pointer-events:none;">🤖</div>
+          <div style="font-size:10px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">PREMIUM</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">가계부 맞춤 관리받기</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:14px;">AI가 내 소비 패턴을 분석해<br>맞춤 절약 전략을 짜드려요</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="premium-features-list">
+            <div class="premium-feat">💰 월수입 입력</div>
+            <div class="premium-feat">🎯 저축 목표 설정</div>
+            <div class="premium-feat">🤖 AI 주간 리포트</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:20px;font-weight:700;color:var(--pink);">월 990원</div>
+              <div style="font-size:11px;color:var(--text3);">언제든 해지 가능</div>
+            </div>
+            <button class="btn-subscribe" onclick="openSubscribe()">구독 시작하기</button>
+          </div>
+        </div>
+
+        <!-- 구독 중일 때 보이는 프리미엄 패널 (기본 숨김) -->
+        <div id="premium-panel" style="display:none;">
+          <!-- 월수입 & 저축목표 -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">💰 월 재정 설정</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+              <div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">월 수입</div>
+                <div style="position:relative;">
+                  <input class="text-input" id="income-input" type="number" placeholder="0" style="padding-right:28px;font-size:14px;" oninput="updateFinance()">
+                  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">원</span>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">저축 목표</div>
+                <div style="position:relative;">
+                  <input class="text-input" id="saving-input" type="number" placeholder="0" style="padding-right:28px;font-size:14px;" oninput="updateFinance()">
+                  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">원</span>
+                </div>
+              </div>
+            </div>
+            <!-- 재정 요약 바 -->
+            <div id="finance-summary" style="display:none;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px;">
+                <span>가용 예산</span><span id="avail-budget" style="color:var(--green);font-weight:700;">0원</span>
+              </div>
+              <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+                <div id="budget-bar" style="height:100%;background:var(--pink);border-radius:3px;transition:width .4s;width:0%;"></div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);text-align:right;" id="budget-pct">지출 0%</div>
+            </div>
+          </div>
+
+          <!-- 주간 리포트 -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:13px;font-weight:500;color:var(--text);">📊 주간 리포트</div>
+              <div style="font-size:10px;color:var(--text3);">매주 월요일 업데이트</div>
+            </div>
+            <div id="ai-report-area">
+              <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
+                <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">이번 주 리포트</div>
+                <div id="ai-report-text" style="font-size:13px;color:var(--text2);line-height:1.7;">
+                  <div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                </div>
+              </div>
+              <button class="refresh-btn" style="margin-top:10px;width:100%;padding:10px;" onclick="generateReport()">새 리포트 받기</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div id="tab-rank" class="section">
+
+        <!-- 거지왕 발표 배너 -->
+        <div id="king-banner" style="display:none;background:linear-gradient(135deg,#2a1020,#1a0a18);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:14px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:6px;">👑</div>
+          <div style="font-size:11px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">이달의 거지왕 발표</div>
+          <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--text);margin-bottom:2px;" id="king-name">1일0식</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="king-score">거지력 214점 · 피드 31개</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
+            <div style="background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--gold);font-weight:700;">🥇 1위 토스포인트 100,000P</div>
+            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);">🥈 2위 30,000P</div>
+            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);">🥉 3~5위 10,000P</div>
+          </div>
+          <div id="king-claim-area" style="display:none;">
+            <div style="font-size:13px;color:var(--green);font-weight:700;margin-bottom:8px;">🎉 축하해요! 리워드가 도착했어요</div>
+            <button style="background:linear-gradient(135deg,var(--gold),#c08000);color:#1a1200;border:none;border-radius:var(--radius);padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;" onclick="claimReward()">토스 포인트 수령하기</button>
+          </div>
+        </div>
+
+        <!-- D-day 카운트다운 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">다음 거지왕 발표까지</div>
+            <div style="font-size:18px;font-weight:700;color:var(--pink);" id="rank-countdown">계산 중...</div>
+          </div>
+          <div style="font-size:28px;">⏳</div>
+        </div>
+
+        <!-- 리워드 안내 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">🏆 이달의 리워드</div>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🥇</span>
+                <span style="font-size:13px;color:var(--text);">1위 <span style="font-family:'Black Han Sans',sans-serif;color:var(--gold);">거지왕</span></span>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:var(--gold);">100,000P</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🥈</span>
+                <span style="font-size:13px;color:var(--text);">2위</span>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:var(--text2);">30,000P</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🥉</span>
+                <span style="font-size:13px;color:var(--text);">3위 · 4위 · 5위</span>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:var(--text2);">각 10,000P</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 토스 인증 연동 필수<br>리워드는 발표 후 24시간 내 자동 지급돼요</div>
+        </div>
+
+        <div class="rank-header"><div class="rank-title">3월 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <div class="formula-card">
+          <div class="formula-title">거지력 점수 산정 방식</div>
+          <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
+          <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
+          <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
+          <div class="formula-row"><div class="formula-key">유효 조건</div><div class="formula-val">토스 인증 + 7일 이상</div></div>
+          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 수동 입력은 피드에만 반영</div>
+        </div>
+        <div id="rank-list"></div>
+        <div class="my-rank">
+          <div style="flex:1;">
+            <div style="font-size:12px;color:var(--pink-light);margin-bottom:4px;">내 거지력 순위</div>
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+              <div style="font-family:'Black Han Sans',sans-serif;font-size:26px;color:var(--pink);">23위</div>
+              <div style="font-size:12px;color:var(--text3);">월 거지력 <span id="my-score-display">76</span>점</div>
+            </div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <div style="font-size:11px;color:var(--text3);">누적 거지력 <b id="my-total-score-display" style="color:var(--gold);">320</b>점</div>
+                <div style="font-size:11px;font-weight:700;" id="my-grade-display">프로 거지 🎯</div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);" id="my-grade-next">다음 계급까지 280점</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 누적 거지력 환전 카드 -->
+        <div style="background:var(--surface);border:1px solid var(--gold-dim);border-radius:var(--radius);padding:14px 16px;margin-top:10px;" id="total-score-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">💫 누적 거지력 환전</div>
+            <div style="font-size:10px;color:var(--text3);">월 랭킹과 별개</div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px;">
+            누적 거지력 1000점 이상 보유 시<br>
+            보유량의 <b style="color:var(--gold);">10%를 토스포인트</b>로 환전할 수 있어요<br>
+            <span style="color:var(--text3);">환전해도 이번달 월 거지력 랭킹은 그대로예요</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text2);">현재 누적 거지력</span>
+            <span style="font-size:16px;font-weight:700;color:var(--gold);" id="total-conv-display">320점</span>
+          </div>
+          <button class="btn-gold" id="total-score-conv-btn" onclick="convertTotalScore()" disabled style="font-size:13px;padding:12px;">1000점 이상 모이면 환전 가능</button>
+        </div>
+
+        <!-- 내 리워드 수령 (수상 시 표시) -->
+        <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#1a2a14,#0e1a0a);border:1px solid rgba(68,204,136,.3);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
+          <div style="font-size:24px;margin-bottom:6px;" id="my-reward-emoji">🥇</div>
+          <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:2px;" id="my-reward-title">이달의 거지왕 선정!</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="my-reward-desc">토스포인트 100,000P 리워드가 준비됐어요</div>
+          <button style="background:linear-gradient(135deg,var(--gold),#c08000);color:#1a1200;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;" id="my-reward-btn" onclick="claimMyReward()">리워드 수령하기</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Begging can page -->
+  <div class="page" id="piggy-page">
+    <div class="page-header">
+      <button class="page-back" onclick="closePiggy()">←</button>
+      <div class="page-title">🥫 동전 구걸하기</div>
+    </div>
+    <div class="page-body">
+      <div class="piggy-hero">
+        <div class="piggy-count-badge">깡통에 동전 <b id="pig-count">0</b>개 모았어요</div>
+        <div class="piggy-tap-wrap">
+          <div class="beg-bubble" id="beg-bubble">한 푼 줍쇼!</div>
+          <div class="piggy-tap" id="piggy-svg-wrap" onclick="tapPiggy()">
+          <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- can body -->
+            <rect x="60" y="70" width="80" height="100" rx="8" fill="#8a7a6a"/>
+            <!-- can top ellipse -->
+            <ellipse cx="100" cy="70" rx="40" ry="12" fill="#a89880"/>
+            <!-- can bottom ellipse -->
+            <ellipse cx="100" cy="170" rx="40" ry="12" fill="#6a5a4a"/>
+            <!-- label band -->
+            <rect x="60" y="95" width="80" height="45" fill="#c8a878"/>
+            <!-- label text lines -->
+            <rect x="70" y="103" width="60" height="5" rx="2.5" fill="#8a6840"/>
+            <rect x="74" y="113" width="52" height="4" rx="2" fill="#8a6840"/>
+            <rect x="70" y="121" width="60" height="4" rx="2" fill="#8a6840"/>
+            <!-- can rim top -->
+            <rect x="56" y="64" width="88" height="10" rx="5" fill="#b0a090"/>
+            <!-- coin slot -->
+            <rect x="84" y="64" width="32" height="5" rx="2.5" fill="#5a4a3a"/>
+            <!-- shine -->
+            <rect x="124" y="76" width="8" height="50" rx="4" fill="rgba(255,255,255,0.12)"/>
+            <!-- begging hand left -->
+            <ellipse cx="52" cy="155" rx="18" ry="10" fill="#c8a060" transform="rotate(-20 52 155)"/>
+            <rect x="36" y="148" width="10" height="22" rx="5" fill="#c8a060" transform="rotate(-10 36 148)"/>
+            <rect x="46" y="145" width="9" height="24" rx="4.5" fill="#d4aa70" transform="rotate(-5 46 145)"/>
+            <rect x="55" y="145" width="9" height="23" rx="4.5" fill="#c8a060"/>
+            <rect x="64" y="147" width="8" height="20" rx="4" fill="#c09050" transform="rotate(8 64 147)"/>
+            <!-- begging hand right -->
+            <ellipse cx="148" cy="155" rx="18" ry="10" fill="#c8a060" transform="rotate(20 148 155)"/>
+            <rect x="154" y="148" width="10" height="22" rx="5" fill="#c8a060" transform="rotate(10 154 148)"/>
+            <rect x="145" y="145" width="9" height="24" rx="4.5" fill="#d4aa70" transform="rotate(5 145 145)"/>
+            <rect x="136" y="145" width="9" height="23" rx="4.5" fill="#c8a060"/>
+            <rect x="128" y="147" width="8" height="20" rx="4" fill="#c09050" transform="rotate(-8 128 147)"/>
+            <!-- coins floating in (animated via JS class) -->
+            <circle cx="100" cy="40" r="10" fill="#f0c040" id="coin-anim" opacity="0"/>
+            <text x="100" y="45" text-anchor="middle" font-size="10" font-weight="700" fill="#8a6000">₩</text>
+          </svg>
+        </div>
+        </div><!-- /piggy-tap-wrap -->
+        <div class="piggy-hint"><span id="pig-hint-icon">🙏</span><span id="pig-hint-text">깡통을 3번 눌러 동전을 구걸하세요</span></div>
+        <div class="piggy-limit" id="pig-limit"></div>
+      </div>
+      <div class="coin-slots" id="coin-slots"></div>
+      <div class="piggy-actions">
+        <div class="pac" id="pac-lottery" onclick="openOverlay('ov-lottery')">
+          <div class="pac-icon">🎟</div>
+          <div class="pac-small">매일 포인트 받는</div>
+          <div class="pac-title">출석 복권</div>
+          <div class="pac-note" id="pac-lotto-note">오늘 1회 무료</div>
+        </div>
+        <div class="pac" onclick="showToast('친구에게 링크가 복사됐어요!')">
+          <div class="pac-icon">⚡</div>
+          <div class="pac-small">광고 없애려면</div>
+          <div class="pac-title">공유하기</div>
+          <div class="pac-note">친구에게 공유</div>
+        </div>
+      </div>
+      <div class="exc-list">
+        <div class="exc-row" id="exc-fortune" onclick="doExchange('fortune',1)">
+          <div class="exc-ico" style="background:#2e2a1a;">🗣️</div>
+          <div class="exc-info"><div class="exc-name">구걸 멘트 뽑기</div><div class="exc-cost">동전 1개</div></div>
+          <div class="exc-arr">›</div>
+        </div>
+        <div class="exc-row" id="exc-lotto" onclick="doExchange('lotto',2)">
+          <div class="exc-ico" style="background:#3a1520;">🎟</div>
+          <div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div>
+          <div class="exc-arr">›</div>
+        </div>
+        <div class="exc-row" id="exc-letter" onclick="doExchange('letter',5)">
+          <div class="exc-ico" style="background:#1a2030;">📜</div>
+          <div class="exc-info"><div class="exc-name">구걸 탄원서 작성하기</div><div class="exc-cost">동전 5개</div></div>
+          <div class="exc-arr">›</div>
+        </div>
+        <div class="exc-row" id="exc-score" onclick="doExchange('score',5)">
+          <div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+1</div>
+          <div class="exc-info"><div class="exc-name">거지력 +1점 올리기</div><div class="exc-cost">동전 5개 · 랭킹 점수에 반영</div></div>
+          <div class="exc-arr">›</div>
+        </div>
+        <div class="exc-row" id="exc-point" onclick="openConvert()">
+          <div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div>
+          <div class="exc-info"><div class="exc-name">전부 토스 포인트로 바꾸기</div><div class="exc-cost">동전 5개 = 토스포인트 1P</div></div>
+          <div class="exc-arr">›</div>
+        </div>
+      </div>
+      <!-- ad placeholder in can page -->
+      <div id="piggy-ads" style="padding:0 16px 8px;"></div>
+      <div style="height:16px;"></div>
+    </div>
+    <!-- bottom coin banner -->
+    <div class="piggy-bottom" id="pig-bottom" style="display:none;">
+      <div class="coin-banner" onclick="openConvert()">
+        <div class="cb-left">
+          <div class="cb-pig">🥫</div>
+          <div>
+            <div class="cb-title">깡통에 동전 <b id="pig-banner-n" style="color:var(--gold);">0</b>개 구걸했어요</div>
+            <div class="cb-sub">토스 포인트로 바꿀 수 있어요 <b>(5개 = 1P)</b></div>
+          </div>
+        </div>
+        <div style="font-size:14px;color:var(--text3);">›</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .app -->
+
+<!-- overlays -->
+<div class="overlay" id="ov-ad">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">광고 시청 중...</div>
+    <div class="sheet-sub">잠시만 기다려주세요</div>
+    <div class="ad-watch">
+      <span class="ad-emoji" id="ad-emoji">📺</span>
+      <div class="ad-prog-wrap"><div class="ad-prog-bar" id="ad-bar"></div></div>
+      <div class="ad-countdown" id="ad-countdown">5초 후 완료...</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-lottery" onclick="closeOverlayOut(event,'ov-lottery')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">출석 복권 🎰</div>
+    <div class="sheet-sub" id="lot-sub">오늘의 행운을 시험해보세요</div>
+    <div id="lot-pick">
+      <div class="lottery-grid">
+        <div class="lc" id="lc-normal" onclick="playLottery('normal')">
+          <span class="lc-badge lb-free">무료</span>
+          <span class="lc-icon">🎟</span>
+          <div class="lc-title">일반 복권</div>
+          <div class="lc-desc">꽝 확률 있음<br>거지력 1~5점</div>
+        </div>
+        <div class="lc" onclick="playLottery('golden')">
+          <span class="lc-badge lb-ad">광고 시청</span>
+          <span class="lc-icon">🌟</span>
+          <div class="lc-title">꽝 없는 복권</div>
+          <div class="lc-desc">꽝 없음<br>거지력 1~10점</div>
+        </div>
+      </div>
+    </div>
+    <div id="lot-result" style="display:none;">
+      <div class="scratch-area">
+        <span class="scratch-icon" id="s-icon">🎉</span>
+        <div class="scratch-label" id="s-label">당첨!</div>
+        <div class="scratch-sub" id="s-sub">토스 포인트 10P 획득!</div>
+      </div>
+      <button class="btn-pink" onclick="closeLottery()" style="margin-top:16px;">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-convert" onclick="closeOverlayOut(event,'ov-convert')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">포인트 교환</div>
+    <div class="sheet-sub">동전 5개 묶음 = 토스포인트 1P</div>
+    <div class="convert-top">
+      <div style="font-size:44px;margin-bottom:8px;">🪙</div>
+      <div class="cv-coins" id="cv-n">0개</div>
+      <div class="cv-label">보유 동전 · 5개 = 1P</div>
+    </div>
+    <div class="cv-table">
+      <div class="cv-row"><span style="color:var(--text2);">교환 가능 묶음</span><span id="cv-sets" style="font-weight:700;">0묶음</span></div>
+      <div class="cv-row"><span style="color:var(--text2);">전환 포인트</span><span id="cv-pts" style="font-weight:700;color:var(--gold);">0P</span></div>
+      <div class="cv-row"><span style="color:var(--text2);">교환 후 남는 동전</span><span id="cv-rem" style="font-weight:700;">0개</span></div>
+    </div>
+    <button class="btn-gold" id="cv-btn" onclick="doConvert()">토스 포인트로 받기</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-fortune" onclick="closeOverlayOut(event,'ov-fortune')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 20px;">
+      <div style="font-size:56px;margin-bottom:12px;">🗣️</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;">오늘의 구걸 멘트</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;font-style:italic;" id="fortune-msg">...</div>
+    </div>
+    <button class="btn-pink" onclick="closeOverlay('ov-fortune')">닫기</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-lotto" onclick="closeOverlayOut(event,'ov-lotto')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 16px;">
+      <div style="font-size:40px;margin-bottom:12px;">🔮</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">오늘의 구걸 운세</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;" id="lotto-balls"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:12px;">오늘의 구걸 운수입니다. 실제 수익 보장 없음.</div>
+    </div>
+    <button class="btn-pink" onclick="closeOverlay('ov-lotto')">닫기</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-letter" onclick="closeOverlayOut(event,'ov-letter')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">구걸 탄원서 📜</div>
+    <div class="sheet-sub">깡통에 구걸 사연을 담아두세요</div>
+    <textarea class="memo-input" id="letter-input" placeholder="오늘의 구걸 사연을 적어주세요..." style="height:90px;margin-bottom:16px;"></textarea>
+    <button class="btn-pink" onclick="sendLetter()">깡통에 넣기</button>
+  </div>
+</div>
+
+<!-- FAB 글쓰기 버튼 -->
+<button class="fab" id="fab-write" onclick="openWrite()">✏️</button>
+
+<!-- 글쓰기 바텀시트 -->
+<div class="overlay" id="ov-write" onclick="closeOverlayOut(event,'ov-write')">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">지출 올리기 🥫</div>
+    <div class="sheet-sub">혼날 각오가 됐다면 올려보세요</div>
+
+    <!-- 소스 선택 -->
+    <div class="write-source-grid">
+      <div class="write-src-card active" id="wsrc-toss" onclick="selectWriteSrc('toss')">
+        <span class="wsc-icon">💳</span>
+        <div class="wsc-title">토스 연동</div>
+        <div class="wsc-desc">최근 결제 내역에서<br>바로 선택</div>
+      </div>
+      <div class="write-src-card" id="wsrc-manual" onclick="selectWriteSrc('manual')">
+        <span class="wsc-icon">✏️</span>
+        <div class="wsc-title">직접 입력</div>
+        <div class="wsc-desc">가맹점·금액을<br>직접 쓰기</div>
+      </div>
+    </div>
+
+    <!-- 토스 연동 뷰 -->
+    <div id="write-toss-view">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">최근 결제 내역 · 하나 선택하세요</div>
+      <div class="write-tx-list" id="write-tx-list">
+        <div class="wtx-row" onclick="selectTx(this,'카카오T','3800','교통 · 오늘')">
+          <div class="wtx-radio"></div><div class="wtx-icon">🚕</div>
+          <div class="wtx-info"><div class="wtx-name">카카오T</div><div class="wtx-cat">교통 · 오늘</div></div>
+          <div class="wtx-amount">3,800원</div>
+        </div>
+        <div class="wtx-row" onclick="selectTx(this,'스타벅스','6500','카페 · 오늘')">
+          <div class="wtx-radio"></div><div class="wtx-icon">☕</div>
+          <div class="wtx-info"><div class="wtx-name">스타벅스</div><div class="wtx-cat">카페 · 오늘</div></div>
+          <div class="wtx-amount">6,500원</div>
+        </div>
+        <div class="wtx-row" onclick="selectTx(this,'게임 포인트','10000','엔터 · 어제')">
+          <div class="wtx-radio"></div><div class="wtx-icon">🎮</div>
+          <div class="wtx-info"><div class="wtx-name">게임 포인트</div><div class="wtx-cat">엔터 · 어제</div></div>
+          <div class="wtx-amount">10,000원</div>
+        </div>
+        <div class="wtx-row" onclick="selectTx(this,'배달의민족','18500','배달 · 어제')">
+          <div class="wtx-radio"></div><div class="wtx-icon">🍜</div>
+          <div class="wtx-info"><div class="wtx-name">배달의민족</div><div class="wtx-cat">배달 · 어제</div></div>
+          <div class="wtx-amount">18,500원</div>
+        </div>
+        <div class="wtx-row" onclick="selectTx(this,'무신사','49000','쇼핑 · 3일 전')">
+          <div class="wtx-radio"></div><div class="wtx-icon">🛍</div>
+          <div class="wtx-info"><div class="wtx-name">무신사</div><div class="wtx-cat">쇼핑 · 3일 전</div></div>
+          <div class="wtx-amount">49,000원</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">한 줄 변명 <span style="color:var(--text3)">(선택 — 더 신나게 혼내드림)</span></label>
+        <textarea class="memo-input" id="write-toss-memo" placeholder="이유가 있다면 적어보세요."></textarea>
+      </div>
+      <button class="btn-pink" id="write-toss-btn" onclick="submitWriteToss()" disabled>올려서 혼나기</button>
+    </div>
+
+    <!-- 직접 입력 뷰 -->
+    <div id="write-manual-view" style="display:none;">
+      <div class="input-group">
+        <label class="input-label">어디서 썼어요?</label>
+        <input class="text-input" id="write-where" placeholder="예) 스타벅스, 배민, 쿠팡..." oninput="checkWriteManual()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">얼마 썼어요?</label>
+        <div class="amount-wrap">
+          <input class="text-input" id="write-amount" type="number" placeholder="0" oninput="checkWriteManual()">
+          <span class="amount-suffix">원</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">카테고리</label>
+        <div class="cat-grid">
+          <div class="cat-chip" onclick="selectCat(this)">🍔 식비</div>
+          <div class="cat-chip" onclick="selectCat(this)">☕ 카페</div>
+          <div class="cat-chip" onclick="selectCat(this)">🚕 교통</div>
+          <div class="cat-chip" onclick="selectCat(this)">🛍 쇼핑</div>
+          <div class="cat-chip" onclick="selectCat(this)">🎮 엔터</div>
+          <div class="cat-chip" onclick="selectCat(this)">💊 건강</div>
+          <div class="cat-chip" onclick="selectCat(this)">📚 교육</div>
+          <div class="cat-chip" onclick="selectCat(this)">기타</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">한 줄 변명 <span style="color:var(--text3)">(선택)</span></label>
+        <textarea class="memo-input" id="write-memo" placeholder="이유가 있다면 적어보세요."></textarea>
+      </div>
+      <button class="btn-pink" id="write-manual-btn" onclick="submitWriteManual()" disabled>올려서 혼나기</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-profile" onclick="closeOverlayOut(event,'ov-profile')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">내 프로필</div>
+    <div class="sheet-sub">닉네임과 소개를 수정할 수 있어요</div>
+    <div class="profile-sheet-av" id="profile-sheet-av" style="background:#3a1520;color:#e8527a;">나</div>
+    <!-- color picker -->
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;" id="color-picker">
+      <div class="color-dot" data-bg="#3a1520" data-c="#e8527a" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#e8527a;cursor:pointer;border:2px solid #e8527a;"></div>
+      <div class="color-dot" data-bg="#1a2e22" data-c="#44cc88" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#44cc88;cursor:pointer;border:2px solid transparent;"></div>
+      <div class="color-dot" data-bg="#1a2030" data-c="#7ab4f0" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#7ab4f0;cursor:pointer;border:2px solid transparent;"></div>
+      <div class="color-dot" data-bg="#2e2a1a" data-c="#d4a844" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#d4a844;cursor:pointer;border:2px solid transparent;"></div>
+      <div class="color-dot" data-bg="#2a1a2e" data-c="#b07ae8" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#b07ae8;cursor:pointer;border:2px solid transparent;"></div>
+      <div class="color-dot" data-bg="#1e2a14" data-c="#7acc44" onclick="pickColor(this)" style="width:24px;height:24px;border-radius:50%;background:#7acc44;cursor:pointer;border:2px solid transparent;"></div>
+    </div>
+    <div class="profile-edit-row"><label class="profile-edit-label">닉네임 <span style="color:var(--pink);">*</span></label><span class="profile-edit-count"><span id="edit-nick-len">0</span>/12</span></div>
+    <input class="ob-input" id="edit-nick" placeholder="닉네임을 입력하세요" maxlength="12" oninput="editNickCount()" style="margin-bottom:12px;">
+    <div class="profile-edit-row"><label class="profile-edit-label">한 줄 소개</label><span class="profile-edit-count"><span id="edit-bio-len">0</span>/30</span></div>
+    <input class="ob-input" id="edit-bio" placeholder="한 줄 소개를 입력하세요" maxlength="30" oninput="editBioCount()" style="margin-bottom:20px;">
+    <button class="btn-pink" id="edit-save-btn" onclick="saveProfile()">저장하기</button>
+  </div>
+</div>
+
+<!-- 구독 오버레이 -->
+<div class="overlay" id="ov-subscribe" onclick="closeOverlayOut(event,'ov-subscribe')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 16px;">
+      <div style="font-size:48px;margin-bottom:10px;">🤖</div>
+      <div class="sheet-title" style="text-align:center;">가계부 맞춤 관리받기</div>
+      <div class="sheet-sub" style="text-align:center;">AI가 내 소비를 분석해 맞춤 절약 전략을 짜드려요</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:500;">구독 시 추가되는 기능</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+          <span style="font-size:16px;">💰</span> 월 수입 입력 및 예산 자동 계산
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+          <span style="font-size:16px;">🎯</span> 저축 목표 설정 및 진행률 트래킹
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+          <span style="font-size:16px;">🤖</span> AI 주간 소비 리포트 (매주 월요일)
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+          <span style="font-size:16px;">📊</span> 카테고리별 예산 초과 알림
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--pink-dim);border:1px solid var(--pink-dim2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--pink);">월 990원</div>
+        <div style="font-size:11px;color:var(--text3);">부가세 포함 · 언제든 해지 가능</div>
+      </div>
+      <div style="font-size:11px;color:var(--pink-light);text-align:right;">커피 한 잔보다<br>싸요 ☕</div>
+    </div>
+    <button class="btn-pink" onclick="confirmSubscribe()">990원으로 시작하기</button>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;">첫 달 무료 · 이후 매월 자동 결제</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════
+//  거지방 Firebase 연동 (geojibang-5254c 전용)
+//  컬렉션 prefix: geojibang_ — hot8-miniapp과 완전 분리
+// ═══════════════════════════════════════════════════
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
+  updateDoc, onSnapshot, query, orderBy, limit, serverTimestamp, increment
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const GJ_CONFIG = {
+  apiKey: "AIzaSyAXv86i3jRToWBr2T9nv9o-BCpYWfHew9k",
+  authDomain: "geojibang-5254c.firebaseapp.com",
+  projectId: "geojibang-5254c",
+  storageBucket: "geojibang-5254c.firebasestorage.app",
+  messagingSenderId: "856762520566",
+  appId: "1:856762520566:web:4c8289a4ad8f559a426dd7"
+};
+
+const gjApp = initializeApp(GJ_CONFIG, 'geojibang'); // 앱 이름 분리로 충돌 방지
+const db = getFirestore(gjApp);
+
+// 컬렉션 레퍼런스 (모두 geojibang_ prefix)
+const COLS = {
+  users:    () => collection(db, 'geojibang_users'),
+  posts:    () => collection(db, 'geojibang_posts'),
+  comments: (postId) => collection(db, 'geojibang_posts', postId, 'geojibang_comments'),
+  ranking:  () => collection(db, 'geojibang_ranking'),
+};
+
+// ── 유저 저장/불러오기 ──────────────────────────────
+window.GJ = window.GJ || {};
+
+window.GJ.saveUser = async (uid, data) => {
+  await setDoc(doc(db, 'geojibang_users', uid), {
+    ...data,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+};
+
+window.GJ.loadUser = async (uid) => {
+  const snap = await getDoc(doc(db, 'geojibang_users', uid));
+  return snap.exists() ? snap.data() : null;
+};
+
+window.GJ.updateScore = async (uid, monthDelta, totalDelta) => {
+  await updateDoc(doc(db, 'geojibang_users', uid), {
+    monthScore: increment(monthDelta),
+    totalScore: increment(totalDelta),
+    updatedAt: serverTimestamp()
+  });
+};
+
+// ── 피드 게시물 ──────────────────────────────────────
+window.GJ.addPost = async (postData) => {
+  const ref = await addDoc(COLS.posts(), {
+    ...postData,
+    createdAt: serverTimestamp(),
+    rxn: [0, 0, 0]
+  });
+  return ref.id;
+};
+
+window.GJ.loadPosts = async (limitN = 20) => {
+  const q = query(COLS.posts(), orderBy('createdAt', 'desc'), limit(limitN));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+window.GJ.listenPosts = (callback) => {
+  const q = query(COLS.posts(), orderBy('createdAt', 'desc'), limit(20));
+  return onSnapshot(q, snap => {
+    const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(posts);
+  });
+};
+
+window.GJ.updateRxn = async (postId, rxnArr) => {
+  await updateDoc(doc(db, 'geojibang_posts', postId), { rxn: rxnArr });
+};
+
+// ── 댓글 ────────────────────────────────────────────
+window.GJ.addComment = async (postId, commentData) => {
+  await addDoc(COLS.comments(postId), {
+    ...commentData,
+    createdAt: serverTimestamp()
+  });
+};
+
+window.GJ.loadComments = async (postId) => {
+  const q = query(COLS.comments(postId), orderBy('createdAt', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+window.GJ.listenComments = (postId, callback) => {
+  const q = query(COLS.comments(postId), orderBy('createdAt', 'asc'));
+  return onSnapshot(q, snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
+// ── 구독 상태 ────────────────────────────────────────
+window.GJ.setSubscription = async (uid, isPremium) => {
+  await updateDoc(doc(db, 'geojibang_users', uid), {
+    isPremium,
+    premiumSince: isPremium ? serverTimestamp() : null
+  });
+};
+
+// ── 랭킹 ────────────────────────────────────────────
+window.GJ.saveRanking = async (yearMonth, rankers) => {
+  // yearMonth 예: "2026-03"
+  await setDoc(doc(db, 'geojibang_ranking', yearMonth), {
+    rankers,
+    announcedAt: serverTimestamp()
+  });
+};
+
+window.GJ.loadRanking = async (yearMonth) => {
+  const snap = await getDoc(doc(db, 'geojibang_ranking', yearMonth));
+  return snap.exists() ? snap.data() : null;
+};
+
+window.GJ.getTopRankers = async (yearMonth, topN = 5) => {
+  const q = query(COLS.users(), orderBy('monthScore', 'desc'), limit(topN));
+  const snap = await getDocs(q);
+  return snap.docs.map((d, i) => ({ rank: i + 1, uid: d.id, ...d.data() }));
+};
+
+// ── 앱 초기화 연동 ───────────────────────────────────
+window.GJ.ready = true;
+console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
+
+// 피드 실시간 리슨 시작
+window.GJ.listenPosts(async (posts) => {
+  if (!posts.length) return;
+  const feed = document.getElementById('tab-feed');
+  if (!feed) return;
+
+  posts.forEach(p => {
+    const existing = document.getElementById('post-' + p.id);
+    if (existing) return; // 이미 있으면 스킵
+
+    const timeStr = p.createdAt?.toDate
+      ? timeAgo(p.createdAt.toDate())
+      : '방금 전';
+
+    const postObj = {
+      id: p.id,
+      name: p.authorName || '익명',
+      score: p.authorMonthScore || 0,
+      abg: p.authorBg || '#3a1520',
+      ac: p.authorColor || '#e8527a',
+      init: (p.authorName || '익')[0],
+      time: timeStr,
+      desc: p.desc || '',
+      item: p.item || '',
+      amount: p.amount || '0원',
+      comments: [],
+      rxn: p.rxn || [0, 0, 0]
+    };
+
+    const el = window.makePost(postObj);
+    // 피드 배너 다음에 삽입
+    const banner = document.getElementById('feed-cb');
+    if (banner) feed.insertBefore(el, banner.nextSibling);
+    else feed.appendChild(el);
+
+    window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+  });
+});
+
+// 프로필 로드 (Firebase 우선, localStorage 폴백)
+window.GJ.initProfile = async () => {
+  const saved = localStorage.getItem('gj_profile');
+  if (!saved) return; // 온보딩 표시
+
+  const profile = JSON.parse(saved);
+  const uid = profile.uid || ('gj_' + Date.now());
+  profile.uid = uid;
+  localStorage.setItem('gj_profile', JSON.stringify(profile));
+
+  // Firestore에서 최신 점수 불러오기
+  try {
+    const remote = await window.GJ.loadUser(uid);
+    if (remote) {
+      window.myMonthScore = remote.monthScore || window.myMonthScore;
+      window.myTotalScore = remote.totalScore || window.myTotalScore;
+      window.myProfile = { ...window.myProfile, ...remote };
+      if (remote.isPremium) {
+        window.isPremium = true;
+        const pc = document.getElementById('premium-card');
+        const pp = document.getElementById('premium-panel');
+        if (pc) pc.style.display = 'none';
+        if (pp) pp.style.display = 'block';
+      }
+    } else {
+      // 첫 로그인 → Firestore에 저장
+      await window.GJ.saveUser(uid, {
+        nick: profile.nick,
+        bio: profile.bio || '',
+        avatarBg: profile.bg,
+        avatarColor: profile.c,
+        monthScore: window.myMonthScore,
+        totalScore: window.myTotalScore,
+        isPremium: false
+      });
+    }
+    window.updateMyRankUI();
+  } catch (e) {
+    console.warn('[거지방] Firestore 로드 실패, 로컬 데이터 사용:', e);
+  }
+};
+
+// ── addToFeed Firebase 연동 버전 ─────────────────────
+window.GJ.publishPost = async (where, amount, memo) => {
+  const uid = window.myProfile.uid || ('gj_' + Date.now());
+  const postId = await window.GJ.addPost({
+    authorUid: uid,
+    authorName: window.myProfile.nick,
+    authorMonthScore: window.myMonthScore,
+    authorBg: window.myProfile.bg,
+    authorColor: window.myProfile.c,
+    desc: memo || '그냥 썼음',
+    item: where,
+    amount: parseInt(amount).toLocaleString() + '원',
+  });
+  return postId;
+};
+
+// 댓글 Firebase 저장 래퍼
+window.GJ.submitComment = async (postId, text) => {
+  const uid = window.myProfile.uid || 'anonymous';
+  await window.GJ.addComment(postId, {
+    authorUid: uid,
+    authorName: window.myProfile.nick,
+    authorBg: window.myProfile.bg,
+    authorColor: window.myProfile.c,
+    text
+  });
+};
+
+// 시간 포맷
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return Math.floor(diff/60) + '분 전';
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+  return Math.floor(diff/86400) + '일 전';
+}
+
+// 앱 로드 후 프로필 초기화
+setTimeout(() => window.GJ.initProfile(), 500);
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
+let coins = 0, todayEarned = 0, lotteryUsed = false, adCb = null;
+const MAX_DAILY = 5;
+
+const POSTS = [
+  {id:'p1',name:'김절약',score:88,abg:'#3a1520',ac:'#e8527a',init:'김',time:'방금 전',
+   desc:'저를 운반 해준 어르신께 감사의 인사로',item:'택시',amount:'3,800원',
+   comments:[{av:'이',bg:'#1a2e22',c:'#44cc88',name:'이탕진',text:'택시 타셨군요 🐶'},
+             {av:'벼',bg:'#2e2a1a',c:'#d4a844',name:'벼룩5200',text:'두 정거장이면 걸어도 되지 않나요?'},
+             {av:'병',bg:'#2a1a2e',c:'#b07ae8',name:'병찐튜브',text:'감사 인사는 목례로도 충분합니다'}],rxn:[18,7,3]},
+  {id:'p2',name:'이탕진',score:23,abg:'#1a2e22',ac:'#44cc88',init:'이',time:'12분 전',
+   desc:'버블티 마시고 싶어서',item:'버블티',amount:'4,700원',
+   comments:[{av:'김',bg:'#3a1520',c:'#e8527a',name:'김절약',text:'버블티 사먹고싶은데 돈없을때 꿀팁: 흑임자 스티커 사세요'},
+             {av:'박',bg:'#1a2030',c:'#7ab4f0',name:'박포인트',text:'4700원이면 쌀 1kg 삽니다'}],rxn:[99,16,5]},
+  {id:'p3',name:'박포인트',score:61,abg:'#1a2030',ac:'#7ab4f0',init:'박',time:'34분 전',
+   desc:'포타 게임 포인트 충전했어요',item:'포인트 충전',amount:'10,000원',
+   comments:[{av:'이',bg:'#1a2e22',c:'#44cc88',name:'이탕진',text:'포타를 왜 보조로 합니까. 직접 연성하세요'},
+             {av:'벼',bg:'#2e2a1a',c:'#d4a844',name:'벼룩5200',text:'죄송해요 국어 47점 맞았어요'},
+             {av:'김',bg:'#3a1520',c:'#e8527a',name:'김절약',text:'국어 47점도 연성은 됩니다. 무료입니다'}],rxn:[7,3,9]},
+  {id:'p4',name:'니뽀',score:44,abg:'#1e2a14',ac:'#7acc44',init:'니',time:'1시간 전',
+   desc:'퍼컬 진단 받으러 갔다가',item:'미용실',amount:'40,000원',
+   comments:[{av:'박',bg:'#1a2030',c:'#7ab4f0',name:'박포인트',text:'퍼컬 진단이 왜 필요한가요. 색종이 얼굴 옆에 대보세요'},
+             {av:'병',bg:'#2a1a2e',c:'#b07ae8',name:'병찐튜브',text:'예약금 제외 40000원... 말문이 막힘'}],rxn:[6,2,11]},
+];
+const ADS = [
+  {emoji:'🏦',bg:'#1a2030',title:'토스뱅크 파킹통장',desc:'쓸 돈 없으면 모으세요. 연 3.5% 이자는 공짜입니다.',cta:'개설하기'},
+  {emoji:'🛒',bg:'#1e2a14',title:'컬리 첫 주문 30% 할인',desc:'배달 시키지 말고 직접 해 드세요. 재료값이 훨씬 쌉니다.',cta:'할인받기'},
+  {emoji:'🚲',bg:'#2e2a1a',title:'따릉이 정기권 30,000원',desc:'택시 10번 탈 돈으로 1년 탑니다. 계산기 없어도 압니다.',cta:'가입하기'},
+];
+const RANKS = [
+  {name:'1일0식',desc:'거지력 214점 · 피드 31개 · 거지ㅇㅈ 68회',score:'214점',bg:'#2a1020',c:'#e8527a',init:'1'},
+  {name:'좌절하는 제이지',desc:'거지력 187점 · 피드 27개 · 거지ㅇㅈ 59회',score:'187점',bg:'#1a2030',c:'#7ab4f0',init:'제'},
+  {name:'눈물바다 라이언',desc:'거지력 143점 · 피드 22개 · 거지ㅇㅈ 44회',score:'143점',bg:'#1a2e22',c:'#44cc88',init:'눈'},
+  {name:'벼룩 5200',desc:'거지력 98점 · 피드 18개 · 거지ㅇㅈ 31회',score:'98점',bg:'#2e2a1a',c:'#d4a844',init:'벼'},
+  {name:'병찐 튜브',desc:'거지력 61점 · 피드 11개 · 사치 판정 많음',score:'61점',bg:'#2a1a2e',c:'#b07ae8',init:'병'},
+];
+const FORTUNES = [
+  '"죄송합니다, 사흘째 굶었습니다.\n따뜻한 말 한마디라도 부탁드립니다."',
+  '"저는 지금 월세가 3개월 밀렸습니다.\n동전 하나가 희망입니다."',
+  '"배달비가 없어 직접 걸어왔습니다.\n제발 도와주세요."',
+  '"스타벅스를 끊은 지 사흘째입니다.\n하지만 아직 살아있습니다."',
+  '"지출 한 번 참을 때마다\n거지력이 1점씩 줄어듭니다."',
+];
+const NORMAL_P = [
+  {icon:'😭', label:'꽝',         sub:'다음엔 행운이 있을 거예요',      score:0},
+  {icon:'😭', label:'꽝',         sub:'역시 거지는 거지...',             score:0},
+  {icon:'😭', label:'꽝',         sub:'운도 없군요',                      score:0},
+  {icon:'🙇', label:'거지력 +1',  sub:'거지력 1점 올랐어요',              score:1},
+  {icon:'🙇', label:'거지력 +3',  sub:'거지력 3점 올랐어요',              score:3},
+  {icon:'🎉', label:'거지력 +5',  sub:'거지력 5점 올랐어요!',             score:5},
+];
+const GOLDEN_P = [
+  {icon:'🙇', label:'거지력 +1',  sub:'거지력 1점 올랐어요',              score:1},
+  {icon:'🙇', label:'거지력 +3',  sub:'거지력 3점 올랐어요',              score:3},
+  {icon:'🎉', label:'거지력 +5',  sub:'거지력 5점 올랐어요!',             score:5},
+  {icon:'🔥', label:'거지력 +7',  sub:'거지력 7점 올랐어요!!',            score:7},
+  {icon:'🌟', label:'거지력 +10', sub:'최대 당첨! 거지력 10점 올랐어요!', score:10},
+];
+
+/* ── Write sheet ── */
+let writeSrc = 'toss';
+let selectedTxName = '', selectedTxAmount = '';
+
+function openWrite() { openOverlay('ov-write'); }
+
+function selectWriteSrc(src) {
+  writeSrc = src;
+  document.getElementById('wsrc-toss').classList.toggle('active', src==='toss');
+  document.getElementById('wsrc-manual').classList.toggle('active', src==='manual');
+  document.getElementById('write-toss-view').style.display = src==='toss' ? 'block' : 'none';
+  document.getElementById('write-manual-view').style.display = src==='manual' ? 'block' : 'none';
+}
+
+function selectTx(row, name, amount, cat) {
+  document.querySelectorAll('.wtx-row').forEach(r => r.classList.remove('selected'));
+  row.classList.add('selected');
+  selectedTxName = name; selectedTxAmount = amount;
+  document.getElementById('write-toss-btn').disabled = false;
+}
+
+function checkWriteManual() {
+  const w = document.getElementById('write-where').value.trim();
+  const a = parseInt(document.getElementById('write-amount').value);
+  document.getElementById('write-manual-btn').disabled = !(w && a > 0);
+}
+
+function submitWriteToss() {
+  if (!selectedTxName) return;
+  const memo = document.getElementById('write-toss-memo').value.trim();
+  closeOverlay('ov-write');
+  addToFeed(selectedTxName, selectedTxAmount, memo);
+  // reset
+  document.querySelectorAll('.wtx-row').forEach(r => r.classList.remove('selected'));
+  document.getElementById('write-toss-memo').value = '';
+  document.getElementById('write-toss-btn').disabled = true;
+  selectedTxName = ''; selectedTxAmount = '';
+}
+
+function submitWriteManual() {
+  const where = document.getElementById('write-where').value.trim();
+  const amount = document.getElementById('write-amount').value;
+  const memo = document.getElementById('write-memo').value.trim();
+  if (!where || !amount) return;
+  closeOverlay('ov-write');
+  addToFeed(where, amount, memo);
+  document.getElementById('write-where').value = '';
+  document.getElementById('write-amount').value = '';
+  document.getElementById('write-memo').value = '';
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('write-manual-btn').disabled = true;
+}
+
+/* FAB show only on feed tab */
+function showTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank'][i]===n));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('active');
+  document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
+  if (n === 'mine') { buildCatBars(); buildChart('week'); }
+}
+
+/* feed */
+let adI=0;
+function buildFeed() {
+  const feed=document.getElementById('tab-feed'); feed.innerHTML='';
+  // coin banner slot
+  const bannerWrap=document.createElement('div'); bannerWrap.id='feed-cb'; bannerWrap.style.display='none';
+  bannerWrap.innerHTML=`<div class="coin-banner" onclick="openConvert()"><div class="cb-left"><div class="cb-pig">🥫</div><div><div class="cb-title">깡통에 동전 <b id="fcb-n" style="color:var(--gold);">0</b>개 구걸했어요</div><div class="cb-sub">토스 포인트로 바꿀 수 있어요 <b>(5개 = 1P)</b></div></div></div><div style="font-size:14px;color:var(--text3);">›</div></div>`;
+  feed.appendChild(bannerWrap);
+  POSTS.forEach((p,i)=>{
+    feed.appendChild(makePost(p)); genRoast(p.id,`${p.desc} ${p.item} ${p.amount}`);
+    if((i+1)%3===0) feed.appendChild(makeAd(adI++));
+  });
+}
+
+function makePost(p) {
+  const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
+  el.innerHTML=`<div class="post-header"><div class="avatar" style="background:${p.abg};color:${p.ac};">${p.init}</div><div><div class="post-name">${p.name} · 거지력 ${p.score}점</div><div class="post-time">${p.time}</div></div></div>
+    <div class="post-desc">${p.desc}</div><div class="post-amount">${p.item} ${p.amount}</div>
+    <div class="roast-box"><div class="roast-label">AI 거지방장</div><div class="roast-text" id="rt-${p.id}"><div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+      <div class="reactions" id="rxn-${p.id}" style="margin-top:0;">
+        <button class="rxn-btn active" onclick="castRxn(this,'${p.id}',0)">🙇 거지ㅇㅈ ${p.rxn[0]}</button>
+        <button class="rxn-btn" onclick="castRxn(this,'${p.id}',1)">🤔 애매한데 ${p.rxn[1]}</button>
+        <button class="rxn-btn rxn-sachi" onclick="castRxn(this,'${p.id}',2)">💸 사치 ${p.rxn[2]}</button>
+      </div>
+      <button class="share-post-btn" data-name="${p.name}" data-item="${p.item}" data-amount="${p.amount}" onclick="sharePost(this)">&#8599; 공유</button>
+    </div>
+    <div class="comment-toggle" onclick="toggleCmt('cm-${p.id}')">💬 댓글 ${p.comments.length>0?p.comments.length+'개 보기':'달기'}</div>
+    <div class="comment-section" id="cm-${p.id}">
+      <div id="cml-${p.id}">${p.comments.map(c=>`<div class="comment-row"><div class="comment-av" style="background:${c.bg};color:${c.c};">${c.av}</div><div><div class="comment-name">${c.name}</div><div class="comment-bubble">${c.text}</div></div></div>`).join('')}</div>
+      <div class="comment-input-row"><input class="comment-input" placeholder="따끔한 한마디..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="csend-btn" onclick="addCmt('${p.id}')">전송</button></div>
+    </div>`;
+  return el;
+}
+
+function makeAd(i) {
+  const el=document.createElement('div'); el.className='ad-card';
+  el.innerHTML=`<div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
+    <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
+      <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
+    </div>`;
+  return el;
+}
+
+function sharePost(btn) {
+  const name = btn.dataset.name, item = btn.dataset.item, amount = btn.dataset.amount;
+  const text = name + '님이 ' + item + ' ' + amount + ' 지출해서 거지방에서 혼나는 중 😂\n\n나도 거지방 입장하기 👉 https://toss.im/geojibang';
+  if (navigator.share) {
+    navigator.share({ title: '거지방', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+  } else {
+    showToast('📋 링크가 복사됐어요!');
+  }
+}
+
+function castRxn(btn,id,idx) {
+  const btns=document.querySelectorAll(`#rxn-${id} .rxn-btn`);
+  const scores=[3,0.5,-1];
+  const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
+  // get current counts from text
+  const counts=Array.from(btns).map(b=>parseInt(b.textContent.match(/\d+/)?.[0])||0);
+  const prevActive=Array.from(btns).findIndex(b=>b.classList.contains('active'));
+  // undo prev
+  if(prevActive>=0 && prevActive!==idx) counts[prevActive]=Math.max(0,counts[prevActive]-1);
+  // apply new
+  if(prevActive!==idx) counts[idx]++;
+  btns.forEach((b,i)=>{ b.classList.toggle('active',i===idx); b.textContent=labels[i]+' '+counts[i]; });
+  // score feedback toast
+  if(prevActive!==idx){
+    const s=scores[idx];
+    if(s > 0) { myMonthScore += s; myTotalScore += s; updateMyRankUI(); }
+    if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); updateMyRankUI(); }
+    const msg=s>0?'+'+s+'점 거지력 인정!':s<0?s+'점 사치로 판정됨':'0.5점 애매 판정';
+    showToast(msg);
+  }
+}
+function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
+const cmC=[{bg:'#3a1520',c:'#e8527a'},{bg:'#1a2030',c:'#7ab4f0'},{bg:'#1a2e22',c:'#44cc88'},{bg:'#2e2a1a',c:'#d4a844'}];
+let cmI=0;
+function addCmt(pid) {
+  const inp=document.getElementById('ci-'+pid), txt=inp.value.trim(); if(!txt) return;
+  const row=document.createElement('div'); row.className='comment-row'; row.style.marginTop='8px';
+  row.innerHTML='<div class="comment-av" style="background:'+myProfile.bg+';color:'+myProfile.c+';">'+myProfile.nick.charAt(0)+'</div><div><div class="comment-name">'+myProfile.nick+'</div><div class="comment-bubble">'+txt.replace(/</g,'&lt;')+'</div></div>';
+  document.getElementById('cml-'+pid).appendChild(row); inp.value='';
+}
+
+async function genRoast(pid,ctx) {
+  const el=document.getElementById('rt-'+pid);
+  try {
+    const r=await fetch('/api/roast',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ context: ctx })});
+    const d=await r.json(); el.textContent=d?.text||'말문이 막힙니다.';
+  } catch { el.textContent='말문이 막힙니다. 반성하세요.'; }
+}
+
+/* mine */
+function switchSource(s) {
+  document.getElementById('btn-toss').classList.toggle('active',s==='toss');
+  document.getElementById('btn-manual').classList.toggle('active',s==='manual');
+  document.getElementById('view-toss').style.display=s==='toss'?'block':'none';
+  document.getElementById('view-manual').style.display=s==='manual'?'block':'none';
+}
+function toggleCheck(el) { el.classList.toggle('checked'); document.getElementById('toss-share-btn').disabled=!document.querySelectorAll('.tx-check.checked').length; }
+/* mine tab actions */
+function openTossSync() {
+  // 글쓰기 바텀시트를 토스 연동 탭으로 열기
+  selectWriteSrc('toss');
+  openOverlay('ov-write');
+}
+
+function openManualInput() {
+  // 글쓰기 바텀시트를 직접 입력 탭으로 열기
+  selectWriteSrc('manual');
+  openOverlay('ov-write');
+}
+
+function toggleTxList() {
+  const list = document.getElementById('mine-tx-list');
+  const icon = document.getElementById('tx-toggle-icon');
+  const isOpen = list.style.display !== 'none';
+  list.style.display = isOpen ? 'none' : 'block';
+  icon.textContent = isOpen ? '›' : '˅';
+}
+
+function syncAnim(btn) { btn.textContent='불러오는 중...'; setTimeout(()=>btn.textContent='새로고침',1200); }
+function selectCat(el) { document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
+function checkManualForm() { document.getElementById('manual-share-btn').disabled=!(parseInt(document.getElementById('m-amount').value)>0); }
+function addToFeed(where,amount,memo) {
+  const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
+  const p={id:pid,name:myProfile.nick,score:myScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0]};
+  feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
+  showToast('피드에 올렸어요. 혼나는 중...'); showTab('feed');
+}
+function shareToss() {
+  document.querySelectorAll('.tx-check.checked').forEach(c=>{ const r=c.closest('.tx-row'); addToFeed(r.querySelector('.tx-name').textContent,r.querySelector('.tx-amount').textContent.replace(/[^0-9]/g,''),''); c.classList.remove('checked'); });
+  document.getElementById('toss-share-btn').disabled=true;
+}
+function shareManual() {
+  const w=document.getElementById('m-where').value||'어딘가', a=document.getElementById('m-amount').value, m=document.getElementById('m-memo').value;
+  if(!a||parseInt(a)<=0) return;
+  addToFeed(w,a,m);
+  document.getElementById('m-where').value=''; document.getElementById('m-amount').value=''; document.getElementById('m-memo').value='';
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active')); document.getElementById('manual-share-btn').disabled=true;
+}
+
+/* rank */
+function buildRank() {
+  document.getElementById('rank-list').innerHTML = RANKS.map((r,i) => {
+    const tb = RANK_TITLE_BADGE[i];
+    const badge = tb
+      ? '<span style="font-size:10px;background:' + tb.bg + ';color:' + tb.color + ';padding:2px 8px;border-radius:20px;font-weight:700;margin-left:4px;">' + tb.text + '</span>'
+      : '';
+    return '<div class="rank-row">' +
+      '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
+      '<div class="rank-av" style="background:' + r.bg + ';color:' + r.c + ';">' + r.init + '</div>' +
+      '<div class="rank-info">' +
+        '<div class="rank-name">' + r.name + badge + ' <span class="badge-valid">토스인증</span></div>' +
+        '<div class="rank-desc">' + r.desc + '</div>' +
+      '</div>' +
+      '<div class="rank-score">거지력 ' + r.score + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+/* ── 거지왕 발표 로직 ── */
+function getNextAnnouncementDate() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
+  return next;
+}
+
+function updateRankCountdown() {
+  const el = document.getElementById('rank-countdown');
+  if (!el) return;
+  const now = new Date();
+  const next = getNextAnnouncementDate();
+  const diff = next - now;
+  if (diff <= 0) {
+    triggerKingAnnouncement();
+    return;
+  }
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const secs = Math.floor((diff % (1000*60)) / 1000);
+  el.textContent = days + '일 ' + String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+}
+
+const RANK_REWARDS = [100000, 30000, 10000, 10000, 10000];
+const RANK_LABELS = ['이달의 거지왕 선정!', '이달의 거지대장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!'];
+const RANK_EMOJIS  = ['🥇', '🥈', '🥉', '🥉', '🥉'];
+const RANK_TITLE_BADGE = [
+  { text: '거지왕 👑',    bg: 'linear-gradient(135deg,#f0c040,#c08000)', color: '#1a1200' },
+  { text: '거지대장 🎖',  bg: 'linear-gradient(135deg,#b0b0c0,#707080)', color: '#0a0a14' },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+];
+
+function triggerKingAnnouncement() {
+  const banner = document.getElementById('king-banner');
+  if (!banner) return;
+  banner.style.display = 'block';
+  const king = RANKS[0];
+  document.getElementById('king-name').textContent = king.name;
+  document.getElementById('king-score').textContent = king.desc;
+
+  // 내가 1위면 수령 버튼 표시 (프로토타입: 닉네임 일치 시뮬레이션)
+  const myRankIdx = RANKS.findIndex(r => r.name === myProfile.nick);
+  if (myRankIdx >= 0 && myRankIdx <= 4) {
+    document.getElementById('king-claim-area').style.display = 'block';
+    showMyRewardCard(myRankIdx);
+  }
+}
+
+function showMyRewardCard(rankIdx) {
+  const card = document.getElementById('my-reward-card');
+  card.style.display = 'block';
+  document.getElementById('my-reward-emoji').textContent = RANK_EMOJIS[rankIdx];
+  document.getElementById('my-reward-title').textContent = '이달의 ' + RANK_LABELS[rankIdx];
+  document.getElementById('my-reward-desc').textContent =
+    '토스포인트 ' + RANK_REWARDS[rankIdx].toLocaleString() + 'P 리워드가 준비됐어요';
+  card.dataset.reward = RANK_REWARDS[rankIdx];
+}
+
+function claimReward() {
+  const btn = document.querySelector('#king-claim-area button');
+  if (btn) { btn.textContent = '수령 완료!'; btn.disabled = true; btn.style.opacity = '.5'; }
+  showToast('🎉 토스포인트가 지급됐어요!');
+}
+
+function claimMyReward() {
+  const card = document.getElementById('my-reward-card');
+  const pts = parseInt(card.dataset.reward || 0);
+  const btn = document.getElementById('my-reward-btn');
+  btn.textContent = '수령 완료!';
+  btn.disabled = true;
+  btn.style.opacity = '.5';
+  showToast('🎉 토스포인트 ' + pts.toLocaleString() + 'P 지급됐어요!');
+}
+
+function checkAnnouncementOnLoad() {
+  const now = new Date();
+  // 매달 1일 오전 8시~자정 사이면 배너 표시
+  if (now.getDate() === 1 && now.getHours() >= 8) {
+    triggerKingAnnouncement();
+  }
+}
+
+setInterval(updateRankCountdown, 1000);
+updateRankCountdown();
+checkAnnouncementOnLoad();
+
+/* ── Piggy ── */
+function openPiggy() { document.getElementById('piggy-page').classList.add('open'); updatePiggy(); buildPiggyAds(); }
+function closePiggy() { document.getElementById('piggy-page').classList.remove('open'); }
+
+function buildPiggyAds() {
+  const wrap=document.getElementById('piggy-ads'); wrap.innerHTML='';
+  for(let i=0;i<2;i++) wrap.appendChild(makeAd(adI++));
+}
+
+function updatePiggy() {
+  document.getElementById('pig-count').textContent=coins;
+  document.getElementById('strip-coins').textContent=coins;
+  // hint
+  if(todayEarned>=MAX_DAILY) { document.getElementById('pig-hint-icon').textContent='😴'; document.getElementById('pig-hint-text').textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요'; document.getElementById('pig-limit').textContent=''; }
+  else { document.getElementById('pig-hint-icon').textContent='🙏'; document.getElementById('pig-hint-text').textContent=tapCount>0?`${tapCount}/3번 눌렀어요. 조금만 더!`:'깡통을 3번 눌러 동전을 구걸하세요'; document.getElementById('pig-limit').textContent=`오늘 ${todayEarned}/${MAX_DAILY}회 구걸`; }
+  // slots
+  const sl=document.getElementById('coin-slots'); sl.innerHTML='';
+  for(let i=0;i<MAX_DAILY;i++){ const s=document.createElement('div'); s.className='coin-slot'+(i<coins?' filled':''); sl.appendChild(s); }
+  // exchange locks
+  document.getElementById('exc-fortune').classList.toggle('locked',coins<1);
+  document.getElementById('exc-lotto').classList.toggle('locked',coins<2);
+  document.getElementById('exc-letter').classList.toggle('locked',coins<5);
+  document.getElementById('exc-score').classList.toggle('locked',coins<5);
+  document.getElementById('exc-point').classList.toggle('locked',coins<5);
+  // bottom banner
+  const bb=document.getElementById('pig-bottom'); bb.style.display=coins>=5?'block':'none';
+  document.getElementById('pig-banner-n').textContent=coins;
+  // feed coin banner
+  const fb=document.getElementById('feed-cb'); if(fb){fb.style.display=coins>=5?'block':'none'; const fn=document.getElementById('fcb-n'); if(fn)fn.textContent=coins;}
+  // coin animation hint — can gets coins stacked as slots fill
+  const cv=document.getElementById('coin-anim');
+  if(cv) { cv.setAttribute('opacity', coins>0?'1':'0'); }
+  // convert sheet
+  document.getElementById('cv-n').textContent=coins+'개';
+  const sets=Math.floor(coins/5);
+  document.getElementById('cv-sets').textContent=sets+'묶음';
+  document.getElementById('cv-pts').textContent=sets+'P';
+  document.getElementById('cv-rem').textContent=(coins%5)+'개';
+  document.getElementById('cv-btn').disabled=coins<5;
+}
+
+let tapCount = 0;
+const BEG_LINES = ['한 푼 줍쇼!', '제발요... 한 푼만요...', '거지가 간절히 바라옵니다!'];
+let begTimer = null;
+
+function showBegBubble(text) {
+  const el = document.getElementById('beg-bubble');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add('show');
+  if (begTimer) clearTimeout(begTimer);
+  begTimer = setTimeout(() => el.classList.remove('show'), 1200);
+}
+
+function tapPiggy() {
+  if(todayEarned>=MAX_DAILY){showToast('오늘 구걸 한도를 다 채웠어요!');return;}
+  tapCount++;
+  // shake can
+  const w=document.getElementById('piggy-svg-wrap');
+  w.style.transform='scale(1.12) rotate(-5deg)'; setTimeout(()=>w.style.transform='scale(1.12) rotate(5deg)',120); setTimeout(()=>w.style.transform='',240);
+  // show beg bubble in front of can
+  showBegBubble(BEG_LINES[Math.min(tapCount-1, BEG_LINES.length-1)]);
+  updatePiggy();
+  if(tapCount>=3) {
+    tapCount=0;
+    setTimeout(()=>{
+      closePiggy();
+      watchAd(()=>{
+        coins++; todayEarned++; updatePiggy(); openPiggy();
+        showToast('🪙 동전 1개 구걸 성공!');
+      });
+    }, 600);
+  }
+}
+
+let myMonthScore = 76;   // 월 거지력 — 랭킹용, 매달 초기화
+let myTotalScore = 320;  // 누적 거지력 — 영구 누적, 환전용
+
+// 누적 거지력 계급 테이블
+const TOTAL_GRADES = [
+  { min:0,    label:'거지 새싹 🌱',  color:'#7a5f68' },
+  { min:100,  label:'동네 거지 🥫',  color:'#b89aa6' },
+  { min:300,  label:'프로 거지 🎯',  color:'#7ab4f0' },
+  { min:600,  label:'거지 고수 ⚡',  color:'#44cc88' },
+  { min:1000, label:'전설의 거지 🔥', color:'#f0c040' },
+  { min:2000, label:'거지신 👑',     color:'var(--pink)' },
+];
+
+function getGrade(score) {
+  let g = TOTAL_GRADES[0];
+  for (const t of TOTAL_GRADES) { if (score >= t.min) g = t; }
+  return g;
+}
+
+function updateMyRankUI() {
+  const grade = getGrade(myTotalScore);
+  document.getElementById('my-score-display').textContent = myMonthScore;
+  const totalEl = document.getElementById('my-total-score-display');
+  if (totalEl) totalEl.textContent = myTotalScore;
+  const gradeEl = document.getElementById('my-grade-display');
+  if (gradeEl) { gradeEl.textContent = grade.label; gradeEl.style.color = grade.color; }
+  // 환전 버튼 활성화
+  const convBtn = document.getElementById('total-score-conv-btn');
+  if (convBtn) {
+    const convertable = myTotalScore >= 1000;
+    convBtn.disabled = !convertable;
+    convBtn.textContent = convertable
+      ? '거지력 ' + Math.floor(myTotalScore * 0.1) + 'P 환전하기'
+      : '1000점 이상 모이면 환전 가능';
+  }
+  // 다음 계급까지
+  const nextEl = document.getElementById('my-grade-next');
+  if (nextEl) {
+    const nextGrade = TOTAL_GRADES.find(t => t.min > myTotalScore);
+    nextEl.textContent = nextGrade
+      ? '다음 계급까지 ' + (nextGrade.min - myTotalScore) + '점'
+      : '최고 계급 달성!';
+  }
+}
+
+function doExchange(type,cost) {
+  if(coins<cost){showToast('동전이 ' + cost + '개 필요해요');return;}
+  coins-=cost; updatePiggy();
+  if(type==='fortune'){
+    document.getElementById('fortune-msg').innerHTML=FORTUNES[Math.floor(Math.random()*FORTUNES.length)].replace('\n','<br>');
+    openOverlay('ov-fortune');
+  } else if(type==='score'){
+    myMonthScore += 1;
+    myTotalScore += 1;
+    document.getElementById('my-score-display').textContent = myMonthScore;
+    updateMyRankUI();
+    showToast('🙇 거지력 +1점! 월 랭킹 & 누적 반영됨');
+  } else if(type==='lotto'){
+    const beggingLevels=['상','중','하','최하','바닥'];
+    const emoji=['🌟','✨','😐','😢','💀'];
+    const msgs=['오늘은 구걸 운수가 대통입니다!','그럭저럭 구걸할 수 있을 것입니다.','구걸보다 집에 있는 게 나을 수도.','오늘은 구걸 쉬는 날입니다.','지갑 열어줄 사람이 아무도 없습니다.'];
+    const idx=Math.floor(Math.random()*5);
+    document.getElementById('lotto-balls').innerHTML='<div style="text-align:center;width:100%;"><div style="font-size:48px;margin-bottom:8px;">'+emoji[idx]+'</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;">구걸운 '+beggingLevels[idx]+'급</div><div style="font-size:13px;color:var(--text2);line-height:1.6;">'+msgs[idx]+'</div></div>';
+    openOverlay('ov-lotto');
+  } else if(type==='letter'){
+    openOverlay('ov-letter');
+  }
+}
+
+function convertTotalScore() {
+  if (myTotalScore < 1000) { showToast('1000점 이상 모여야 환전 가능해요'); return; }
+  const pts = Math.floor(myTotalScore * 0.1);
+  // 누적 거지력만 10% 차감, 월 거지력은 그대로
+  myTotalScore = Math.floor(myTotalScore * 0.9);
+  updateMyRankUI();
+  closeOverlay('ov-total-score');
+  showToast('🎉 토스포인트 ' + pts.toLocaleString() + 'P 환전 완료! 월 랭킹은 그대로예요');
+  const convDisp = document.getElementById('total-conv-display');
+  if (convDisp) convDisp.textContent = myTotalScore + '점';
+}
+
+function sendLetter() {
+  const t=document.getElementById('letter-input').value.trim(); if(!t)return;
+  document.getElementById('letter-input').value=''; closeOverlay('ov-letter'); showToast('📜 구걸 탄원서를 깡통에 넣었어요!');
+}
+
+function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
+function doConvert() {
+  const sets=Math.floor(coins/5), pts=sets*1; coins=coins%5; updatePiggy(); closeOverlay('ov-convert');
+  showToast(`🎉 토스 포인트 ${pts}P 전환 완료!`);
+}
+
+/* lottery */
+function playLottery(type) {
+  if(type==='normal'&&lotteryUsed){showToast('오늘 무료 복권을 이미 사용했어요');return;}
+  if(type==='golden'){closeOverlay('ov-lottery'); watchAd(()=>{openOverlay('ov-lottery');revealPrize(GOLDEN_P);}); return;}
+  lotteryUsed=true; document.getElementById('lc-normal').classList.add('used');
+  document.getElementById('pac-lotto-note').textContent='오늘 사용 완료';
+  document.getElementById('strip-lotto-sub').textContent='오늘 무료 사용 완료';
+  revealPrize(NORMAL_P);
+}
+function revealPrize(pool) {
+  const p = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('lot-pick').style.display = 'none';
+  document.getElementById('lot-result').style.display = 'block';
+  document.getElementById('s-icon').textContent = p.icon;
+  document.getElementById('s-label').textContent = p.label;
+  document.getElementById('s-sub').textContent = p.sub;
+  if (p.score > 0) {
+    myMonthScore += p.score;
+    myTotalScore += p.score;
+    updateMyRankUI();
+    showToast('🎉 거지력 +' + p.score + '점 획득!');
+  }
+}
+function closeLottery() { document.getElementById('lot-pick').style.display='block'; document.getElementById('lot-result').style.display='none'; closeOverlay('ov-lottery'); }
+
+/* ad */
+function watchAd(cb) {
+  adCb=cb;
+  const em=['📺','🎬','🛍','🏖','🚗','🍕','👟','💄'];
+  document.getElementById('ad-emoji').textContent=em[Math.floor(Math.random()*em.length)];
+  document.getElementById('ad-bar').style.width='0%';
+  document.getElementById('ad-countdown').textContent='5초 후 완료...';
+  openOverlay('ov-ad');
+  let e=0; const iv=setInterval(()=>{
+    e+=100; document.getElementById('ad-bar').style.width=Math.min(100,(e/5000)*100)+'%';
+    const rem=Math.ceil((5000-e)/1000); document.getElementById('ad-countdown').textContent=rem>0?`${rem}초 후 완료...`:'완료!';
+    if(e>=5000){clearInterval(iv);setTimeout(()=>{closeOverlay('ov-ad');if(adCb){adCb();adCb=null;}},400);}
+  },100);
+}
+
+/* overlay helpers */
+function openOverlay(id){document.getElementById(id).classList.add('open');}
+function closeOverlay(id){document.getElementById(id)?.classList.remove('open');}
+function closeOverlayOut(e,id){if(e.target===document.getElementById(id))closeOverlay(id);}
+
+/* toast */
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+/* ── Profile & Onboarding ── */
+let myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
+let selectedBg = '#3a1520', selectedC = '#e8527a';
+
+function obCheck() {
+  const v = document.getElementById('ob-nick').value;
+  document.getElementById('ob-nick-len').textContent = v.length;
+  document.getElementById('ob-btn').disabled = v.trim().length < 1;
+}
+function obBioCount() {
+  document.getElementById('ob-bio-len').textContent = document.getElementById('ob-bio').value.length;
+}
+
+function completeOnboarding() {
+  const nick = document.getElementById('ob-nick').value.trim();
+  const bio = document.getElementById('ob-bio').value.trim();
+  if (!nick) return;
+  const uid = 'gj_' + Date.now();
+  myProfile = { nick, bio, bg: '#3a1520', c: '#e8527a', uid };
+  localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+  applyProfile();
+  document.getElementById('onboarding').classList.add('hidden');
+  setTimeout(() => document.getElementById('onboarding').style.display = 'none', 300);
+  showToast('환영해요, ' + nick + '님! 거지방에 입장했어요 🥫');
+  // Firebase에 새 유저 저장
+  if (window.GJ?.ready) {
+    window.GJ.saveUser(uid, {
+      nick, bio,
+      avatarBg: '#3a1520', avatarColor: '#e8527a',
+      monthScore: myMonthScore,
+      totalScore: myTotalScore,
+      isPremium: false
+    }).catch(e => console.warn('[거지방] 신규 유저 저장 실패:', e));
+  }
+}
+
+function applyProfile() {
+  const init = myProfile.nick.charAt(0);
+  document.getElementById('header-profile-av').textContent = init;
+  document.getElementById('header-profile-av').style.background = myProfile.bg;
+  document.getElementById('header-profile-av').style.color = myProfile.c;
+  document.getElementById('header-profile-name').textContent = myProfile.nick;
+  document.getElementById('profile-sheet-av').textContent = init;
+  document.getElementById('profile-sheet-av').style.background = myProfile.bg;
+  document.getElementById('profile-sheet-av').style.color = myProfile.c;
+  document.getElementById('edit-nick').value = myProfile.nick;
+  document.getElementById('edit-bio').value = myProfile.bio;
+  document.getElementById('edit-nick-len').textContent = myProfile.nick.length;
+  document.getElementById('edit-bio-len').textContent = myProfile.bio.length;
+  selectedBg = myProfile.bg; selectedC = myProfile.c;
+  syncColorDots();
+}
+
+function pickColor(dot) {
+  selectedBg = dot.dataset.bg; selectedC = dot.dataset.c;
+  document.getElementById('profile-sheet-av').style.background = selectedBg;
+  document.getElementById('profile-sheet-av').style.color = selectedC;
+  syncColorDots();
+}
+function syncColorDots() {
+  document.querySelectorAll('.color-dot').forEach(d => {
+    d.style.border = d.dataset.bg === selectedBg ? '2.5px solid ' + selectedC : '2px solid transparent';
+  });
+}
+
+function editNickCount() {
+  document.getElementById('edit-nick-len').textContent = document.getElementById('edit-nick').value.length;
+}
+function editBioCount() {
+  document.getElementById('edit-bio-len').textContent = document.getElementById('edit-bio').value.length;
+}
+
+function saveProfile() {
+  const nick = document.getElementById('edit-nick').value.trim();
+  if (!nick) { showToast('닉네임을 입력해주세요'); return; }
+  myProfile = { nick, bio: document.getElementById('edit-bio').value.trim(), bg: selectedBg, c: selectedC };
+  localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+  applyProfile();
+  closeOverlay('ov-profile');
+  showToast('프로필이 저장됐어요!');
+}
+
+/* ── Ledger ── */
+let isPremium = false;
+let spendChart = null;
+
+const CAT_DATA = [
+  { emoji:'🛍', label:'쇼핑', amt:49000, color:'#e8527a' },
+  { emoji:'🍜', label:'배달', amt:18500, color:'#f0849f' },
+  { emoji:'🎮', label:'엔터', amt:10000, color:'#7ab4f0' },
+  { emoji:'☕', label:'카페', amt:6500,  color:'#d4a844' },
+  { emoji:'🚕', label:'교통', amt:3800,  color:'#44cc88' },
+];
+const TOTAL = CAT_DATA.reduce((s,c)=>s+c.amt,0);
+
+const WEEK_DATA = { labels:['월','화','수','목','금','토','일'], data:[12000,0,28000,6500,18500,49000,3800] };
+const MONTH_DATA = { labels:['1주','2주','3주','4주'], data:[42000,88000,124000,58400] };
+
+function buildCatBars() {
+  const el = document.getElementById('cat-bars');
+  if (!el) return;
+  el.innerHTML = CAT_DATA.map(c => {
+    const pct = Math.round(c.amt / TOTAL * 100);
+    return '<div class="cat-bar-row">' +
+      '<span class="cat-bar-emoji">' + c.emoji + '</span>' +
+      '<span class="cat-bar-label">' + c.label + '</span>' +
+      '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + c.color + ';"></div></div>' +
+      '<span class="cat-bar-amt">' + c.amt.toLocaleString() + '원</span>' +
+      '</div>';
+  }).join('');
+}
+
+function buildChart(period) {
+  const d = period === 'week' ? WEEK_DATA : MONTH_DATA;
+  const canvas = document.getElementById('spend-chart');
+  if (!canvas) return;
+  const isDark = true;
+  const gridColor = 'rgba(255,255,255,0.06)';
+  const textColor = '#7a5f68';
+  if (spendChart) spendChart.destroy();
+  spendChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [{
+        data: d.data,
+        backgroundColor: d.data.map(v => v > 0 ? 'rgba(232,82,122,0.7)' : 'rgba(232,82,122,0.15)'),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ctx.raw.toLocaleString() + '원' }
+      }},
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 }, callback: v => v >= 1000 ? (v/1000)+'k' : v } }
+      }
+    }
+  });
+}
+
+function setChartPeriod(period, btn) {
+  document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildChart(period);
+}
+
+function openSubscribe() { openOverlay('ov-subscribe'); }
+
+function confirmSubscribe() {
+  isPremium = true;
+  closeOverlay('ov-subscribe');
+  document.getElementById('premium-card').style.display = 'none';
+  document.getElementById('premium-panel').style.display = 'block';
+  showToast('🎉 구독 완료! AI 코치가 시작됐어요');
+  generateReport();
+}
+
+function updateFinance() {
+  const income = parseInt(document.getElementById('income-input').value) || 0;
+  const saving = parseInt(document.getElementById('saving-input').value) || 0;
+  if (!income) { document.getElementById('finance-summary').style.display = 'none'; return; }
+  document.getElementById('finance-summary').style.display = 'block';
+  const avail = income - saving - TOTAL;
+  const pct = Math.min(100, Math.round(TOTAL / (income - saving) * 100));
+  document.getElementById('avail-budget').textContent = avail.toLocaleString() + '원';
+  document.getElementById('avail-budget').style.color = avail >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('budget-bar').style.width = pct + '%';
+  document.getElementById('budget-bar').style.background = pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--pink)';
+  document.getElementById('budget-pct').textContent = '지출 ' + pct + '%';
+}
+
+async function generateReport() {
+  const el = document.getElementById('ai-report-text');
+  el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  const income = parseInt(document.getElementById('income-input')?.value) || 0;
+  const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
+  try {
+    const res = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spendData: {
+          total: 312400,
+          categories: [
+            { label: '쇼핑', amt: 49000 },
+            { label: '배달', amt: 18500 },
+            { label: '엔터테인먼트', amt: 10000 },
+            { label: '카페', amt: 6500 },
+            { label: '교통', amt: 3800 }
+          ]
+        },
+        income: income || undefined,
+        savingGoal: saving || undefined
+      })
+    });
+    const data = await res.json();
+    el.textContent = data?.text || '분석 중 오류가 발생했어요.';
+  } catch {
+    el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
+  }
+}
+
+buildFeed(); buildRank(); updatePiggy(); updateMyRankUI();
+
+// window에 노출 (Firebase module에서 접근)
+window.makePost = makePost;
+window.genRoast = genRoast;
+window.myProfile = myProfile;
+window.myMonthScore = myMonthScore;
+window.myTotalScore = myTotalScore;
+window.isPremium = isPremium;
+window.updateMyRankUI = updateMyRankUI;
+
+// addToFeed — Firebase 연동 버전으로 교체
+const _origAddToFeed = addToFeed;
+window.addToFeed = async function(where, amount, memo) {
+  // 로컬 즉시 표시
+  _origAddToFeed(where, amount, memo);
+  // Firebase 저장 (GJ 준비된 경우)
+  if (window.GJ?.ready) {
+    try {
+      await window.GJ.publishPost(where, amount, memo);
+    } catch(e) { console.warn('[거지방] 게시물 Firebase 저장 실패:', e); }
+  }
+};
+
+// addCmt — Firebase 연동 버전으로 교체
+const _origAddCmt = addCmt;
+window.addCmt = function(pid) {
+  const inp = document.getElementById('ci-' + pid);
+  const text = inp?.value?.trim();
+  if (!text) return;
+  _origAddCmt(pid); // 로컬 렌더
+  if (window.GJ?.ready) {
+    window.GJ.submitComment(pid, text).catch(e =>
+      console.warn('[거지방] 댓글 Firebase 저장 실패:', e)
+    );
+  }
+};
+
+// 프로필 저장 — Firebase 동기화 추가
+const _origSaveProfile = saveProfile;
+window.saveProfile = async function() {
+  _origSaveProfile();
+  if (window.GJ?.ready && myProfile.uid) {
+    try {
+      await window.GJ.saveUser(myProfile.uid, {
+        nick: myProfile.nick,
+        bio: myProfile.bio,
+        avatarBg: myProfile.bg,
+        avatarColor: myProfile.c,
+        monthScore: myMonthScore,
+        totalScore: myTotalScore,
+      });
+    } catch(e) { console.warn('[거지방] 프로필 Firebase 저장 실패:', e); }
+  }
+};
+
+// 구독 확정 — Firebase 동기화 추가
+const _origConfirmSubscribe = confirmSubscribe;
+window.confirmSubscribe = async function() {
+  _origConfirmSubscribe();
+  if (window.GJ?.ready && myProfile.uid) {
+    try {
+      await window.GJ.setSubscription(myProfile.uid, true);
+    } catch(e) { console.warn('[거지방] 구독 Firebase 저장 실패:', e); }
+  }
+};
+
+// 저장된 프로필 있으면 온보딩 스킵
+const _saved = localStorage.getItem('gj_profile');
+if (_saved) {
+  try {
+    myProfile = JSON.parse(_saved);
+    if (!myProfile.uid) {
+      myProfile.uid = 'gj_' + Date.now();
+      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+    }
+    applyProfile();
+    const ob = document.getElementById('onboarding');
+    ob.style.display = 'none';
+  } catch(e) { localStorage.removeItem('gj_profile'); }
+}
+</script>
+</body>
+</html>
