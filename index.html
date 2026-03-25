@@ -1820,7 +1820,6 @@ function saveRxn(pid, idx) {
 }
 
 function castRxn(btn,id,idx) {
-  // 이미 이 게시물에 반응한 경우 차단
   if (getSavedRxn(id) >= 0) {
     showToast('이미 반응했어요 (변경 불가)');
     return;
@@ -1833,23 +1832,37 @@ function castRxn(btn,id,idx) {
   if(prevActive>=0 && prevActive!==idx) counts[prevActive]=Math.max(0,counts[prevActive]-1);
   if(prevActive!==idx) counts[idx]++;
   btns.forEach((b,i)=>{ b.classList.toggle('active',i===idx); b.textContent=labels[i]+' '+counts[i]; });
+
   if(prevActive!==idx){
-    const s=scores[idx];
-    if(s > 0) { myMonthScore += s; myTotalScore += s; }
-    if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); }
-    updateMyRankUI();
-    window.myMonthScore = myMonthScore;
-    window.myTotalScore = myTotalScore;
-    // 반응 localStorage 저장 (중복 방지)
+    const s = scores[idx];
     saveRxn(id, idx);
-    if(window.GJ?.ready && myProfile.uid) {
-      window.GJ.updateScore(myProfile.uid, s > 0 ? s : (s < 0 ? s : 0), s > 0 ? s : 0)
-        .catch(e => console.warn('[거지방] 점수 저장 실패:', e));
-    }
+
+    // 반응 카운트 Firebase 저장
     if(window.GJ?.ready) {
       window.GJ.updateRxn(id, counts).catch(()=>{});
     }
-    const msg=s>0?'+'+s+'점 거지력 인정!':s<0?s+'점 사치로 판정됨':'0.5점 애매 판정';
+
+    // 게시물 작성자 UID 가져오기
+    const postEl = document.getElementById('post-'+id);
+    const authorUid = postEl?.querySelector('.profile-click')?.dataset?.uid || '';
+    const isMyPost = authorUid && myProfile.uid && authorUid === myProfile.uid;
+
+    if (isMyPost) {
+      // 내 글에 반응 — 내 점수 변경
+      if(s > 0) { myMonthScore += s; myTotalScore += s; }
+      if(s < 0) { myMonthScore = Math.max(0, myMonthScore + s); }
+      updateMyRankUI();
+    } else if (authorUid && window.GJ?.ready) {
+      // 남의 글에 반응 — 글 쓴 사람 점수만 Firebase에서 변경
+      const monthDelta = s > 0 ? s : (s < 0 ? s : 0);
+      const totalDelta = s > 0 ? s : 0;
+      if (monthDelta !== 0 || totalDelta !== 0) {
+        window.GJ.updateScore(authorUid, monthDelta, totalDelta)
+          .catch(e => console.warn('[거지방] 작성자 점수 저장 실패:', e));
+      }
+    }
+
+    const msg = s>0 ? '👍 +'+s+'점! 거지ㅇㅈ 판정' : s<0 ? '💸 사치 판정!' : '🤔 애매 판정';
     showToast(msg);
   }
 }
