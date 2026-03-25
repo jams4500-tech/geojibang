@@ -152,7 +152,7 @@ const COLS = {
   users:    ()=>collection(db,'geojibang_users'),
   posts:    ()=>collection(db,'geojibang_posts'),
   ranking:  ()=>collection(db,'geojibang_ranking'),
-  settings: ()=>collection(db,'geojibang_settings'),
+  settings: ()=>collection(db,'geojibang_ranking'),
   comments: (pid)=>collection(db,'geojibang_posts',pid,'geojibang_comments'),
 };
 
@@ -459,8 +459,12 @@ window.announceKing = async () => {
 // ── 상점 가격 관리 ──────────────────────────────
 async function renderShop(m) {
   // Firebase에서 현재 저장된 가격 불러오기
-  const settingSnap = await getDoc(doc(db,'geojibang_settings','item_prices'));
-  const savedPrices = settingSnap.exists() ? settingSnap.data() : {};
+  const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+  const rawData = settingSnap.exists() ? settingSnap.data() : {};
+  // updatedAt 등 non-price 필드 제거
+  const savedPrices = Object.fromEntries(
+    Object.entries(rawData).filter(([k]) => k.startsWith('room_') || k.startsWith('char_'))
+  );
   const prices = {...DEFAULT_PRICES, ...savedPrices};
 
   const uSnap = await getDocs(COLS.users());
@@ -511,7 +515,7 @@ window.savePrices = async () => {
   }
   try {
     // Firebase Firestore에 저장 (앱에서 읽어감)
-    await setDoc(doc(db,'geojibang_settings','item_prices'), {
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
       ...prices, updatedAt: serverTimestamp()
     });
     toast('✅ 가격이 Firebase에 저장됐어요! 앱 재접속 시 반영');
@@ -522,7 +526,7 @@ window.savePrices = async () => {
 window.resetPrices = async () => {
   if (!confirm('기본 가격으로 초기화할까요?')) return;
   try {
-    await setDoc(doc(db,'geojibang_settings','item_prices'), {
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
       ...DEFAULT_PRICES, updatedAt: serverTimestamp()
     });
     toast('✅ 기본 가격으로 초기화됐어요'); showPage('shop');

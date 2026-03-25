@@ -1312,7 +1312,7 @@ window.GJ.listenComments = (postId, callback) => {
 
 // ── 구독 상태 ────────────────────────────────────────
 window.GJ._getSettingsDoc = async (docId) => {
-  return await getDoc(doc(db, 'geojibang_settings', docId));
+  return await getDoc(doc(db, 'geojibang_ranking', '_settings'));
 };
 
 window.GJ.setSubscription = async (uid, isPremium) => {
@@ -2521,9 +2521,13 @@ async function loadItemPrices() {
   try {
     const snap = await window.GJ._getSettingsDoc('item_prices');
     if (snap && snap.exists()) {
-      _loadedItemPrices = snap.data();
+      const raw = snap.data();
+      // updatedAt 등 non-price 필드 제거
+      _loadedItemPrices = Object.fromEntries(
+        Object.entries(raw).filter(([k]) => k.startsWith('room_') || k.startsWith('char_'))
+      );
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[거지방] 가격 로드 실패, 기본값 사용:', e); }
 }
 function getItemPrice(id) {
   return (_loadedItemPrices?.[id] ?? DEFAULT_ITEM_PRICES[id] ?? 0);
