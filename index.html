@@ -1454,7 +1454,6 @@ window.GJ.initProfile = async () => {
   try {
     const remote = await window.GJ.loadUser(uid);
     if (remote) {
-      // window와 로컬 변수 동시 동기화
       myMonthScore = remote.monthScore || 0;
       myTotalScore = remote.totalScore || 0;
       window.myMonthScore = myMonthScore;
@@ -1467,8 +1466,12 @@ window.GJ.initProfile = async () => {
         if (pc) pc.style.display = 'none';
         if (pp) pp.style.display = 'block';
       }
+      // Firebase 로드 직후엔 debounce 저장 타이머 취소
+      // (어드민에서 수정한 값이 덮어씌워지는 것 방지)
+      clearTimeout(updateMyRankUI._t);
+      // UI만 업데이트, Firebase 재저장 없이
+      _updateRankUIOnly();
     } else {
-      // 첫 로그인 → Firestore에 저장
       await window.GJ.saveUser(uid, {
         nick: profile.nick,
         bio: profile.bio || '',
@@ -1478,10 +1481,11 @@ window.GJ.initProfile = async () => {
         totalScore: myTotalScore,
         isPremium: false
       });
+      _updateRankUIOnly();
     }
-    updateMyRankUI();
   } catch (e) {
     console.warn('[거지방] Firestore 로드 실패, 로컬 데이터 사용:', e);
+    _updateRankUIOnly();
   }
 };
 
@@ -2120,6 +2124,35 @@ function getGrade(score) {
   return g;
 }
 
+// UI만 업데이트 (Firebase 저장 없음 - 어드민 수정값 덮어씌우기 방지)
+function _updateRankUIOnly() {
+  window.myMonthScore = myMonthScore;
+  window.myTotalScore = myTotalScore;
+  const grade = getGrade(myTotalScore);
+  const el = id => document.getElementById(id);
+  if (el('my-score-display')) el('my-score-display').textContent = myMonthScore;
+  if (el('my-total-score-display')) el('my-total-score-display').textContent = myTotalScore;
+  if (el('total-conv-display')) el('total-conv-display').textContent = myTotalScore + '점';
+  if (el('my-grade-display')) { el('my-grade-display').textContent = grade.label; el('my-grade-display').style.color = grade.color; }
+  const convBtn = el('total-score-conv-btn');
+  if (convBtn) {
+    const convertable = myTotalScore >= 1000;
+    convBtn.disabled = !convertable;
+    const sets = Math.floor(myTotalScore / 1000);
+    convBtn.textContent = convertable ? sets + '000점 → ' + (sets * 10) + 'P 환전하기' : '1000점 이상 모이면 환전 가능';
+  }
+  const nextEl = el('my-grade-next');
+  if (nextEl) {
+    const ng = TOTAL_GRADES.find(t => t.min > myTotalScore);
+    nextEl.textContent = ng ? '다음 계급까지 ' + (ng.min - myTotalScore) + '점' : '최고 계급 달성!';
+  }
+  const rankPosEl = el('my-rank-pos');
+  if (rankPosEl) {
+    const above = RANKS.filter(r => (r.monthScore || 0) > myMonthScore).length;
+    rankPosEl.textContent = (above + 1) + '위';
+  }
+}
+
 function updateMyRankUI() {
   // window 변수 항상 동기화
   window.myMonthScore = myMonthScore;
@@ -2300,22 +2333,30 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) 
 
 async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
   const isMyProfile = uid && myProfile.uid && uid === myProfile.uid;
-  viewUserProfile(nick, bg, c, '', monthScore, 0, isMyProfile);
+  // 내 프로필이면 바로 최신 값 사용
+  if (isMyProfile) {
+    viewUserProfile(myProfile.nick || nick, myProfile.bg || bg, myProfile.c || c,
+      myProfile.bio || '', myMonthScore, myTotalScore, true);
+    return;
+  }
+  // 먼저 아는 정보로 즉시 표시
+  viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false);
+  // Firebase에서 정확한 정보 조회
   if (uid && window.GJ?.ready) {
     try {
       const data = await window.GJ.loadUser(uid);
       if (data) {
         viewUserProfile(
-          data.nick || nick,
-          data.avatarBg || bg,
-          data.avatarColor || c,
-          data.bio || '',
-          data.monthScore || monthScore,
-          data.totalScore || 0,
-          isMyProfile
+          data.nick ?? nick,
+          data.avatarBg ?? bg,
+          data.avatarColor ?? c,
+          data.bio ?? '',
+          data.monthScore ?? monthScore ?? 0,
+          data.totalScore ?? 0,
+          false
         );
       }
-    } catch(e) {}
+    } catch(e) { console.warn('[거지방] 프로필 조회 실패', e); }
   }
 }
 
@@ -2490,8 +2531,9 @@ function adjustColor(hex, amt) {
   } catch(e){ return hex||'#888'; }
 }
 
-// 싸이월드 스타일 캐릭터 (밝은 방 기준 색상)
-function drawChar(char, cx, groundY) {
+// 싸이월드 스타일 캐릭터 프리뷰 (상점/꾸미기용 소형)
+function drawCharSmall(char, cx, groundY) {
+  // S=3으로 drawChar 내부를 흉내냄 (독립 함수)
   const S = 3;
   const cid = (char.id||'char_default').replace('char_','');
   const palettes = {
@@ -2505,67 +2547,95 @@ function drawChar(char, cx, groundY) {
   const c = palettes[cid] || palettes.default;
   const ox = cx - 8*S, oy = groundY - 18*S;
   let g = '';
-
+  g += px(ox+3*S,oy,2*S,S,c.hair); g += px(ox+2*S,oy+S,5*S,S,c.hair);
+  g += px(ox+2*S,oy+2*S,5*S,4*S,c.skin);
+  g += px(ox+3*S,oy+3*S,S,S,'#1a1010'); g += px(ox+5*S,oy+3*S,S,S,'#1a1010');
+  g += px(ox+3*S,oy+5*S,3*S,S,'#d06060');
+  g += px(ox+2*S,oy+7*S,5*S,5*S,c.shirt);
+  g += px(ox+S,oy+7*S,S,4*S,c.shirt); g += px(ox+7*S,oy+7*S,S,4*S,c.shirt);
+  g += px(ox+2*S,oy+12*S,2*S,4*S,c.pants); g += px(ox+5*S,oy+12*S,2*S,4*S,c.pants);
+  g += px(ox+S,oy+16*S,3*S,S,c.shoe); g += px(ox+5*S,oy+16*S,3*S,S,c.shoe);
+  if (cid==='paper_bag') { g += px(ox+2*S,oy-3*S,5*S,4*S,'#d4a840'); g += px(ox+3*S,oy-2*S,S,S,'#2a1808'); g += px(ox+5*S,oy-2*S,S,S,'#2a1808'); }
+  else if (cid==='crown') { g += px(ox+2*S,oy-2*S,5*S,2*S,'#d4a844'); g += px(ox+4*S,oy-5*S,S,3*S,'#d4a844'); }
+  else if (cid==='santa') { g += px(ox+2*S,oy-S,5*S,S,'#f0f0f0'); g += px(ox+3*S,oy-4*S,4*S,3*S,'#cc2020'); }
+  else if (cid==='ninja') { g += px(ox+S,oy+S,7*S,6*S,'#1a1a1a',0.9); g += px(ox+2*S,oy+3*S,5*S,S,'#cc3030',0.8); }
+  else if (cid==='vip') { g += px(ox+2*S,oy-4*S,5*S,3*S,'#1a1a2a'); g += px(ox+S,oy-S,7*S,S,'#1a1a2a'); }
+  return g;
+}
+// 방 안 메인 캐릭터 (2배 크기, S=6)
+function drawChar(char, cx, groundY) {
+  const S = 6;
+  const cid = (char.id||'char_default').replace('char_','');
+  const palettes = {
+    default:   { skin:'#f5c88a', hair:'#3a1a0a', shirt:'#7ab4f0', pants:'#2a4a8a', shoe:'#1a1a2a' },
+    paper_bag: { skin:'#f5c88a', hair:'#c8a840', shirt:'#e8c870', pants:'#8a6820', shoe:'#3a2810' },
+    crown:     { skin:'#f5c88a', hair:'#2a1a08', shirt:'#e8d080', pants:'#8a6020', shoe:'#1a1a2a' },
+    santa:     { skin:'#f5c88a', hair:'#f0f0f0', shirt:'#cc2020', pants:'#cc2020', shoe:'#1a1a2a' },
+    ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', shirt:'#1a1a1a', pants:'#1a1a1a', shoe:'#0a0a0a' },
+    vip:       { skin:'#f5c88a', hair:'#1a1a2a', shirt:'#f8f8f8', pants:'#1a1a3a', shoe:'#0a0a1a' },
+  };
+  const c = palettes[cid] || palettes.default;
+  const ox = cx - 8*S, oy = groundY - 18*S;
+  let g = '';
   // 머리카락
-  g += px(ox+3*S, oy,    2*S, S,   c.hair);
-  g += px(ox+2*S, oy+S,  5*S, S,   c.hair);
+  g += px(ox+3*S,oy,      2*S,S,   c.hair);
+  g += px(ox+2*S,oy+S,    5*S,S,   c.hair);
   // 얼굴
-  g += px(ox+2*S, oy+2*S,5*S, 4*S, c.skin);
-  g += px(ox+3*S, oy+3*S,S,   S,   '#1a1010'); // 눈L
-  g += px(ox+5*S, oy+3*S,S,   S,   '#1a1010'); // 눈R
-  g += px(ox+3*S, oy+5*S,3*S, S,   '#d06060'); // 입
-  g += px(ox+2*S, oy+4*S,S,   S,   '#f5a0a0',0.6); // 볼L
-  g += px(ox+6*S, oy+4*S,S,   S,   '#f5a0a0',0.6); // 볼R
+  g += px(ox+2*S,oy+2*S,  5*S,4*S, c.skin);
+  g += px(ox+3*S,oy+3*S,  S,  S,   '#1a1010');
+  g += px(ox+5*S,oy+3*S,  S,  S,   '#1a1010');
+  g += px(ox+3*S,oy+5*S,  3*S,S,   '#d06060');
+  g += px(ox+2*S,oy+4*S,  S,  S,   '#f5a0a0',0.6);
+  g += px(ox+6*S,oy+4*S,  S,  S,   '#f5a0a0',0.6);
   // 몸통
-  g += px(ox+2*S, oy+7*S,5*S, 5*S, c.shirt);
-  g += px(ox+3*S, oy+7*S,3*S, S,   adjustColor(c.shirt,-30)); // 칼라
-  g += px(ox+2*S, oy+7*S,S,   5*S, adjustColor(c.shirt,-20)); // 왼 음영
-  g += px(ox+6*S, oy+7*S,S,   5*S, adjustColor(c.shirt,-30)); // 오른 음영
+  g += px(ox+2*S,oy+7*S,  5*S,5*S, c.shirt);
+  g += px(ox+3*S,oy+7*S,  3*S,S,   adjustColor(c.shirt,-30));
+  g += px(ox+2*S,oy+7*S,  S,  5*S, adjustColor(c.shirt,-20));
+  g += px(ox+6*S,oy+7*S,  S,  5*S, adjustColor(c.shirt,-30));
   // 팔
-  g += px(ox+S,    oy+7*S,S,  4*S, c.shirt);
-  g += px(ox+7*S,  oy+7*S,S,  4*S, c.shirt);
-  g += px(ox+S,    oy+11*S,S, S,   c.skin);
-  g += px(ox+7*S,  oy+11*S,S, S,   c.skin);
+  g += px(ox+S,  oy+7*S,  S,  4*S, c.shirt);
+  g += px(ox+7*S,oy+7*S,  S,  4*S, c.shirt);
+  g += px(ox+S,  oy+11*S, S,  S,   c.skin);
+  g += px(ox+7*S,oy+11*S, S,  S,   c.skin);
   // 다리
-  g += px(ox+2*S, oy+12*S,2*S,4*S, c.pants);
-  g += px(ox+5*S, oy+12*S,2*S,4*S, c.pants);
-  g += px(ox+2*S, oy+12*S,S,  4*S, adjustColor(c.pants,-25));
+  g += px(ox+2*S,oy+12*S, 2*S,4*S, c.pants);
+  g += px(ox+5*S,oy+12*S, 2*S,4*S, c.pants);
+  g += px(ox+2*S,oy+12*S, S,  4*S, adjustColor(c.pants,-25));
   // 신발
-  g += px(ox+S,   oy+16*S,3*S,S,   c.shoe);
-  g += px(ox+5*S, oy+16*S,3*S,S,   c.shoe);
-  g += px(ox+S,   oy+17*S,2*S,S,   adjustColor(c.shoe,20));
-  g += px(ox+5*S, oy+17*S,2*S,S,   adjustColor(c.shoe,20));
+  g += px(ox+S,  oy+16*S, 3*S,S,   c.shoe);
+  g += px(ox+5*S,oy+16*S, 3*S,S,   c.shoe);
+  g += px(ox+S,  oy+17*S, 2*S,S,   adjustColor(c.shoe,20));
+  g += px(ox+5*S,oy+17*S, 2*S,S,   adjustColor(c.shoe,20));
   // 깡통
-  g += px(ox-S,   oy+9*S, 3*S,4*S, '#b0a090');
-  g += px(ox-S,   oy+9*S, 3*S,S,   '#d0c0b0');
-  g += px(ox,     oy+10*S,S,  S,   'rgba(255,255,255,0.3)');
-
-  // 모자/액세서리
+  g += px(ox-S,  oy+9*S,  3*S,4*S, '#b0a090');
+  g += px(ox-S,  oy+9*S,  3*S,S,   '#d0c0b0');
+  g += px(ox,    oy+10*S, S,  S,   'rgba(255,255,255,0.3)');
+  // 모자
   if (cid==='paper_bag') {
-    g += px(ox+2*S, oy-3*S,5*S, 4*S, '#d4a840');
-    g += px(ox+3*S, oy-2*S,S,   S,   '#2a1808');
-    g += px(ox+5*S, oy-2*S,S,   S,   '#2a1808');
-    g += px(ox+2*S, oy+S,  5*S, S,   adjustColor('#d4a840',-30));
+    g += px(ox+2*S,oy-3*S, 5*S,4*S, '#d4a840');
+    g += px(ox+3*S,oy-2*S, S,  S,   '#2a1808');
+    g += px(ox+5*S,oy-2*S, S,  S,   '#2a1808');
+    g += px(ox+2*S,oy+S,   5*S,S,   adjustColor('#d4a840',-30));
   } else if (cid==='crown') {
-    g += px(ox+2*S, oy-2*S,5*S, 2*S, '#d4a844');
-    g += px(ox+2*S, oy-4*S,S,   2*S, '#d4a844');
-    g += px(ox+4*S, oy-5*S,S,   3*S, '#d4a844');
-    g += px(ox+6*S, oy-4*S,S,   2*S, '#d4a844');
-    g += px(ox+3*S, oy-2*S,S,   S,   '#e8527a');
-    g += px(ox+5*S, oy-2*S,S,   S,   '#44cc88');
-    g += px(ox+4*S, oy-4*S,S,   S,   '#7ab4f0');
+    g += px(ox+2*S,oy-2*S, 5*S,2*S, '#d4a844');
+    g += px(ox+2*S,oy-4*S, S,  2*S, '#d4a844');
+    g += px(ox+4*S,oy-5*S, S,  3*S, '#d4a844');
+    g += px(ox+6*S,oy-4*S, S,  2*S, '#d4a844');
+    g += px(ox+3*S,oy-2*S, S,  S,   '#e8527a');
+    g += px(ox+5*S,oy-2*S, S,  S,   '#44cc88');
+    g += px(ox+4*S,oy-4*S, S,  S,   '#7ab4f0');
   } else if (cid==='santa') {
-    g += px(ox+2*S, oy-S,  5*S, S,   '#f0f0f0');
-    g += px(ox+3*S, oy-4*S,4*S, 3*S, '#cc2020');
-    g += px(ox+5*S, oy-6*S,2*S, 2*S, '#cc2020');
-    g += px(ox+6*S, oy-7*S,S,   S,   '#f0f0f0');
+    g += px(ox+2*S,oy-S,   5*S,S,   '#f0f0f0');
+    g += px(ox+3*S,oy-4*S, 4*S,3*S, '#cc2020');
+    g += px(ox+5*S,oy-6*S, 2*S,2*S, '#cc2020');
+    g += px(ox+6*S,oy-7*S, S,  S,   '#f0f0f0');
   } else if (cid==='ninja') {
-    g += px(ox+S,   oy+S,  7*S, 6*S, '#1a1a1a',0.9);
-    g += px(ox+2*S, oy+3*S,5*S, S,   '#cc3030',0.8);
+    g += px(ox+S,  oy+S,   7*S,6*S, '#1a1a1a',0.9);
+    g += px(ox+2*S,oy+3*S, 5*S,S,   '#cc3030',0.8);
   } else if (cid==='vip') {
-    g += px(ox+2*S, oy-4*S,5*S, 3*S, '#1a1a2a');
-    g += px(ox+S,   oy-S,  7*S, S,   '#1a1a2a');
-    g += px(ox+3*S, oy-4*S,3*S, S,   'rgba(255,255,255,0.2)');
+    g += px(ox+2*S,oy-4*S, 5*S,3*S, '#1a1a2a');
+    g += px(ox+S,  oy-S,   7*S,S,   '#1a1a2a');
+    g += px(ox+3*S,oy-4*S, 3*S,S,   'rgba(255,255,255,0.2)');
   }
   return g;
 }
@@ -2696,7 +2766,7 @@ function renderRoom(svgId, roomId, charId) {
   if (!container) return;
   const room = ROOM_ITEMS.find(r => r.id === roomId) || ROOM_ITEMS[0];
   const char = CHAR_ITEMS.find(c => c.id === charId) || CHAR_ITEMS[0];
-  const charSvg = drawChar(char, 148, 106);
+  const charSvg = drawChar(char, 160, 148);
   const svgContent = `<svg id="${svgId}" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;" shape-rendering="crispEdges">
     <rect width="320" height="220" fill="${room.bg}"/>
     <rect x="0" y="0" width="320" height="148" fill="${room.wall}" shape-rendering="crispEdges"/>
@@ -2817,24 +2887,23 @@ function switchShopTab(tab) {
 
 // 싸이월드 스타일 아이템 미니 프리뷰 SVG
 function itemPreviewSvg(item) {
-  const S = 2;
   if (item.type === 'room') {
     const r = item;
     const decor = getRoomDecor(r);
     return `<svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;" shape-rendering="crispEdges">
       <rect width="320" height="220" fill="${r.bg}"/>
       <rect x="0" y="0" width="320" height="148" fill="${r.wall}"/>
-      <rect x="0" y="148" width="320" height="72" fill="${r.floor}"/>
       ${decor}
-      <g opacity="0.7">${drawChar(CHAR_ITEMS[0], 160, 106)}</g>
+      <g opacity="0.9">${drawCharSmall(CHAR_ITEMS[0], 160, 148)}</g>
     </svg>`;
   }
-  // 캐릭터 프리뷰
+  // 캐릭터 프리뷰 — 작은 뷰박스에 맞게
   const cid = item.id.replace('char_','');
-  const bg = { default:'#f5eee0', paper_bag:'#f5eacc', crown:'#fff8e0', santa:'#ffe0e0', ninja:'#e0e0e8', vip:'#e8e8f5' }[cid] || '#f0ece0';
-  return `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;" shape-rendering="crispEdges">
-    <rect width="80" height="100" fill="${bg}"/>
-    <g transform="translate(40,55)">${drawChar(item, 0, 0)}</g>
+  const bgMap = { default:'#f5eee0', paper_bag:'#f5eacc', crown:'#fff8e0', santa:'#ffe0e0', ninja:'#e8e8f0', vip:'#e8e8f5' };
+  const bg = bgMap[cid] || '#f0ece0';
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;" shape-rendering="crispEdges">
+    <rect width="80" height="80" fill="${bg}"/>
+    <g>${drawCharSmall(item, 40, 76)}</g>
   </svg>`;
 }
 
