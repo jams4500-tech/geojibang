@@ -1470,6 +1470,12 @@ window.GJ.initProfile = async () => {
       window.myMonthScore = myMonthScore;
       window.myTotalScore = myTotalScore;
       window.myProfile = { ...window.myProfile, ...remote };
+      // Firebase에 저장된 아이템 불러오기
+      if (remote.items) {
+        if (remote.items.equippedRoom) myItems.equippedRoom = remote.items.equippedRoom;
+        if (remote.items.equippedChar) myItems.equippedChar = remote.items.equippedChar;
+        saveMyItems();
+      }
       if (remote.isPremium) {
         window.isPremium = true;
         const pc = document.getElementById('premium-card');
@@ -2341,8 +2347,8 @@ function resetCounseling() {
   document.getElementById('counseling-result-area').style.display = 'none';
 }
 
-// 유저 프로필 보기 (uid로 Firebase 조회)
-function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) {
+// 유저 프로필 보기
+function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile, roomId, charId) {
   try {
     const av = document.getElementById('view-profile-av');
     if (av) {
@@ -2355,9 +2361,9 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) 
     const bioEl = document.getElementById('view-profile-bio');
     if (bioEl) bioEl.textContent = bio || '한 줄 소개가 없어요';
     const monthEl = document.getElementById('view-profile-month');
-    if (monthEl) monthEl.textContent = monthScore || 0;
+    if (monthEl) monthEl.textContent = monthScore ?? 0;
     const totalEl = document.getElementById('view-profile-total');
-    if (totalEl) totalEl.textContent = totalScore || 0;
+    if (totalEl) totalEl.textContent = totalScore ?? 0;
     const gradeEl = document.getElementById('view-profile-grade');
     if (gradeEl) {
       const grade = getGrade(parseInt(totalScore) || 0);
@@ -2369,15 +2375,14 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) 
       shopBtn.style.display = isMyProfile ? 'flex' : 'none';
       shopBtn.style.flexDirection = 'column';
     }
-    // 방 렌더링
+    // 방 렌더링 — 내 프로필이면 내 아이템, 남의 프로필이면 그 사람 아이템
     try {
-      const roomId = myItems?.equippedRoom || 'room_default';
-      const charId = myItems?.equippedChar || 'char_default';
-      renderRoom('profile-room-svg', roomId, charId);
+      const rId = isMyProfile ? (myItems?.equippedRoom || 'room_default') : (roomId || 'room_default');
+      const cId = isMyProfile ? (myItems?.equippedChar || 'char_default') : (charId || 'char_default');
+      renderRoom('profile-room-svg', rId, cId);
     } catch(re) {
       console.error('[거지방] 방 렌더링 오류:', re);
     }
-    // 오버레이 열기
     document.getElementById('ov-user-profile')?.classList.add('open');
   } catch(err) {
     console.error('[거지방] viewUserProfile 오류:', err);
@@ -2386,27 +2391,38 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) 
 
 async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
   const isMyProfile = uid && myProfile.uid && uid === myProfile.uid;
-  // 내 프로필이면 바로 최신 값 사용
+
+  // 내 프로필이면 최신 로컬값 바로 사용
   if (isMyProfile) {
-    viewUserProfile(myProfile.nick || nick, myProfile.bg || bg, myProfile.c || c,
-      myProfile.bio || '', myMonthScore, myTotalScore, true);
+    viewUserProfile(
+      myProfile.nick || nick, myProfile.bg || bg, myProfile.c || c,
+      myProfile.bio || '', myMonthScore, myTotalScore, true,
+      myItems?.equippedRoom, myItems?.equippedChar
+    );
     return;
   }
-  // 먼저 아는 정보로 즉시 표시
-  viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false);
+
+  // 먼저 아는 정보로 즉시 표시 (방/스킨은 기본값)
+  viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
+
   // Firebase에서 정확한 정보 조회
   if (uid && window.GJ?.ready) {
     try {
       const data = await window.GJ.loadUser(uid);
       if (data) {
+        // monthScore: Firebase 값이 0이어도 그게 맞는 값
+        // items: Firebase에 저장된 equippedRoom/equippedChar 사용
+        const items = data.items || {};
         viewUserProfile(
           data.nick ?? nick,
           data.avatarBg ?? bg,
           data.avatarColor ?? c,
           data.bio ?? '',
-          data.monthScore ?? monthScore ?? 0,
+          data.monthScore ?? 0,
           data.totalScore ?? 0,
-          false
+          false,
+          items.equippedRoom || 'room_default',
+          items.equippedChar || 'char_default'
         );
       }
     } catch(e) { console.warn('[거지방] 프로필 조회 실패', e); }
@@ -2924,10 +2940,15 @@ function saveDecoration() {
   myItems.equippedRoom = decorateTempRoom;
   myItems.equippedChar = decorateTempChar;
   saveMyItems();
-  // 프로필 방도 업데이트
   renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
   document.getElementById('ov-decorate')?.classList.remove('open');
   showToast('🏠 방 꾸미기 저장됐어요!');
+  // Firebase에도 저장 — 다른 사람이 내 프로필 볼 때 반영
+  if (window.GJ?.ready && myProfile?.uid) {
+    window.GJ.saveUser(myProfile.uid, {
+      items: { equippedRoom: myItems.equippedRoom, equippedChar: myItems.equippedChar }
+    }).catch(() => {});
+  }
 }
 
 function openShop() {
@@ -3025,6 +3046,12 @@ function equipItem(itemId, tab) {
   saveMyItems();
   renderShopList(tab);
   renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
+  // Firebase에도 저장 — 다른 사람이 내 프로필 볼 때 반영
+  if (window.GJ?.ready && myProfile?.uid) {
+    window.GJ.saveUser(myProfile.uid, {
+      items: { equippedRoom: myItems.equippedRoom, equippedChar: myItems.equippedChar }
+    }).catch(() => {});
+  }
 }
 
 // ── 프로필 클릭 이벤트 위임 (단일 리스너) ─────────────
