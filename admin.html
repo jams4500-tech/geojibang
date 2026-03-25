@@ -379,29 +379,40 @@ async function renderShop(m){
   const users=snap.docs.map(d=>d.data());
   const ROOM_INFO=[{id:'room_default',name:'기본 방',price:0},{id:'room_cave',name:'지하 동굴방',price:200},{id:'room_rooftop',name:'옥탑방',price:300},{id:'room_gosiwon',name:'고시원',price:150},{id:'room_park',name:'공원 벤치',price:500}];
   const CHAR_INFO=[{id:'char_default',name:'기본 거지',price:0},{id:'char_paper_bag',name:'종이봉투 머리',price:100},{id:'char_crown',name:'거지왕 왕관',price:400},{id:'char_santa',name:'산타 거지',price:250},{id:'char_ninja',name:'닌자 거지',price:350},{id:'char_vip',name:'VIP 거지',price:500}];
-  m.innerHTML=`
-  <div class="page-header"><div class="page-title">🏪 상점 현황</div><div class="page-sub">아이템 가격표 · 구매 내역은 클라이언트 저장</div></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-    <div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템</div></div>
-      <table><tr><th>아이템</th><th>가격</th></tr>
-      ${ROOM_INFO.map(i=>`<tr><td>${i.name}</td><td>${i.price===0?'<span class="badge badge-green">무료</span>':'<span class="badge badge-gold">'+i.price+'점</span>'}</td></tr>`).join('')}
-      </table>
-    </div>
-    <div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨</div></div>
-      <table><tr><th>아이템</th><th>가격</th></tr>
-      ${CHAR_INFO.map(i=>`<tr><td>${i.name}</td><td>${i.price===0?'<span class="badge badge-green">무료</span>':'<span class="badge badge-gold">'+i.price+'점</span>'}</td></tr>`).join('')}
-      </table>
-    </div>
-  </div>
-  <div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>
-    <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">
-      ${[{l:'1000점+ (환전가능)',f:u=>(u.totalScore||0)>=1000,c:'var(--gold)'},
-         {l:'500~999점',f:u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000,c:'var(--green)'},
-         {l:'100~499점',f:u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500,c:'var(--blue)'},
-         {l:'100점 미만',f:u=>(u.totalScore||0)<100,c:'var(--text3)'}
-        ].map(s=>`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;"><div style="font-size:22px;font-weight:700;color:${s.c};">${users.filter(s.f).length}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${s.l}</div></div>`).join('')}
-    </div>
-  </div>`;
+
+  const cnt1000 = users.filter(u=>(u.totalScore||0)>=1000).length;
+  const cnt500  = users.filter(u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000).length;
+  const cnt100  = users.filter(u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500).length;
+  const cntLow  = users.filter(u=>(u.totalScore||0)<100).length;
+
+  const priceBadge = p => p===0
+    ? '<span class="badge badge-green">무료</span>'
+    : '<span class="badge badge-gold">'+p+'점</span>';
+
+  const distCard = (cnt, label, color) =>
+    '<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;">' +
+    '<div style="font-size:22px;font-weight:700;color:'+color+';">'+cnt+'</div>' +
+    '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+label+'</div></div>';
+
+  m.innerHTML =
+    '<div class="page-header"><div class="page-title">🏪 상점 현황</div><div class="page-sub">아이템 가격표 · 구매 내역은 클라이언트 저장</div></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+      '<div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템</div></div>' +
+        '<table><tr><th>아이템</th><th>가격</th></tr>' +
+        ROOM_INFO.map(i=>'<tr><td>'+i.name+'</td><td>'+priceBadge(i.price)+'</td></tr>').join('') +
+        '</table></div>' +
+      '<div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨</div></div>' +
+        '<table><tr><th>아이템</th><th>가격</th></tr>' +
+        CHAR_INFO.map(i=>'<tr><td>'+i.name+'</td><td>'+priceBadge(i.price)+'</td></tr>').join('') +
+        '</table></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>' +
+      '<div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">' +
+        distCard(cnt1000,'1000점+ (환전가능)','var(--gold)') +
+        distCard(cnt500,'500~999점','var(--green)') +
+        distCard(cnt100,'100~499점','var(--blue)') +
+        distCard(cntLow,'100점 미만','var(--text3)') +
+      '</div></div>';
 }
 
 function renderReports(m){
