@@ -1320,6 +1320,7 @@ if (window.GJ?.ready) {
     RANKS.length = 0;
     rankers.forEach((r, i) => {
       RANKS.push({
+        uid:   r.uid || '',
         name:  r.nick || '익명',
         desc:  '거지력 ' + (r.monthScore || 0) + '점',
         score: (r.monthScore || 0) + '점',
@@ -2608,15 +2609,11 @@ function renderRoom(svgId, roomId, charId) {
 }
 
 function openMyProfile() {
-  viewUserProfile(
-    myProfile.nick || '나',
-    myProfile.bg || '#3a1520',
-    myProfile.c || '#e8527a',
-    myProfile.bio || '',
-    myMonthScore,
-    myTotalScore,
-    true // 내 프로필
-  );
+  const nick = myProfile?.nick || window.myProfile?.nick || '나';
+  const bg   = myProfile?.bg   || window.myProfile?.bg   || '#3a1520';
+  const c    = myProfile?.c    || window.myProfile?.c    || '#e8527a';
+  const bio  = myProfile?.bio  || window.myProfile?.bio  || '';
+  viewUserProfile(nick, bg, c, bio, myMonthScore, myTotalScore, true);
 }
 
 function openShop() {
@@ -3058,6 +3055,16 @@ window.myMonthScore = myMonthScore;
 window.myTotalScore = myTotalScore;
 window.isPremium = isPremium;
 window.updateMyRankUI = updateMyRankUI;
+
+// 프로필/상점 관련 함수 전역 노출
+window.viewUserProfile = viewUserProfile;
+window.viewUserProfileByUid = viewUserProfileByUid;
+window.openMyProfile = openMyProfile;
+window.openShop = openShop;
+window.switchShopTab = switchShopTab;
+window.buyItem = buyItem;
+window.equipItem = equipItem;
+window.buildRank = buildRank;
 
 // addToFeed — Firebase 연동 버전으로 교체
 const _origAddToFeed = addToFeed;
