@@ -447,21 +447,43 @@ window.submitModal=async()=>{
   if(!modal)return;
   try{
     if(modal.type==='post'){
-      await updateDoc(doc(db,'geojibang_posts',modal.id),{item:document.getElementById('m-item').value,amount:document.getElementById('m-amount').value,desc:document.getElementById('m-desc').value,updatedAt:serverTimestamp()});
-    }else if(modal.type==='user'){
-      await updateDoc(doc(db,'geojibang_users',modal.id),{nick:document.getElementById('m-nick').value,bio:document.getElementById('m-bio').value,monthScore:parseInt(document.getElementById('m-month').value)||0,totalScore:parseInt(document.getElementById('m-total').value)||0,isPremium:document.getElementById('m-premium').value==='true'});
-    }else if(modal.type==='score'){
+      await updateDoc(doc(db,'geojibang_posts',modal.id),{
+        item:document.getElementById('m-item').value,
+        amount:document.getElementById('m-amount').value,
+        desc:document.getElementById('m-desc').value,
+        updatedAt:serverTimestamp()
+      });
+    } else if(modal.type==='user'){
+      const monthVal = parseInt(document.getElementById('m-month').value);
+      const totalVal = parseInt(document.getElementById('m-total').value);
+      // setDoc + merge:true 로 덮어쓰기 보장
+      await setDoc(doc(db,'geojibang_users',modal.id),{
+        nick: document.getElementById('m-nick').value,
+        bio:  document.getElementById('m-bio').value,
+        monthScore: isNaN(monthVal) ? 0 : monthVal,
+        totalScore: isNaN(totalVal) ? 0 : totalVal,
+        isPremium:  document.getElementById('m-premium').value==='true',
+        updatedAt:  serverTimestamp()
+      }, { merge: true });
+    } else if(modal.type==='score'){
       const md=parseInt(document.getElementById('m-md').value)||0;
       const td=parseInt(document.getElementById('m-td').value)||0;
-      const upd={};
-      if(md!==0)upd.monthScore=increment(md);
-      if(td!==0)upd.totalScore=increment(td);
-      if(Object.keys(upd).length)await updateDoc(doc(db,'geojibang_users',modal.id),upd);
+      // 현재 값 먼저 읽어서 정확한 값으로 setDoc
+      const snap = await getDoc(doc(db,'geojibang_users',modal.id));
+      const cur = snap.data() || {};
+      const newMonth = Math.max(0, (cur.monthScore||0) + md);
+      const newTotal = Math.max(0, (cur.totalScore||0) + td);
+      await setDoc(doc(db,'geojibang_users',modal.id),{
+        monthScore: newMonth,
+        totalScore: newTotal,
+        updatedAt:  serverTimestamp()
+      }, { merge: true });
     }
-    closeModal();toast('✅ 저장됐어요!');
+    closeModal();
+    toast('✅ 저장됐어요! (앱 새로고침 시 반영)');
     const cur=document.querySelector('.nav-item.active')?.id?.replace('nav-','');
-    if(cur)setTimeout(()=>showPage(cur),300);
-  }catch(e){toast('⚠️ 실패: '+e.message);}
+    if(cur) setTimeout(()=>showPage(cur), 500);
+  } catch(e) { toast('⚠️ 실패: '+e.message); console.error(e); }
 };
 window.closeModal=()=>{document.getElementById('edit-modal').classList.remove('open');modal=null;};
 

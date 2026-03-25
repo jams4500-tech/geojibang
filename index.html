@@ -1530,6 +1530,27 @@ function timeAgo(date) {
 // 앱 로드 후 프로필 초기화
 setTimeout(() => window.GJ.initProfile(), 500);
 
+// 탭/앱이 다시 포커스될 때 Firebase에서 최신 점수 다시 로드
+// (어드민에서 수정 후 앱으로 돌아오면 자동 반영)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && myProfile?.uid && window.GJ?.ready) {
+    try {
+      const remote = await window.GJ.loadUser(myProfile.uid);
+      if (remote) {
+        const newMonth = remote.monthScore ?? myMonthScore;
+        const newTotal = remote.totalScore ?? myTotalScore;
+        // 현재 로컬 값과 다를 때만 업데이트 (불필요한 덮어쓰기 방지)
+        if (newMonth !== myMonthScore || newTotal !== myTotalScore) {
+          myMonthScore = newMonth;
+          myTotalScore = newTotal;
+          clearTimeout(updateMyRankUI._t); // debounce 취소
+          _updateRankUIOnly();
+        }
+      }
+    } catch(e) {}
+  }
+});
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
@@ -2531,116 +2552,110 @@ function adjustColor(hex, amt) {
   } catch(e){ return hex||'#888'; }
 }
 
-// 싸이월드 스타일 캐릭터 프리뷰 (상점/꾸미기용 소형)
-function drawCharSmall(char, cx, groundY) {
-  // S=3으로 drawChar 내부를 흉내냄 (독립 함수)
-  const S = 3;
-  const cid = (char.id||'char_default').replace('char_','');
-  const palettes = {
-    default:   { skin:'#f5c88a', hair:'#3a1a0a', shirt:'#7ab4f0', pants:'#2a4a8a', shoe:'#1a1a2a' },
-    paper_bag: { skin:'#f5c88a', hair:'#c8a840', shirt:'#e8c870', pants:'#8a6820', shoe:'#3a2810' },
-    crown:     { skin:'#f5c88a', hair:'#2a1a08', shirt:'#e8d080', pants:'#8a6020', shoe:'#1a1a2a' },
-    santa:     { skin:'#f5c88a', hair:'#f0f0f0', shirt:'#cc2020', pants:'#cc2020', shoe:'#1a1a2a' },
-    ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', shirt:'#1a1a1a', pants:'#1a1a1a', shoe:'#0a0a0a' },
-    vip:       { skin:'#f5c88a', hair:'#1a1a2a', shirt:'#f8f8f8', pants:'#1a1a3a', shoe:'#0a0a1a' },
+// ── 귀여운 2등신 도트 캐릭터 (공통 코어) ──────────────────
+function _drawCharCore(char, cx, groundY, S) {
+  const cid = (char?.id||'char_default').replace('char_','');
+  const pal = {
+    default:   { skin:'#fdd9a0', hair:'#4a2010', shirt:'#6ab4f8', pants:'#3a5aaa', shoe:'#22120a', acc:'#e8527a' },
+    paper_bag: { skin:'#fdd9a0', hair:'#c8a840', shirt:'#f0d060', pants:'#8a6820', shoe:'#3a2010', acc:'#c8a840' },
+    crown:     { skin:'#fdd9a0', hair:'#2a1808', shirt:'#f8e880', pants:'#9a7020', shoe:'#1a1208', acc:'#d4a844' },
+    santa:     { skin:'#fdd9a0', hair:'#f8f8f8', shirt:'#dd2020', pants:'#dd2020', shoe:'#1a1a1a', acc:'#f8f8f8' },
+    ninja:     { skin:'#888888', hair:'#111111', shirt:'#181818', pants:'#181818', shoe:'#080808', acc:'#dd3030' },
+    vip:       { skin:'#fdd9a0', hair:'#181828', shirt:'#f8f8f8', pants:'#181838', shoe:'#080818', acc:'#d4a844' },
   };
-  const c = palettes[cid] || palettes.default;
-  const ox = cx - 8*S, oy = groundY - 18*S;
+  const c = pal[cid] || pal.default;
+  const ox = cx - 5*S;
+  const oy = groundY - 17*S;
   let g = '';
-  g += px(ox+3*S,oy,2*S,S,c.hair); g += px(ox+2*S,oy+S,5*S,S,c.hair);
-  g += px(ox+2*S,oy+2*S,5*S,4*S,c.skin);
-  g += px(ox+3*S,oy+3*S,S,S,'#1a1010'); g += px(ox+5*S,oy+3*S,S,S,'#1a1010');
-  g += px(ox+3*S,oy+5*S,3*S,S,'#d06060');
-  g += px(ox+2*S,oy+7*S,5*S,5*S,c.shirt);
-  g += px(ox+S,oy+7*S,S,4*S,c.shirt); g += px(ox+7*S,oy+7*S,S,4*S,c.shirt);
-  g += px(ox+2*S,oy+12*S,2*S,4*S,c.pants); g += px(ox+5*S,oy+12*S,2*S,4*S,c.pants);
-  g += px(ox+S,oy+16*S,3*S,S,c.shoe); g += px(ox+5*S,oy+16*S,3*S,S,c.shoe);
-  if (cid==='paper_bag') { g += px(ox+2*S,oy-3*S,5*S,4*S,'#d4a840'); g += px(ox+3*S,oy-2*S,S,S,'#2a1808'); g += px(ox+5*S,oy-2*S,S,S,'#2a1808'); }
-  else if (cid==='crown') { g += px(ox+2*S,oy-2*S,5*S,2*S,'#d4a844'); g += px(ox+4*S,oy-5*S,S,3*S,'#d4a844'); }
-  else if (cid==='santa') { g += px(ox+2*S,oy-S,5*S,S,'#f0f0f0'); g += px(ox+3*S,oy-4*S,4*S,3*S,'#cc2020'); }
-  else if (cid==='ninja') { g += px(ox+S,oy+S,7*S,6*S,'#1a1a1a',0.9); g += px(ox+2*S,oy+3*S,5*S,S,'#cc3030',0.8); }
-  else if (cid==='vip') { g += px(ox+2*S,oy-4*S,5*S,3*S,'#1a1a2a'); g += px(ox+S,oy-S,7*S,S,'#1a1a2a'); }
-  return g;
-}
-// 방 안 메인 캐릭터 (2배 크기, S=6)
-function drawChar(char, cx, groundY) {
-  const S = 6;
-  const cid = (char.id||'char_default').replace('char_','');
-  const palettes = {
-    default:   { skin:'#f5c88a', hair:'#3a1a0a', shirt:'#7ab4f0', pants:'#2a4a8a', shoe:'#1a1a2a' },
-    paper_bag: { skin:'#f5c88a', hair:'#c8a840', shirt:'#e8c870', pants:'#8a6820', shoe:'#3a2810' },
-    crown:     { skin:'#f5c88a', hair:'#2a1a08', shirt:'#e8d080', pants:'#8a6020', shoe:'#1a1a2a' },
-    santa:     { skin:'#f5c88a', hair:'#f0f0f0', shirt:'#cc2020', pants:'#cc2020', shoe:'#1a1a2a' },
-    ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', shirt:'#1a1a1a', pants:'#1a1a1a', shoe:'#0a0a0a' },
-    vip:       { skin:'#f5c88a', hair:'#1a1a2a', shirt:'#f8f8f8', pants:'#1a1a3a', shoe:'#0a0a1a' },
-  };
-  const c = palettes[cid] || palettes.default;
-  const ox = cx - 8*S, oy = groundY - 18*S;
-  let g = '';
-  // 머리카락
-  g += px(ox+3*S,oy,      2*S,S,   c.hair);
-  g += px(ox+2*S,oy+S,    5*S,S,   c.hair);
+
   // 얼굴
-  g += px(ox+2*S,oy+2*S,  5*S,4*S, c.skin);
-  g += px(ox+3*S,oy+3*S,  S,  S,   '#1a1010');
-  g += px(ox+5*S,oy+3*S,  S,  S,   '#1a1010');
-  g += px(ox+3*S,oy+5*S,  3*S,S,   '#d06060');
-  g += px(ox+2*S,oy+4*S,  S,  S,   '#f5a0a0',0.6);
-  g += px(ox+6*S,oy+4*S,  S,  S,   '#f5a0a0',0.6);
-  // 몸통
-  g += px(ox+2*S,oy+7*S,  5*S,5*S, c.shirt);
-  g += px(ox+3*S,oy+7*S,  3*S,S,   adjustColor(c.shirt,-30));
-  g += px(ox+2*S,oy+7*S,  S,  5*S, adjustColor(c.shirt,-20));
-  g += px(ox+6*S,oy+7*S,  S,  5*S, adjustColor(c.shirt,-30));
+  g += px(ox+S,   oy,     6*S, 7*S, c.skin);
+  g += px(ox,     oy+S,   S,   5*S, c.skin);
+  g += px(ox+7*S, oy+S,   S,   5*S, c.skin);
+  g += px(ox+S,   oy,     6*S, S,   adjustColor(c.skin,-20));
+  // 머리카락
+  g += px(ox+S,   oy-2*S, 6*S, 3*S, c.hair);
+  g += px(ox,     oy-S,   S,   2*S, c.hair);
+  g += px(ox+7*S, oy-S,   S,   2*S, c.hair);
+  g += px(ox+S,   oy-2*S, 2*S, S,   adjustColor(c.hair,20));
+  // 눈 (크고 귀엽게)
+  g += px(ox+S,   oy+2*S, 2*S, 2*S, '#ffffff');
+  g += px(ox+5*S, oy+2*S, 2*S, 2*S, '#ffffff');
+  g += px(ox+2*S, oy+2*S, S,   2*S, '#1a1a2a');
+  g += px(ox+6*S, oy+2*S, S,   2*S, '#1a1a2a');
+  g += px(ox+S,   oy+2*S, S,   S,   '#6699ff',0.7);
+  g += px(ox+5*S, oy+2*S, S,   S,   '#6699ff',0.7);
+  // 볼 홍조
+  g += px(ox,     oy+3*S, 2*S, S,   '#ff9999',0.55);
+  g += px(ox+6*S, oy+3*S, 2*S, S,   '#ff9999',0.55);
+  // 입
+  g += px(ox+2*S, oy+5*S, 4*S, S,   '#e07070');
+  g += px(ox+3*S, oy+5*S, 2*S, S,   '#cc4444');
+  // 목
+  g += px(ox+3*S, oy+7*S, 2*S, S,   c.skin);
+  // 상체
+  g += px(ox+S,   oy+8*S, 6*S, 4*S, c.shirt);
+  g += px(ox+S,   oy+8*S, S,   4*S, adjustColor(c.shirt,-25));
+  g += px(ox+6*S, oy+8*S, S,   4*S, adjustColor(c.shirt,-35));
+  g += px(ox+2*S, oy+8*S, 4*S, S,   adjustColor(c.shirt,15));
   // 팔
-  g += px(ox+S,  oy+7*S,  S,  4*S, c.shirt);
-  g += px(ox+7*S,oy+7*S,  S,  4*S, c.shirt);
-  g += px(ox+S,  oy+11*S, S,  S,   c.skin);
-  g += px(ox+7*S,oy+11*S, S,  S,   c.skin);
-  // 다리
-  g += px(ox+2*S,oy+12*S, 2*S,4*S, c.pants);
-  g += px(ox+5*S,oy+12*S, 2*S,4*S, c.pants);
-  g += px(ox+2*S,oy+12*S, S,  4*S, adjustColor(c.pants,-25));
+  g += px(ox,     oy+8*S, S,   4*S, c.shirt);
+  g += px(ox+7*S, oy+8*S, S,   4*S, c.shirt);
+  g += px(ox,     oy+12*S,S,   S,   c.skin);
+  g += px(ox+7*S, oy+12*S,S,   S,   c.skin);
+  // 하체
+  g += px(ox+S,   oy+12*S,2*S, 3*S, c.pants);
+  g += px(ox+5*S, oy+12*S,2*S, 3*S, c.pants);
+  g += px(ox+S,   oy+12*S,S,   3*S, adjustColor(c.pants,-25));
   // 신발
-  g += px(ox+S,  oy+16*S, 3*S,S,   c.shoe);
-  g += px(ox+5*S,oy+16*S, 3*S,S,   c.shoe);
-  g += px(ox+S,  oy+17*S, 2*S,S,   adjustColor(c.shoe,20));
-  g += px(ox+5*S,oy+17*S, 2*S,S,   adjustColor(c.shoe,20));
+  g += px(ox,     oy+15*S,3*S, 2*S, c.shoe);
+  g += px(ox+5*S, oy+15*S,3*S, 2*S, c.shoe);
+  g += px(ox,     oy+15*S,3*S, S,   adjustColor(c.shoe,20));
   // 깡통
-  g += px(ox-S,  oy+9*S,  3*S,4*S, '#b0a090');
-  g += px(ox-S,  oy+9*S,  3*S,S,   '#d0c0b0');
-  g += px(ox,    oy+10*S, S,  S,   'rgba(255,255,255,0.3)');
-  // 모자
+  g += px(ox-2*S, oy+10*S,2*S, 3*S, '#c0a888');
+  g += px(ox-2*S, oy+10*S,2*S, S,   '#e0c8a0');
+  g += px(ox-2*S, oy+11*S,S,   S,   'rgba(255,255,255,0.35)');
+  g += px(ox-2*S, oy+12*S,2*S, S,   '#a09070');
+
+  // 모자/액세서리
   if (cid==='paper_bag') {
-    g += px(ox+2*S,oy-3*S, 5*S,4*S, '#d4a840');
-    g += px(ox+3*S,oy-2*S, S,  S,   '#2a1808');
-    g += px(ox+5*S,oy-2*S, S,  S,   '#2a1808');
-    g += px(ox+2*S,oy+S,   5*S,S,   adjustColor('#d4a840',-30));
+    g += px(ox+S,   oy-4*S, 6*S, 5*S, '#d4a840');
+    g += px(ox+S,   oy-4*S, 6*S, S,   adjustColor('#d4a840',25));
+    g += px(ox+2*S, oy-2*S, S,   S,   '#2a1808');
+    g += px(ox+5*S, oy-2*S, S,   S,   '#2a1808');
+    g += px(ox+3*S, oy-S,   2*S, S,   '#8a6020');
   } else if (cid==='crown') {
-    g += px(ox+2*S,oy-2*S, 5*S,2*S, '#d4a844');
-    g += px(ox+2*S,oy-4*S, S,  2*S, '#d4a844');
-    g += px(ox+4*S,oy-5*S, S,  3*S, '#d4a844');
-    g += px(ox+6*S,oy-4*S, S,  2*S, '#d4a844');
-    g += px(ox+3*S,oy-2*S, S,  S,   '#e8527a');
-    g += px(ox+5*S,oy-2*S, S,  S,   '#44cc88');
-    g += px(ox+4*S,oy-4*S, S,  S,   '#7ab4f0');
+    g += px(ox+S,   oy-2*S, 6*S, 2*S, '#d4a844');
+    g += px(ox+S,   oy-5*S, 2*S, 3*S, '#d4a844');
+    g += px(ox+3*S, oy-6*S, 2*S, 4*S, '#d4a844');
+    g += px(ox+5*S, oy-5*S, 2*S, 3*S, '#d4a844');
+    g += px(ox+2*S, oy-2*S, S,   S,   '#e8527a');
+    g += px(ox+4*S, oy-2*S, S,   S,   '#7ab4f0');
+    g += px(ox+6*S, oy-2*S, S,   S,   '#44cc88');
+    g += px(ox+3*S, oy-5*S, 2*S, S,   '#ffffff',0.5);
   } else if (cid==='santa') {
-    g += px(ox+2*S,oy-S,   5*S,S,   '#f0f0f0');
-    g += px(ox+3*S,oy-4*S, 4*S,3*S, '#cc2020');
-    g += px(ox+5*S,oy-6*S, 2*S,2*S, '#cc2020');
-    g += px(ox+6*S,oy-7*S, S,  S,   '#f0f0f0');
+    g += px(ox,     oy-S,   8*S, 2*S, '#f8f8f8');
+    g += px(ox+S,   oy-4*S, 6*S, 3*S, '#dd2020');
+    g += px(ox+3*S, oy-6*S, 4*S, 2*S, '#dd2020');
+    g += px(ox+6*S, oy-7*S, 2*S, 2*S, '#f8f8f8');
+    g += px(ox+2*S, oy-4*S, 2*S, S,   '#ff6666',0.5);
   } else if (cid==='ninja') {
-    g += px(ox+S,  oy+S,   7*S,6*S, '#1a1a1a',0.9);
-    g += px(ox+2*S,oy+3*S, 5*S,S,   '#cc3030',0.8);
+    g += px(ox,     oy-S,   8*S, 8*S, '#111111',0.88);
+    g += px(ox+S,   oy+3*S, 6*S, 2*S, '#cc3030');
+    g += px(ox+S,   oy+3*S, S,   2*S, '#1a1a1a');
+    g += px(ox+6*S, oy+3*S, S,   2*S, '#1a1a1a');
   } else if (cid==='vip') {
-    g += px(ox+2*S,oy-4*S, 5*S,3*S, '#1a1a2a');
-    g += px(ox+S,  oy-S,   7*S,S,   '#1a1a2a');
-    g += px(ox+3*S,oy-4*S, 3*S,S,   'rgba(255,255,255,0.2)');
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#181828');
+    g += px(ox,     oy-S,   8*S, S,   '#181828');
+    g += px(ox+2*S, oy-4*S, 4*S, S,   '#2a2a40');
+    g += px(ox+3*S, oy+9*S, 2*S, 2*S, c.acc);
+    g += px(ox+3*S, oy+10*S,2*S, 2*S, c.acc);
   }
   return g;
 }
+function drawCharSmall(char, cx, groundY) { return _drawCharCore(char, cx, groundY, 3); }
+function drawChar(char, cx, groundY)      { return _drawCharCore(char, cx, groundY, 6); }
 
-// 싸이월드 감성 방 배경들 (밝은 톤)
 function getRoomDecor(room) {
   const floorTile = (x,y,w,h,c1,c2) => {
     let t=''; for(let tx=x;tx<x+w;tx+=8) for(let ty=y;ty<y+h;ty+=8) {
