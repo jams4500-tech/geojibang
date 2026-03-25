@@ -6,130 +6,122 @@
 <title>거지방 어드민</title>
 <style>
 :root {
-  --bg: #0e0a0c; --surface: #1a1218; --surface2: #231820;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-  --text: #f0e8ec; --text2: #c0a8b4; --text3: #7a5f68;
-  --pink: #e8527a; --pink-dim: rgba(232,82,122,0.12);
-  --green: #44cc88; --red: #ff5555; --gold: #d4a844;
-  --radius: 12px; --radius-sm: 8px;
+  --bg:#0e0a0c; --surface:#1a1218; --surface2:#231820; --surface3:#2a1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0e8ec; --text2:#c0a8b4; --text3:#7a5f68;
+  --pink:#e8527a; --pink-dim:rgba(232,82,122,0.12);
+  --green:#44cc88; --red:#ff5555; --gold:#d4a844; --blue:#7ab4f0;
+  --radius:12px; --radius-sm:8px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'Noto Sans KR',sans-serif; min-height:100vh; }
-
-.admin-layout { display:flex; min-height:100vh; }
-.sidebar { width:220px; background:var(--surface); border-right:1px solid var(--border); padding:20px 0; flex-shrink:0; }
-.sidebar-logo { font-size:18px; font-weight:900; color:var(--pink); padding:0 20px 20px; border-bottom:1px solid var(--border); }
-.sidebar-logo span { font-size:11px; color:var(--text3); font-weight:400; display:block; margin-top:2px; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:12px 20px; cursor:pointer; color:var(--text2); font-size:13px; transition:all .15s; }
-.nav-item:hover, .nav-item.active { background:var(--pink-dim); color:var(--pink); }
-.nav-icon { font-size:16px; width:20px; text-align:center; }
-
-.main { flex:1; padding:24px; overflow-y:auto; }
-.page-title { font-size:20px; font-weight:700; margin-bottom:4px; }
-.page-sub { font-size:13px; color:var(--text3); margin-bottom:20px; }
-
-.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
-.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
-.stat-label { font-size:11px; color:var(--text3); margin-bottom:6px; }
-.stat-val { font-size:24px; font-weight:700; color:var(--text); }
-.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
-
-.section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
-.section-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
-.section-title { font-size:14px; font-weight:600; }
-
-.search-bar { display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border); }
-.search-input { flex:1; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
-.search-input:focus { border-color:var(--pink); }
-.btn { padding:8px 16px; border-radius:var(--radius-sm); border:none; cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; transition:all .15s; }
-.btn-pink { background:var(--pink); color:#fff; }
-.btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--text2); }
-.btn-ghost:hover { border-color:var(--pink); color:var(--pink); }
-.btn-red { background:rgba(255,85,85,0.15); border:1px solid rgba(255,85,85,0.3); color:var(--red); }
-.btn-red:hover { background:rgba(255,85,85,0.25); }
-.btn-sm { padding:4px 10px; font-size:11px; }
-
-table { width:100%; border-collapse:collapse; }
-th { text-align:left; font-size:11px; color:var(--text3); font-weight:500; padding:10px 16px; border-bottom:1px solid var(--border); }
-td { padding:12px 16px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:middle; }
-tr:last-child td { border-bottom:none; }
-tr:hover td { background:var(--surface2); }
-
-.badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
-.badge-pink { background:var(--pink-dim); color:var(--pink); }
-.badge-green { background:rgba(68,204,136,.15); color:var(--green); }
-.badge-gold { background:rgba(212,168,68,.15); color:var(--gold); }
-.badge-gray { background:var(--surface2); color:var(--text3); }
-
-.avatar-sm { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
-
-.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); }
-.tab-btn { padding:10px 20px; font-size:13px; cursor:pointer; background:transparent; border:none; color:var(--text3); font-family:inherit; border-bottom:2px solid transparent; transition:all .15s; }
-.tab-btn.active { color:var(--pink); border-bottom-color:var(--pink); }
-
-.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
-.modal-bg.open { display:flex; }
-.modal { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:24px; min-width:400px; max-width:540px; width:90%; }
-.modal h3 { font-size:16px; margin-bottom:16px; }
-.form-group { margin-bottom:14px; }
-.form-label { font-size:12px; color:var(--text3); margin-bottom:6px; display:block; }
-.form-input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
-.form-input:focus { border-color:var(--pink); }
-.modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
-
-.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid var(--border2); color:var(--text); font-size:13px; padding:10px 20px; border-radius:30px; z-index:999; transition:transform .3s; white-space:nowrap; pointer-events:none; }
-.toast.show { transform:translateX(-50%) translateY(0); }
-
-.loading { text-align:center; padding:40px; color:var(--text3); }
-.empty { text-align:center; padding:40px; color:var(--text3); font-size:13px; }
-
-#login-screen { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; align-items:center; justify-content:center; }
-.login-box { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:32px; width:320px; text-align:center; }
-.login-box h2 { color:var(--pink); margin-bottom:4px; font-size:20px; }
-.login-box p { color:var(--text3); font-size:13px; margin-bottom:20px; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;min-height:100vh;font-size:14px;}
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;}
+.login-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:36px 32px;width:340px;text-align:center;}
+.login-logo{font-size:40px;margin-bottom:8px;}
+.login-title{font-size:22px;font-weight:900;color:var(--pink);margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo-title{font-size:17px;font-weight:900;color:var(--pink);}
+.sidebar-logo-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.sidebar-stats{padding:14px 18px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mini-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;}
+.mini-stat-val{font-size:18px;font-weight:700;color:var(--pink);}
+.mini-stat-label{font-size:10px;color:var(--text3);margin-top:1px;}
+nav{padding:10px 8px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;color:var(--text2);font-size:13px;border-radius:var(--radius-sm);transition:all .15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--pink-dim);color:var(--pink);font-weight:600;}
+.nav-icon{font-size:15px;width:20px;text-align:center;}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);}
+.main{flex:1;overflow-y:auto;padding:24px;}
+.page-header{margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;}
+.page-sub{font-size:13px;color:var(--text3);margin-top:4px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.stat-val{font-size:28px;font-weight:700;color:var(--text);line-height:1;}
+.stat-label{font-size:11px;color:var(--text3);margin-top:6px;}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:4px;font-weight:600;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.card-title{font-size:14px;font-weight:600;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;color:var(--text3);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--surface2);}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.badge-pink{background:var(--pink-dim);color:var(--pink);}
+.badge-green{background:rgba(68,204,136,.15);color:var(--green);}
+.badge-gold{background:rgba(212,168,68,.15);color:var(--gold);}
+.badge-blue{background:rgba(122,180,240,.15);color:var(--blue);}
+.badge-gray{background:var(--surface2);color:var(--text3);}
+.badge-red{background:rgba(255,85,85,.15);color:var(--red);}
+.btn{padding:7px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
+.btn-pink{background:var(--pink);color:#fff;}.btn-pink:hover{background:#d44068;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);}.btn-ghost:hover{border-color:var(--pink);color:var(--pink);}
+.btn-red{background:rgba(255,85,85,.15);border:1px solid rgba(255,85,85,.3);color:var(--red);}.btn-red:hover{background:rgba(255,85,85,.25);}
+.btn-gold{background:rgba(212,168,68,.15);border:1px solid rgba(212,168,68,.3);color:var(--gold);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+.form-input:focus{border-color:var(--pink);}
+.search-bar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.av{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;min-width:420px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:16px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:5px;display:block;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border2);color:var(--text);font-size:13px;padding:10px 20px;border-radius:30px;z-index:999;transition:transform .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.loading{text-align:center;padding:48px;color:var(--text3);}
+.empty{text-align:center;padding:48px;color:var(--text3);font-size:13px;line-height:1.8;}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
 
-<!-- 로그인 화면 -->
 <div id="login-screen">
   <div class="login-box">
-    <h2>🥫 거지방 어드민</h2>
-    <p>관리자 비밀번호를 입력하세요</p>
-    <input class="form-input" id="pw-input" type="password" placeholder="비밀번호" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="login-logo">🥫</div>
+    <div class="login-title">거지방 어드민</div>
+    <div class="login-sub">We Are Geoji · 관리자 전용</div>
+    <input class="form-input" id="pw-input" type="password" placeholder="비밀번호 입력" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPw()">
     <button class="btn btn-pink" style="width:100%;padding:12px;" onclick="checkPw()">로그인</button>
-    <div id="pw-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">비밀번호가 틀렸어요</div>
+    <div id="pw-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">비밀번호가 틀렸어요</div>
   </div>
 </div>
 
-<!-- 어드민 레이아웃 -->
-<div class="admin-layout" id="admin-app" style="display:none;">
+<div class="layout" id="admin-app" style="display:none;">
   <div class="sidebar">
-    <div class="sidebar-logo">거지방 어드민<span>We Are Geoji</span></div>
-    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
-      <span class="nav-icon">📊</span> 대시보드
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">🥫 거지방 어드민</div>
+      <div class="sidebar-logo-sub">We Are Geoji · geojibang-5254c</div>
     </div>
-    <div class="nav-item" onclick="showPage('posts')" id="nav-posts">
-      <span class="nav-icon">📝</span> 게시물 관리
+    <div class="sidebar-stats">
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-users">-</div><div class="mini-stat-label">전체 회원</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-posts">-</div><div class="mini-stat-label">게시물</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-premium" style="color:var(--gold);">-</div><div class="mini-stat-label">구독 회원</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-score" style="color:var(--green);font-size:14px;">-</div><div class="mini-stat-label">총 거지력</div></div>
     </div>
-    <div class="nav-item" onclick="showPage('users')" id="nav-users">
-      <span class="nav-icon">👥</span> 회원 관리
-    </div>
-    <div class="nav-item" onclick="showPage('ranking')" id="nav-ranking">
-      <span class="nav-icon">🏆</span> 랭킹 관리
-    </div>
-    <div class="nav-item" onclick="showPage('reports')" id="nav-reports">
-      <span class="nav-icon">🚨</span> 신고 관리
-    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>대시보드</div>
+      <div class="nav-item" onclick="showPage('posts')" id="nav-posts"><span class="nav-icon">📝</span>게시물 관리</div>
+      <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon">👥</span>회원 관리</div>
+      <div class="nav-item" onclick="showPage('ranking')" id="nav-ranking"><span class="nav-icon">🏆</span>랭킹 관리</div>
+      <div class="nav-item" onclick="showPage('shop')" id="nav-shop"><span class="nav-icon">🏪</span>상점 현황</div>
+      <div class="nav-item" onclick="showPage('reports')" id="nav-reports"><span class="nav-icon">🚨</span>신고 관리</div>
+    </nav>
+    <div class="sidebar-footer">pw: gj2026admin · v2.1</div>
   </div>
-
-  <div class="main" id="main-content">
-    <!-- 페이지가 JS로 주입됩니다 -->
-    <div class="loading">Firebase 연결 중...</div>
-  </div>
+  <div class="main" id="main-content"><div class="loading">🥫 Firebase 연결 중...</div></div>
 </div>
 
-<!-- 수정 모달 -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <h3 id="modal-title">수정</h3>
@@ -140,330 +132,313 @@ tr:hover td { background:var(--surface2); }
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import {
-  getFirestore, collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
-  query, orderBy, limit, where, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,query,orderBy,limit,serverTimestamp,increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-const ADMIN_PW = 'gj2026admin';
-const GJ_CONFIG = {
-  apiKey: "AIzaSyAXv86i3jRToWBr2T9nv9o-BCpYWfHew9k",
-  authDomain: "geojibang-5254c.firebaseapp.com",
-  projectId: "geojibang-5254c",
-  storageBucket: "geojibang-5254c.firebasestorage.app",
-  messagingSenderId: "856762520566",
-  appId: "1:856762520566:web:4c8289a4ad8f559a426dd7"
+const ADMIN_PW='gj2026admin';
+const FB={apiKey:"AIzaSyAXv86i3jRToWBr2T9nv9o-BCpYWfHew9k",authDomain:"geojibang-5254c.firebaseapp.com",projectId:"geojibang-5254c",storageBucket:"geojibang-5254c.firebasestorage.app",messagingSenderId:"856762520566",appId:"1:856762520566:web:4c8289a4ad8f559a426dd7"};
+const db=getFirestore(initializeApp(FB,'geojibang-admin'));
+const C={users:()=>collection(db,'geojibang_users'),posts:()=>collection(db,'geojibang_posts'),ranking:()=>collection(db,'geojibang_ranking')};
+const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛'];
+const REWARDS=[100000,30000,10000,10000,10000];
+const GRADES=[{min:2000,label:'거지신 👑',color:'#e8527a'},{min:1000,label:'전설의 거지 🔥',color:'#f0c040'},{min:600,label:'거지 고수 ⚡',color:'#7ab4f0'},{min:300,label:'프로 거지 🎯',color:'#44cc88'},{min:100,label:'동네 거지 🥫',color:'#c0a8b4'},{min:0,label:'거지 새싹 🌱',color:'#7a5f68'}];
+const gg=s=>GRADES.find(g=>s>=g.min)||GRADES[5];
+let modal=null;
+
+window.checkPw=()=>{
+  if(document.getElementById('pw-input').value===ADMIN_PW){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-app').style.display='flex';
+    loadSS(); showPage('dashboard');
+  } else document.getElementById('pw-error').style.display='block';
 };
 
-const gjApp = initializeApp(GJ_CONFIG, 'geojibang-admin');
-const db = getFirestore(gjApp);
-
-window.checkPw = () => {
-  const v = document.getElementById('pw-input').value;
-  if (v === ADMIN_PW) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-app').style.display = 'flex';
-    showPage('dashboard');
-  } else {
-    document.getElementById('pw-error').style.display = 'block';
-  }
-};
-
-let currentModal = null;
-
-window.showPage = async (page) => {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('nav-' + page)?.classList.add('active');
-  const main = document.getElementById('main-content');
-  main.innerHTML = '<div class="loading">불러오는 중...</div>';
-
-  if (page === 'dashboard') await renderDashboard(main);
-  else if (page === 'posts') await renderPosts(main);
-  else if (page === 'users') await renderUsers(main);
-  else if (page === 'ranking') await renderRanking(main);
-  else if (page === 'reports') renderReports(main);
-};
-
-async function renderDashboard(main) {
-  const [usersSnap, postsSnap] = await Promise.all([
-    getDocs(collection(db, 'geojibang_users')),
-    getDocs(collection(db, 'geojibang_posts'))
-  ]);
-  const users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  const posts = postsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  const premiumCount = users.filter(u => u.isPremium).length;
-  const totalScore = users.reduce((s,u) => s + (u.monthScore||0), 0);
-
-  main.innerHTML = `
-    <div class="page-title">📊 대시보드</div>
-    <div class="page-sub">거지방 현황 한눈에 보기</div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">전체 회원</div>
-        <div class="stat-val">${users.length}</div>
-        <div class="stat-sub">명</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">전체 게시물</div>
-        <div class="stat-val">${posts.length}</div>
-        <div class="stat-sub">개</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">구독 회원</div>
-        <div class="stat-val" style="color:var(--pink);">${premiumCount}</div>
-        <div class="stat-sub">월 ${(premiumCount * 990).toLocaleString()}원</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">총 거지력 합산</div>
-        <div class="stat-val" style="color:var(--gold);">${totalScore}</div>
-        <div class="stat-sub">점</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header"><div class="section-title">최근 가입 회원</div></div>
-      <table>
-        <tr><th>닉네임</th><th>월 거지력</th><th>누적 거지력</th><th>구독</th></tr>
-        ${users.slice(0,5).map(u => `
-          <tr>
-            <td><div style="display:flex;align-items:center;gap:8px;">
-              <div class="avatar-sm" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>
-              ${u.nick||'알 수 없음'}
-            </div></td>
-            <td>${u.monthScore||0}점</td>
-            <td>${u.totalScore||0}점</td>
-            <td>${u.isPremium ? '<span class="badge badge-pink">구독중</span>' : '<span class="badge badge-gray">무료</span>'}</td>
-          </tr>`).join('')}
-      </table>
-    </div>
-
-    <div class="section">
-      <div class="section-header"><div class="section-title">최근 게시물</div></div>
-      <table>
-        <tr><th>작성자</th><th>가맹점</th><th>금액</th><th>반응</th></tr>
-        ${posts.slice(0,5).map(p => `
-          <tr>
-            <td>${p.authorName||'알 수 없음'}</td>
-            <td>${p.item||'-'}</td>
-            <td>${p.amount||'-'}</td>
-            <td>🙇${(p.rxn?.[0]||0)} 🤔${(p.rxn?.[1]||0)} 💸${(p.rxn?.[2]||0)}</td>
-          </tr>`).join('')}
-      </table>
-    </div>`;
+async function loadSS(){
+  const[u,p]=await Promise.all([getDocs(C.users()),getDocs(C.posts())]);
+  const ud=u.docs.map(d=>d.data());
+  document.getElementById('ss-users').textContent=u.size;
+  document.getElementById('ss-posts').textContent=p.size;
+  document.getElementById('ss-premium').textContent=ud.filter(u=>u.isPremium).length;
+  document.getElementById('ss-score').textContent=ud.reduce((s,u)=>s+(u.monthScore||0),0).toLocaleString();
 }
 
-async function renderPosts(main) {
-  const snap = await getDocs(query(collection(db, 'geojibang_posts'), orderBy('createdAt','desc'), limit(50)));
-  const posts = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-
-  main.innerHTML = `
-    <div class="page-title">📝 게시물 관리</div>
-    <div class="page-sub">전체 ${posts.length}개 (최근 50개)</div>
-    <div class="section">
-      <div class="search-bar">
-        <input class="search-input" id="post-search" placeholder="작성자 또는 가맹점명 검색..." oninput="filterPosts()">
-      </div>
-      <table id="posts-table">
-        <tr><th>작성자</th><th>내용</th><th>금액</th><th>반응</th><th>시간</th><th>관리</th></tr>
-        ${posts.map(p => `
-          <tr data-author="${p.authorName||''}" data-item="${p.item||''}">
-            <td>${p.authorName||'알 수 없음'}</td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.desc||''} / ${p.item||''}</td>
-            <td>${p.amount||'-'}</td>
-            <td style="white-space:nowrap;">🙇${p.rxn?.[0]||0} 🤔${p.rxn?.[1]||0} 💸${p.rxn?.[2]||0}</td>
-            <td style="color:var(--text3);font-size:11px;">${p.createdAt?.toDate ? timeAgo(p.createdAt.toDate()) : '-'}</td>
-            <td style="white-space:nowrap;">
-              <button class="btn btn-ghost btn-sm" onclick="editPost('${p.id}','${esc(p.desc)}','${esc(p.item)}','${esc(p.amount)}')">수정</button>
-              <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="deletePost('${p.id}')">삭제</button>
-            </td>
-          </tr>`).join('')}
-      </table>
-    </div>`;
-}
-
-window.filterPosts = () => {
-  const q = document.getElementById('post-search')?.value.toLowerCase();
-  document.querySelectorAll('#posts-table tr[data-author]').forEach(r => {
-    const match = r.dataset.author.toLowerCase().includes(q) || r.dataset.item.toLowerCase().includes(q);
-    r.style.display = match ? '' : 'none';
-  });
+window.showPage=async(page)=>{
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-'+page)?.classList.add('active');
+  const m=document.getElementById('main-content');
+  m.innerHTML='<div class="loading">🥫 불러오는 중...</div>';
+  try{
+    if(page==='dashboard') await renderDashboard(m);
+    else if(page==='posts') await renderPosts(m);
+    else if(page==='users') await renderUsers(m);
+    else if(page==='ranking') await renderRanking(m);
+    else if(page==='shop') await renderShop(m);
+    else renderReports(m);
+  }catch(e){m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`;}
 };
 
-window.editPost = (id, desc, item, amount) => {
-  currentModal = { type:'post', id };
-  document.getElementById('modal-title').textContent = '게시물 수정';
-  document.getElementById('modal-body').innerHTML = `
+async function renderDashboard(m){
+  const[uS,pS]=await Promise.all([getDocs(C.users()),getDocs(C.posts())]);
+  const users=uS.docs.map(d=>({id:d.id,...d.data()}));
+  const posts=pS.docs.map(d=>({id:d.id,...d.data()}));
+  const prem=users.filter(u=>u.isPremium).length;
+  const totalMs=users.reduce((s,u)=>s+(u.monthScore||0),0);
+  const totalRxn=posts.reduce((s,p)=>s+(p.rxn||[]).reduce((a,b)=>a+b,0),0);
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">📊 대시보드</div><div class="page-sub">${new Date().toLocaleDateString('ko-KR')} 기준</div></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">${users.length}</div><div class="stat-label">전체 회원</div><div class="stat-sub">구독 ${prem}명 · 월 ${(prem*990).toLocaleString()}원</div></div>
+    <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-label">전체 게시물</div><div class="stat-sub">총 반응 ${totalRxn}개</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--gold);">${totalMs.toLocaleString()}</div><div class="stat-label">이달 총 거지력</div><div class="stat-sub">평균 ${users.length?Math.round(totalMs/users.length):0}점/인</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--pink);">${totalRxn}</div><div class="stat-label">전체 반응 수</div><div class="stat-sub">🙇${posts.reduce((s,p)=>s+(p.rxn?.[0]||0),0)} 🤔${posts.reduce((s,p)=>s+(p.rxn?.[1]||0),0)} 💸${posts.reduce((s,p)=>s+(p.rxn?.[2]||0),0)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">🏆 거지력 TOP 5</div><button class="btn btn-ghost btn-sm" onclick="showPage('ranking')">전체</button></div>
+      <table><tr><th>순위</th><th>닉네임</th><th>월 거지력</th><th>계급</th></tr>
+      ${[...users].sort((a,b)=>(b.monthScore||0)-(a.monthScore||0)).slice(0,5).map((u,i)=>`
+      <tr><td><b style="color:${i<3?'var(--pink)':'var(--text3)'};">${i+1}위</b></td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${u.nick||'?'}</div></td>
+      <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+      <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">📝 최근 게시물</div><button class="btn btn-ghost btn-sm" onclick="showPage('posts')">전체</button></div>
+      <table><tr><th>작성자</th><th>가맹점</th><th>반응</th></tr>
+      ${[...posts].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,5).map(p=>`
+      <tr><td>${p.authorName||'?'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.item||'-'} <span style="color:var(--pink);font-weight:700;">${p.amount||''}</span></td>
+      <td style="font-size:11px;white-space:nowrap;">🙇${p.rxn?.[0]||0} 🤔${p.rxn?.[1]||0} 💸${p.rxn?.[2]||0}</td></tr>`).join('')}
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📈 계급 분포</div></div>
+    <div style="padding:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      ${GRADES.map(g=>{const cnt=users.filter(u=>gg(u.totalScore||0).label===g.label).length;return`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;text-align:center;min-width:80px;"><div style="font-size:20px;font-weight:700;color:${g.color};">${cnt}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${g.label}</div></div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+async function renderPosts(m){
+  const snap=await getDocs(query(C.posts(),orderBy('createdAt','desc'),limit(100)));
+  const posts=snap.docs.map(d=>({id:d.id,...d.data()}));
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">📝 게시물 관리</div><div class="page-sub">최근 ${posts.length}개</div></div>
+  <div class="card">
+    <div class="search-bar">
+      <input class="form-input" id="post-search" placeholder="작성자/가맹점 검색..." oninput="filterTbl('posts-tb','post-search',['author','item'])">
+      <button class="btn btn-ghost" onclick="showPage('posts')">새로고침</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>작성자</th><th>내용</th><th>금액</th><th>반응</th><th>시간</th><th>관리</th></tr></thead>
+      <tbody id="posts-tb">
+      ${posts.map(p=>`<tr data-author="${p.authorName||''}" data-item="${p.item||''}">
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${p.authorBg||'#3a1520'};color:${p.authorColor||'#e8527a'};">${(p.authorName||'?')[0]}</div><div><div>${p.authorName||'?'}</div><div style="font-size:10px;color:var(--text3);">${p.authorUid?.slice(0,8)||''}</div></div></div></td>
+        <td style="max-width:180px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text3);font-size:11px;">${p.desc||''}</div><div style="font-weight:600;">${p.item||'-'}</div></td>
+        <td style="color:var(--pink);font-weight:700;white-space:nowrap;">${p.amount||'-'}</td>
+        <td style="white-space:nowrap;"><span class="badge badge-blue">🙇${p.rxn?.[0]||0}</span> <span class="badge badge-gray">🤔${p.rxn?.[1]||0}</span> <span class="badge badge-red">💸${p.rxn?.[2]||0}</span></td>
+        <td style="color:var(--text3);font-size:11px;">${p.createdAt?.toDate?timeAgo(p.createdAt.toDate()):'-'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-sm" onclick="editPost('${p.id}','${esc(p.desc)}','${esc(p.item)}','${esc(p.amount)}')">수정</button>
+          <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delPost('${p.id}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+window.editPost=(id,desc,item,amount)=>{
+  modal={type:'post',id};
+  document.getElementById('modal-title').textContent='게시물 수정';
+  document.getElementById('modal-body').innerHTML=`
     <div class="form-group"><label class="form-label">가맹점명</label><input class="form-input" id="m-item" value="${item}"></div>
     <div class="form-group"><label class="form-label">금액</label><input class="form-input" id="m-amount" value="${amount}"></div>
-    <div class="form-group"><label class="form-label">내용</label><input class="form-input" id="m-desc" value="${desc}"></div>`;
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-input" id="m-desc" rows="3">${desc}</textarea></div>`;
   document.getElementById('edit-modal').classList.add('open');
 };
+window.delPost=async(id)=>{if(!confirm('삭제할까요?'))return;await deleteDoc(doc(db,'geojibang_posts',id));toast('🗑 삭제됨');showPage('posts');};
 
-window.deletePost = async (id) => {
-  if (!confirm('이 게시물을 삭제할까요?')) return;
-  await deleteDoc(doc(db, 'geojibang_posts', id));
-  toast('삭제됐어요');
-  showPage('posts');
-};
-
-async function renderUsers(main) {
-  const snap = await getDocs(query(collection(db, 'geojibang_users'), orderBy('monthScore','desc')));
-  const users = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-
-  main.innerHTML = `
-    <div class="page-title">👥 회원 관리</div>
-    <div class="page-sub">전체 ${users.length}명</div>
-    <div class="section">
-      <div class="search-bar">
-        <input class="search-input" id="user-search" placeholder="닉네임 검색..." oninput="filterUsers()">
-      </div>
-      <table id="users-table">
-        <tr><th>닉네임</th><th>한줄소개</th><th>월 거지력</th><th>누적 거지력</th><th>구독</th><th>관리</th></tr>
-        ${users.map(u => `
-          <tr data-nick="${u.nick||''}">
-            <td><div style="display:flex;align-items:center;gap:8px;">
-              <div class="avatar-sm" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>
-              ${u.nick||'알 수 없음'}
-            </div></td>
-            <td style="color:var(--text3);font-size:12px;">${u.bio||'-'}</td>
-            <td><span class="badge badge-pink">${u.monthScore||0}점</span></td>
-            <td><span class="badge badge-gold">${u.totalScore||0}점</span></td>
-            <td>${u.isPremium ? '<span class="badge badge-green">구독중</span>' : '<span class="badge badge-gray">무료</span>'}</td>
-            <td style="white-space:nowrap;">
-              <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}','${esc(u.nick)}','${esc(u.bio||'')}',${u.monthScore||0},${u.totalScore||0},${!!u.isPremium})">수정</button>
-              <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="deleteUser('${u.id}','${esc(u.nick)}')">삭제</button>
-            </td>
-          </tr>`).join('')}
-      </table>
-    </div>`;
+async function renderUsers(m){
+  const snap=await getDocs(query(C.users(),orderBy('monthScore','desc')));
+  const users=snap.docs.map(d=>({id:d.id,...d.data()}));
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">👥 회원 관리</div><div class="page-sub">전체 ${users.length}명 · 구독 ${users.filter(u=>u.isPremium).length}명</div></div>
+  <div class="card">
+    <div class="search-bar">
+      <input class="form-input" id="user-search" placeholder="닉네임 검색..." oninput="filterTbl('users-tb','user-search',['nick'])">
+      <button class="btn btn-ghost" onclick="showPage('users')">새로고침</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>회원</th><th>한줄소개</th><th>월 거지력</th><th>누적 거지력</th><th>계급</th><th>구독</th><th>관리</th></tr></thead>
+      <tbody id="users-tb">
+      ${users.map(u=>`<tr data-nick="${u.nick||''}">
+        <td><div style="display:flex;align-items:center;gap:8px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div><div><div style="font-weight:600;">${u.nick||'?'}</div><div style="font-size:10px;color:var(--text3);">${u.bio||''}</div></div></div></td>
+        <td style="color:var(--text3);font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.bio||'-'}</td>
+        <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+        <td><span class="badge badge-gold">${(u.totalScore||0).toLocaleString()}점</span></td>
+        <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td>
+        <td>${u.isPremium?'<span class="badge badge-green">구독중</span>':'<span class="badge badge-gray">무료</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}','${esc(u.nick)}','${esc(u.bio||'')}',${u.monthScore||0},${u.totalScore||0},${!!u.isPremium})">수정</button>
+          <button class="btn btn-gold btn-sm" style="margin-left:4px;" onclick="adjustScore('${u.id}','${esc(u.nick)}')">점수</button>
+          <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delUser('${u.id}','${esc(u.nick)}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
 }
 
-window.filterUsers = () => {
-  const q = document.getElementById('user-search')?.value.toLowerCase();
-  document.querySelectorAll('#users-table tr[data-nick]').forEach(r => {
-    r.style.display = r.dataset.nick.toLowerCase().includes(q) ? '' : 'none';
-  });
-};
-
-window.editUser = (id, nick, bio, month, total, isPremium) => {
-  currentModal = { type:'user', id };
-  document.getElementById('modal-title').textContent = '회원 정보 수정';
-  document.getElementById('modal-body').innerHTML = `
+window.editUser=(id,nick,bio,month,total,isPremium)=>{
+  modal={type:'user',id};
+  document.getElementById('modal-title').textContent='회원 정보 수정';
+  document.getElementById('modal-body').innerHTML=`
     <div class="form-group"><label class="form-label">닉네임</label><input class="form-input" id="m-nick" value="${nick}"></div>
     <div class="form-group"><label class="form-label">한 줄 소개</label><input class="form-input" id="m-bio" value="${bio}"></div>
     <div class="form-group"><label class="form-label">월 거지력</label><input class="form-input" id="m-month" type="number" value="${month}"></div>
     <div class="form-group"><label class="form-label">누적 거지력</label><input class="form-input" id="m-total" type="number" value="${total}"></div>
-    <div class="form-group"><label class="form-label">구독 상태</label>
-      <select class="form-input" id="m-premium"><option value="false" ${!isPremium?'selected':''}>무료</option><option value="true" ${isPremium?'selected':''}>구독중</option></select>
-    </div>`;
+    <div class="form-group"><label class="form-label">구독 상태</label><select class="form-input" id="m-premium"><option value="false" ${!isPremium?'selected':''}>무료</option><option value="true" ${isPremium?'selected':''}>구독중</option></select></div>`;
   document.getElementById('edit-modal').classList.add('open');
 };
-
-window.deleteUser = async (id, nick) => {
-  if (!confirm(`"${nick}" 회원을 삭제할까요? 이 작업은 되돌릴 수 없어요.`)) return;
-  await deleteDoc(doc(db, 'geojibang_users', id));
-  toast('회원이 삭제됐어요');
-  showPage('users');
+window.adjustScore=(id,nick)=>{
+  modal={type:'score',id};
+  document.getElementById('modal-title').textContent=`${nick} · 점수 조정`;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group"><label class="form-label">월 거지력 증감 (양수/음수)</label><input class="form-input" id="m-md" type="number" value="0" placeholder="+10 또는 -10"></div>
+    <div class="form-group"><label class="form-label">누적 거지력 증감</label><input class="form-input" id="m-td" type="number" value="0"></div>
+    <div style="font-size:12px;color:var(--red);margin-top:8px;">⚠️ 되돌릴 수 없어요</div>`;
+  document.getElementById('edit-modal').classList.add('open');
 };
+window.delUser=async(id,nick)=>{if(!confirm(`"${nick}" 삭제할까요?`))return;await deleteDoc(doc(db,'geojibang_users',id));toast('🗑 삭제됨');showPage('users');};
 
-async function renderRanking(main) {
-  const snap = await getDocs(query(collection(db, 'geojibang_users'), orderBy('monthScore','desc'), limit(10)));
-  const users = snap.docs.map((d,i) => ({ rank:i+1, id:d.id, ...d.data() }));
-  const TITLES = ['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛'];
-  const REWARDS = [100000,30000,10000,10000,10000];
-
-  main.innerHTML = `
-    <div class="page-title">🏆 랭킹 관리</div>
-    <div class="page-sub">이달의 거지력 TOP 10 · 매달 1일 자동 집계</div>
-    <div class="section">
-      <div class="section-header">
-        <div class="section-title">현재 랭킹</div>
-        <button class="btn btn-pink" onclick="resetMonthScores()">월 거지력 초기화</button>
+async function renderRanking(m){
+  const snap=await getDocs(query(C.users(),orderBy('monthScore','desc'),limit(20)));
+  const users=snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()}));
+  const now=new Date(),next=new Date(now.getFullYear(),now.getMonth()+1,1,8,0,0);
+  const diff=next-now,dd=Math.floor(diff/86400000),hh=Math.floor((diff%86400000)/3600000);
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">🏆 랭킹 관리</div><div class="page-sub">다음 발표까지 ${dd}일 ${hh}시간 · 매달 1일 오전 8시</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">이달 거지왕 후보 TOP 5</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-gold btn-sm" onclick="announceKing()">🎺 발표</button>
+          <button class="btn btn-red btn-sm" onclick="resetMonthScores()">초기화</button>
+        </div>
       </div>
-      <table>
-        <tr><th>순위</th><th>닉네임</th><th>월 거지력</th><th>누적 거지력</th><th>리워드</th></tr>
-        ${users.map((u,i) => `
-          <tr>
-            <td style="font-weight:700;color:${i<3?'var(--pink)':'var(--text)'};">${u.rank}위 ${TITLES[i]||''}</td>
-            <td><div style="display:flex;align-items:center;gap:8px;">
-              <div class="avatar-sm" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>
-              ${u.nick||'알 수 없음'}
-            </div></td>
-            <td><span class="badge badge-pink">${u.monthScore||0}점</span></td>
-            <td>${u.totalScore||0}점</td>
-            <td>${i<5 ? '<span class="badge badge-gold">'+REWARDS[i].toLocaleString()+'P</span>' : '-'}</td>
-          </tr>`).join('')}
+      <table><tr><th>순위/칭호</th><th>닉네임</th><th>월 거지력</th><th>리워드</th></tr>
+      ${users.slice(0,5).map((u,i)=>`<tr>
+        <td><div style="font-weight:700;color:${i===0?'var(--gold)':i===1?'var(--text2)':'var(--text3)'};">${u.rank}위</div><div style="font-size:10px;color:var(--text3);">${RANK_TITLES[i]}</div></td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${u.nick||'?'}</div></td>
+        <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+        <td><span class="badge badge-gold">${REWARDS[i].toLocaleString()}P</span></td>
+      </tr>`).join('')}
       </table>
-    </div>`;
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">전체 TOP 20</div></div>
+      <div style="overflow-y:auto;max-height:320px;"><table>
+        <tr><th>순위</th><th>닉네임</th><th>월 거지력</th><th>누적</th></tr>
+        ${users.map((u,i)=>`<tr>
+          <td style="color:${i<3?'var(--pink)':'var(--text3)'};font-weight:${i<3?700:400};">${u.rank}</td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${u.nick||'?'}</div></td>
+          <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}</span></td>
+          <td style="color:var(--gold);">${(u.totalScore||0).toLocaleString()}</td>
+        </tr>`).join('')}
+      </table></div>
+    </div>
+  </div>`;
 }
 
-window.resetMonthScores = async () => {
-  if (!confirm('모든 회원의 월 거지력을 0으로 초기화할까요?')) return;
-  const snap = await getDocs(collection(db, 'geojibang_users'));
-  await Promise.all(snap.docs.map(d => updateDoc(doc(db, 'geojibang_users', d.id), { monthScore: 0 })));
-  toast('월 거지력이 초기화됐어요');
-  showPage('ranking');
+window.resetMonthScores=async()=>{
+  if(!confirm('모든 회원의 월 거지력을 0으로 초기화할까요?\n누적 거지력은 그대로 유지됩니다.'))return;
+  const snap=await getDocs(C.users());
+  await Promise.all(snap.docs.map(d=>updateDoc(doc(db,'geojibang_users',d.id),{monthScore:0})));
+  toast('✅ 월 거지력 초기화 완료');showPage('ranking');
+};
+window.announceKing=async()=>{
+  if(!confirm('이달의 거지왕을 발표할까요?'))return;
+  const snap=await getDocs(query(C.users(),orderBy('monthScore','desc'),limit(5)));
+  const winners=snap.docs.map((d,i)=>({rank:i+1,uid:d.id,...d.data()}));
+  const ym=new Date().toISOString().slice(0,7);
+  await setDoc(doc(db,'geojibang_ranking',ym),{
+    winners:winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
+    announcedAt:serverTimestamp()
+  });
+  toast('🎺 거지왕 발표 완료!');showPage('ranking');
 };
 
-function renderReports(main) {
-  main.innerHTML = `
-    <div class="page-title">🚨 신고 관리</div>
-    <div class="page-sub">신고된 게시물 및 댓글 관리</div>
-    <div class="section">
-      <div class="empty">🚧 신고 기능은 준비 중이에요<br><span style="font-size:12px;margin-top:8px;display:block;">신고 시스템 연동 후 여기서 관리할 수 있어요</span></div>
-    </div>`;
+async function renderShop(m){
+  const snap=await getDocs(C.users());
+  const users=snap.docs.map(d=>d.data());
+  const ROOM_INFO=[{id:'room_default',name:'기본 방',price:0},{id:'room_cave',name:'지하 동굴방',price:200},{id:'room_rooftop',name:'옥탑방',price:300},{id:'room_gosiwon',name:'고시원',price:150},{id:'room_park',name:'공원 벤치',price:500}];
+  const CHAR_INFO=[{id:'char_default',name:'기본 거지',price:0},{id:'char_paper_bag',name:'종이봉투 머리',price:100},{id:'char_crown',name:'거지왕 왕관',price:400},{id:'char_santa',name:'산타 거지',price:250},{id:'char_ninja',name:'닌자 거지',price:350},{id:'char_vip',name:'VIP 거지',price:500}];
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">🏪 상점 현황</div><div class="page-sub">아이템 가격표 · 구매 내역은 클라이언트 저장</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템</div></div>
+      <table><tr><th>아이템</th><th>가격</th></tr>
+      ${ROOM_INFO.map(i=>`<tr><td>${i.name}</td><td>${i.price===0?'<span class="badge badge-green">무료</span>':'<span class="badge badge-gold">'+i.price+'점</span>'}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨</div></div>
+      <table><tr><th>아이템</th><th>가격</th></tr>
+      ${CHAR_INFO.map(i=>`<tr><td>${i.name}</td><td>${i.price===0?'<span class="badge badge-green">무료</span>':'<span class="badge badge-gold">'+i.price+'점</span>'}</td></tr>`).join('')}
+      </table>
+    </div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>
+    <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      ${[{l:'1000점+ (환전가능)',f:u=>(u.totalScore||0)>=1000,c:'var(--gold)'},
+         {l:'500~999점',f:u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000,c:'var(--green)'},
+         {l:'100~499점',f:u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500,c:'var(--blue)'},
+         {l:'100점 미만',f:u=>(u.totalScore||0)<100,c:'var(--text3)'}
+        ].map(s=>`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;"><div style="font-size:22px;font-weight:700;color:${s.c};">${users.filter(s.f).length}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${s.l}</div></div>`).join('')}
+    </div>
+  </div>`;
 }
 
-window.submitModal = async () => {
-  if (!currentModal) return;
-  try {
-    if (currentModal.type === 'post') {
-      await updateDoc(doc(db, 'geojibang_posts', currentModal.id), {
-        item: document.getElementById('m-item').value,
-        amount: document.getElementById('m-amount').value,
-        desc: document.getElementById('m-desc').value,
-        updatedAt: serverTimestamp()
-      });
-    } else if (currentModal.type === 'user') {
-      await updateDoc(doc(db, 'geojibang_users', currentModal.id), {
-        nick: document.getElementById('m-nick').value,
-        bio: document.getElementById('m-bio').value,
-        monthScore: parseInt(document.getElementById('m-month').value)||0,
-        totalScore: parseInt(document.getElementById('m-total').value)||0,
-        isPremium: document.getElementById('m-premium').value === 'true'
-      });
+function renderReports(m){
+  m.innerHTML=`<div class="page-header"><div class="page-title">🚨 신고 관리</div></div>
+  <div class="card"><div class="empty">🚧 신고 시스템 연동 준비 중<br><span style="font-size:12px;">추가 후 이곳에서 관리 가능</span></div></div>`;
+}
+
+window.submitModal=async()=>{
+  if(!modal)return;
+  try{
+    if(modal.type==='post'){
+      await updateDoc(doc(db,'geojibang_posts',modal.id),{item:document.getElementById('m-item').value,amount:document.getElementById('m-amount').value,desc:document.getElementById('m-desc').value,updatedAt:serverTimestamp()});
+    }else if(modal.type==='user'){
+      await updateDoc(doc(db,'geojibang_users',modal.id),{nick:document.getElementById('m-nick').value,bio:document.getElementById('m-bio').value,monthScore:parseInt(document.getElementById('m-month').value)||0,totalScore:parseInt(document.getElementById('m-total').value)||0,isPremium:document.getElementById('m-premium').value==='true'});
+    }else if(modal.type==='score'){
+      const md=parseInt(document.getElementById('m-md').value)||0;
+      const td=parseInt(document.getElementById('m-td').value)||0;
+      const upd={};
+      if(md!==0)upd.monthScore=increment(md);
+      if(td!==0)upd.totalScore=increment(td);
+      if(Object.keys(upd).length)await updateDoc(doc(db,'geojibang_users',modal.id),upd);
     }
-    closeModal();
-    toast('저장됐어요!');
-    setTimeout(() => showPage(currentModal?.type === 'post' ? 'posts' : 'users'), 300);
-  } catch(e) {
-    toast('저장 실패: ' + e.message);
-  }
+    closeModal();toast('✅ 저장됐어요!');
+    const cur=document.querySelector('.nav-item.active')?.id?.replace('nav-','');
+    if(cur)setTimeout(()=>showPage(cur),300);
+  }catch(e){toast('⚠️ 실패: '+e.message);}
+};
+window.closeModal=()=>{document.getElementById('edit-modal').classList.remove('open');modal=null;};
+
+window.filterTbl=(tbodyId,inputId,keys)=>{
+  const q=document.getElementById(inputId)?.value.toLowerCase()||'';
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(r=>{r.style.display=keys.some(k=>r.dataset[k]?.toLowerCase().includes(q))?'':'none';});
 };
 
-window.closeModal = () => {
-  document.getElementById('edit-modal').classList.remove('open');
-  currentModal = null;
-};
-
-function esc(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-function timeAgo(d) {
-  const diff = Math.floor((Date.now()-d.getTime())/1000);
-  if(diff<60) return '방금 전';
-  if(diff<3600) return Math.floor(diff/60)+'분 전';
-  if(diff<86400) return Math.floor(diff/3600)+'시간 전';
-  return Math.floor(diff/86400)+'일 전';
-}
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function timeAgo(d){const s=Math.floor((Date.now()-d.getTime())/1000);if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분 전';if(s<86400)return Math.floor(s/3600)+'시간 전';return Math.floor(s/86400)+'일 전';}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 </script>
 </body>
 </html>
