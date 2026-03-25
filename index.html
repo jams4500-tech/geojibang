@@ -951,9 +951,9 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div id="view-profile-grade" style="font-size:11px;margin-top:2px;"></div>
         <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="view-profile-bio">한 줄 소개가 없어요</div>
       </div>
-      <div id="view-shop-btn" style="display:none;display:flex;flex-direction:column;gap:6px;">
-        <button class="btn-pink" style="font-size:12px;padding:7px 14px;white-space:nowrap;" onclick="openShop()">🏪 상점</button>
-        <button style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap;" onclick="closeOverlay('ov-user-profile');openOverlay('ov-profile')">✏️ 편집</button>
+      <div id="view-shop-btn" style="display:none;flex-direction:column;gap:6px;">
+        <button class="btn-pink" style="font-size:12px;padding:7px 14px;white-space:nowrap;" id="btn-open-shop">🏪 방 꾸미기</button>
+        <button style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap;" id="btn-open-profile-edit">✏️ 프로필 편집</button>
       </div>
     </div>
     <!-- 거지력 요약 -->
@@ -2241,9 +2241,18 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) 
       gradeEl.style.color = grade.color;
     }
     const shopBtn = document.getElementById('view-shop-btn');
-    if (shopBtn) shopBtn.style.display = isMyProfile ? 'flex' : 'none';
+    if (shopBtn) {
+      shopBtn.style.display = isMyProfile ? 'flex' : 'none';
+      shopBtn.style.flexDirection = 'column';
+    }
     // 방 렌더링
-    try { renderRoom('profile-room-svg', myItems?.equippedRoom || 'room_default', myItems?.equippedChar || 'char_default'); } catch(re) {}
+    try {
+      const roomId = myItems?.equippedRoom || 'room_default';
+      const charId = myItems?.equippedChar || 'char_default';
+      renderRoom('profile-room-svg', roomId, charId);
+    } catch(re) {
+      console.error('[거지방] 방 렌더링 오류:', re);
+    }
     // 오버레이 열기
     document.getElementById('ov-user-profile')?.classList.add('open');
   } catch(err) {
@@ -2618,18 +2627,28 @@ function getRoomDecor(room) {
 }
 
 function renderRoom(svgId, roomId, charId) {
-  const svg = document.getElementById(svgId);
-  if (!svg) return;
+  const container = document.getElementById(svgId)?.parentElement;
+  if (!container) return;
   const room = ROOM_ITEMS.find(r => r.id === roomId) || ROOM_ITEMS[0];
   const char = CHAR_ITEMS.find(c => c.id === charId) || CHAR_ITEMS[0];
-  svg.innerHTML = `
+  const svgContent = `<svg id="${svgId}" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
     <rect width="320" height="220" fill="${room.bg}"/>
     <rect x="0" y="0" width="320" height="150" fill="${room.wall}"/>
     <rect x="0" y="150" width="320" height="70" fill="${room.floor}"/>
-    <line x1="0" y1="150" x2="320" y2="150" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <rect x="0" y="149" width="320" height="2" fill="rgba(255,255,255,0.06)"/>
     ${getRoomDecor(room)}
     ${drawChar(char, 160, 93)}
-    <text x="8" y="216" font-family="sans-serif" font-size="9" fill="rgba(255,255,255,0.2)">${room.name}</text>`;
+    <text x="8" y="216" font-family="sans-serif" font-size="9" fill="rgba(255,255,255,0.25)">${room.name}</text>
+  </svg>`;
+  // 기존 SVG를 새 SVG로 교체
+  const oldSvg = document.getElementById(svgId);
+  if (oldSvg) {
+    const div = document.createElement('div');
+    div.innerHTML = svgContent;
+    oldSvg.replaceWith(div.firstElementChild);
+  } else {
+    container.insertAdjacentHTML('beforeend', svgContent);
+  }
 }
 
 function openMyProfile() {
@@ -2724,6 +2743,16 @@ function _handleProfileClick(e) {
     }
     if (e.target.closest('#header-profile-btn')) {
       openMyProfile();
+      return;
+    }
+    if (e.target.closest('#btn-open-shop')) {
+      openShop();
+      return;
+    }
+    if (e.target.closest('#btn-open-profile-edit')) {
+      document.getElementById('ov-user-profile')?.classList.remove('open');
+      document.getElementById('ov-profile')?.classList.add('open');
+      return;
     }
   } catch(err) {
     console.error('[거지방] 클릭 이벤트 오류:', err);
