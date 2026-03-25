@@ -377,43 +377,66 @@ window.announceKing=async()=>{
 async function renderShop(m){
   const snap=await getDocs(C.users());
   const users=snap.docs.map(d=>d.data());
-  const ROOM_INFO=[{id:'room_default',name:'기본 방',price:0},{id:'room_cave',name:'지하 동굴방',price:200},{id:'room_rooftop',name:'옥탑방',price:300},{id:'room_gosiwon',name:'고시원',price:150},{id:'room_park',name:'공원 벤치',price:500}];
-  const CHAR_INFO=[{id:'char_default',name:'기본 거지',price:0},{id:'char_paper_bag',name:'종이봉투 머리',price:100},{id:'char_crown',name:'거지왕 왕관',price:400},{id:'char_santa',name:'산타 거지',price:250},{id:'char_ninja',name:'닌자 거지',price:350},{id:'char_vip',name:'VIP 거지',price:500}];
+  const ROOM_INFO=[{id:'room_default',name:'기본 방'},{id:'room_cave',name:'지하 동굴방'},{id:'room_rooftop',name:'옥탑방'},{id:'room_gosiwon',name:'고시원'},{id:'room_park',name:'공원 벤치'}];
+  const CHAR_INFO=[{id:'char_default',name:'기본 거지'},{id:'char_paper_bag',name:'종이봉투 머리'},{id:'char_crown',name:'거지왕 왕관'},{id:'char_santa',name:'산타 거지'},{id:'char_ninja',name:'닌자 거지'},{id:'char_vip',name:'VIP 거지'}];
+  const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500};
 
-  const cnt1000 = users.filter(u=>(u.totalScore||0)>=1000).length;
-  const cnt500  = users.filter(u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000).length;
-  const cnt100  = users.filter(u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500).length;
-  const cntLow  = users.filter(u=>(u.totalScore||0)<100).length;
+  const cnt1000=users.filter(u=>(u.totalScore||0)>=1000).length;
+  const cnt500=users.filter(u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000).length;
+  const cnt100=users.filter(u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500).length;
+  const cntLow=users.filter(u=>(u.totalScore||0)<100).length;
 
-  const priceBadge = p => p===0
-    ? '<span class="badge badge-green">무료</span>'
-    : '<span class="badge badge-gold">'+p+'점</span>';
+  const priceBadge=(id)=>{
+    const p=DEFAULT_PRICES[id];
+    return p===0?'<span class="badge badge-green">무료</span>':'<span class="badge badge-gold">'+p+'점</span>';
+  };
 
-  const distCard = (cnt, label, color) =>
-    '<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;">' +
-    '<div style="font-size:22px;font-weight:700;color:'+color+';">'+cnt+'</div>' +
+  const distCard=(cnt,label,color)=>
+    '<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;">'+
+    '<div style="font-size:22px;font-weight:700;color:'+color+';">'+cnt+'</div>'+
     '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+label+'</div></div>';
 
-  m.innerHTML =
-    '<div class="page-header"><div class="page-title">🏪 상점 현황</div><div class="page-sub">아이템 가격표 · 구매 내역은 클라이언트 저장</div></div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
-      '<div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템</div></div>' +
-        '<table><tr><th>아이템</th><th>가격</th></tr>' +
-        ROOM_INFO.map(i=>'<tr><td>'+i.name+'</td><td>'+priceBadge(i.price)+'</td></tr>').join('') +
-        '</table></div>' +
-      '<div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨</div></div>' +
-        '<table><tr><th>아이템</th><th>가격</th></tr>' +
-        CHAR_INFO.map(i=>'<tr><td>'+i.name+'</td><td>'+priceBadge(i.price)+'</td></tr>').join('') +
-        '</table></div>' +
-    '</div>' +
-    '<div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>' +
-      '<div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">' +
-        distCard(cnt1000,'1000점+ (환전가능)','var(--gold)') +
-        distCard(cnt500,'500~999점','var(--green)') +
-        distCard(cnt100,'100~499점','var(--blue)') +
-        distCard(cntLow,'100점 미만','var(--text3)') +
+  const priceRow=(item,type)=>`<tr>
+    <td>${item.name}</td>
+    <td><input type="number" id="price-${item.id}" value="${DEFAULT_PRICES[item.id]}" style="width:80px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;"></td>
+    <td>${priceBadge(item.id)}</td>
+  </tr>`;
+
+  m.innerHTML=
+    '<div class="page-header"><div class="page-title">🏪 상점 현황</div><div class="page-sub">아이템 가격 설정 · 변경 사항은 앱에 즉시 적용</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'+
+      '<div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템 가격</div></div>'+
+        '<div style="padding:0 16px 4px;"><table><tr><th>아이템</th><th>가격(점)</th><th>현재</th></tr>'+
+        ROOM_INFO.map(i=>priceRow(i,'room')).join('')+
+        '</table></div></div>'+
+      '<div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨 가격</div></div>'+
+        '<div style="padding:0 16px 4px;"><table><tr><th>아이템</th><th>가격(점)</th><th>현재</th></tr>'+
+        CHAR_INFO.map(i=>priceRow(i,'char')).join('')+
+        '</table></div></div>'+
+    '</div>'+
+    '<div style="text-align:right;margin-bottom:16px;">'+
+      '<button class="btn btn-pink" onclick="savePrices()">💾 가격 저장 (앱에 적용)</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>'+
+      '<div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">'+
+        distCard(cnt1000,'1000점+ (환전가능)','var(--gold)')+
+        distCard(cnt500,'500~999점','var(--green)')+
+        distCard(cnt100,'100~499점','var(--blue)')+
+        distCard(cntLow,'100점 미만','var(--text3)')+
       '</div></div>';
 }
+
+window.savePrices=()=>{
+  const ids=['room_default','room_cave','room_rooftop','room_gosiwon','room_park','char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_vip'];
+  const prices={};
+  ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip'].forEach(id=>{
+    const el=document.getElementById('price-'+id);
+    if(el) prices[id]=parseInt(el.value)||0;
+  });
+  // localStorage에 저장 (앱이 같은 도메인이라 공유됨)
+  localStorage.setItem('gj_item_prices', JSON.stringify(prices));
+  toast('✅ 가격 저장 완료! 앱 새로고침 시 적용돼요');
+};
 
 function renderReports(m){
   m.innerHTML=`<div class="page-header"><div class="page-title">🚨 신고 관리</div></div>

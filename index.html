@@ -2443,26 +2443,32 @@ function submitEditPost() {
 }
 // ── 아이템 상점 시스템 ──────────────────────────────────
 
+// 아이템 가격 (어드민에서 수정 가능 → localStorage gj_item_prices)
+const DEFAULT_ITEM_PRICES = {
+  room_default:0, room_cave:200, room_rooftop:300, room_gosiwon:150, room_park:500,
+  char_default:0, char_paper_bag:100, char_crown:400, char_santa:250, char_ninja:350, char_vip:500
+};
+function getItemPrices() {
+  try { return JSON.parse(localStorage.getItem('gj_item_prices') || 'null') || DEFAULT_ITEM_PRICES; }
+  catch(e) { return DEFAULT_ITEM_PRICES; }
+}
+function getItemPrice(id) { return getItemPrices()[id] ?? DEFAULT_ITEM_PRICES[id] ?? 0; }
+
 const ROOM_ITEMS = [
-  { id:'room_default', name:'기본 방', desc:'거지의 소박한 방', price:0, emoji:'🏠', type:'room',
-    bg:'#1a0e14', wall:'#2a1820', floor:'#3a2830' },
-  { id:'room_cave', name:'지하 동굴방', desc:'햇빛이 안 들어오는 진정한 거지 거주지', price:200, emoji:'🗿', type:'room',
-    bg:'#0a0a12', wall:'#1a1a2a', floor:'#2a2040' },
-  { id:'room_rooftop', name:'옥탑방', desc:'월세 20만원짜리 뷰 맛집', price:300, emoji:'🌇', type:'room',
-    bg:'#0a1220', wall:'#1a2030', floor:'#2a3040' },
-  { id:'room_gosiwon', name:'고시원', desc:'침대 하나가 전부인 꿈의 공간', price:150, emoji:'📦', type:'room',
-    bg:'#120e10', wall:'#1e1418', floor:'#2e2022' },
-  { id:'room_park', name:'공원 벤치', desc:'임대료 0원 노숙 스팟', price:500, emoji:'🌳', type:'room',
-    bg:'#0a1408', wall:'#1a2414', floor:'#2a3420' },
+  { id:'room_default', name:'기본 방',    desc:'거지의 소박한 방',              emoji:'🏠', type:'room', bg:'#f5f0e8', wall:'#e8dcc8', floor:'#d4c4a8' },
+  { id:'room_cave',   name:'지하 동굴방', desc:'햇빛이 안 들어오는 진정한 거지 거주지', emoji:'🗿', type:'room', bg:'#2a2438', wall:'#3a3250', floor:'#2e2840' },
+  { id:'room_rooftop',name:'옥탑방',      desc:'월세 20만원짜리 뷰 맛집',        emoji:'🌇', type:'room', bg:'#1a2840', wall:'#243660', floor:'#8a6040' },
+  { id:'room_gosiwon',name:'고시원',      desc:'침대 하나가 전부인 꿈의 공간',   emoji:'📦', type:'room', bg:'#e8e0d4', wall:'#d4c8b8', floor:'#c0b0a0' },
+  { id:'room_park',   name:'공원 벤치',   desc:'임대료 0원 노숙 스팟',          emoji:'🌳', type:'room', bg:'#b8e4a8', wall:'#8ac888', floor:'#6aaa60' },
 ];
 
 const CHAR_ITEMS = [
-  { id:'char_default', name:'기본 거지', desc:'허름한 옷의 기본 거지', price:0, emoji:'🧑', type:'char', color:'#c8a060' },
-  { id:'char_paper_bag', name:'종이봉투 머리', desc:'신분을 숨기는 최고의 방법', price:100, emoji:'🛍️', type:'char', color:'#d4a860', hat:'paperbag' },
-  { id:'char_crown', name:'거지왕 왕관', desc:'거지왕 출신만 착용 가능 (거짓말)', price:400, emoji:'👑', type:'char', color:'#c8a060', hat:'crown' },
-  { id:'char_santa', name:'산타 거지', desc:'선물 대신 동전을 받는 산타', price:250, emoji:'🎅', type:'char', color:'#c83030', hat:'santa' },
-  { id:'char_ninja', name:'닌자 거지', desc:'은밀하게 위대하게 구걸하는', price:350, emoji:'🥷', type:'char', color:'#303030', hat:'ninja' },
-  { id:'char_vip', name:'VIP 거지', desc:'정장 입은 거지. 자존심은 있다.', price:500, emoji:'🤵', type:'char', color:'#1a1a3a', hat:'tophat' },
+  { id:'char_default',   name:'기본 거지',     desc:'허름한 옷의 기본 거지',           emoji:'🧑', type:'char' },
+  { id:'char_paper_bag', name:'종이봉투 머리', desc:'신분을 숨기는 최고의 방법',        emoji:'🛍️', type:'char' },
+  { id:'char_crown',     name:'거지왕 왕관',   desc:'거지왕 출신만 착용 가능 (거짓말)', emoji:'👑', type:'char' },
+  { id:'char_santa',     name:'산타 거지',     desc:'선물 대신 동전을 받는 산타',       emoji:'🎅', type:'char' },
+  { id:'char_ninja',     name:'닌자 거지',     desc:'은밀하게 위대하게 구걸하는',       emoji:'🥷', type:'char' },
+  { id:'char_vip',       name:'VIP 거지',      desc:'정장 입은 거지. 자존심은 있다.',   emoji:'🤵', type:'char' },
 ];
 
 let myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
@@ -2484,213 +2490,202 @@ function adjustColor(hex, amt) {
   } catch(e){ return hex||'#888'; }
 }
 
-// 싸이월드 스타일 캐릭터 (아이소메트릭 미니)
+// 싸이월드 스타일 캐릭터 (밝은 방 기준 색상)
 function drawChar(char, cx, groundY) {
   const S = 3;
-  const colors = {
-    default: { skin:'#f5c88a', hair:'#3a1a0a', shirt:'#7ab4f0', pants:'#2a3a6a', shoe:'#1a1a2a' },
-    paper_bag: { skin:'#f5c88a', hair:'#c8a840', shirt:'#d4a860', pants:'#8a6820', shoe:'#1a1a2a' },
-    crown: { skin:'#f5c88a', hair:'#d4a844', shirt:'#7ab4f0', pants:'#2a3a6a', shoe:'#1a1a2a' },
-    santa: { skin:'#f5c88a', hair:'#f0f0f0', shirt:'#cc2020', pants:'#cc2020', shoe:'#1a1a2a' },
-    ninja: { skin:'#2a2a2a', hair:'#1a1a1a', shirt:'#1a1a1a', pants:'#1a1a1a', shoe:'#0a0a0a' },
-    vip: { skin:'#f5c88a', hair:'#1a1a2a', shirt:'#f0f0f0', pants:'#1a1a3a', shoe:'#0a0a1a' },
+  const cid = (char.id||'char_default').replace('char_','');
+  const palettes = {
+    default:   { skin:'#f5c88a', hair:'#3a1a0a', shirt:'#7ab4f0', pants:'#2a4a8a', shoe:'#1a1a2a' },
+    paper_bag: { skin:'#f5c88a', hair:'#c8a840', shirt:'#e8c870', pants:'#8a6820', shoe:'#3a2810' },
+    crown:     { skin:'#f5c88a', hair:'#2a1a08', shirt:'#e8d080', pants:'#8a6020', shoe:'#1a1a2a' },
+    santa:     { skin:'#f5c88a', hair:'#f0f0f0', shirt:'#cc2020', pants:'#cc2020', shoe:'#1a1a2a' },
+    ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', shirt:'#1a1a1a', pants:'#1a1a1a', shoe:'#0a0a0a' },
+    vip:       { skin:'#f5c88a', hair:'#1a1a2a', shirt:'#f8f8f8', pants:'#1a1a3a', shoe:'#0a0a1a' },
   };
-  const cid = char.id.replace('char_','');
-  const c = colors[cid] || colors.default;
-  const ox = cx - 8*S;
-  const oy = groundY - 18*S;
+  const c = palettes[cid] || palettes.default;
+  const ox = cx - 8*S, oy = groundY - 18*S;
   let g = '';
 
-  // === 머리 ===
-  g += px(ox+3*S, oy,   2*S,S, c.hair);   // 머리카락 위
-  g += px(ox+2*S, oy+S, 5*S,S, c.hair);
-  g += px(ox+2*S, oy+2*S, 5*S,4*S, c.skin); // 얼굴
-  g += px(ox+3*S, oy+3*S, S,S, '#1a1a1a'); // 눈L
-  g += px(ox+5*S, oy+3*S, S,S, '#1a1a1a'); // 눈R
-  g += px(ox+3*S, oy+5*S, 3*S,S, '#cc6060'); // 입
-  g += px(ox+2*S, oy+6*S, 5*S,S, c.skin);
-  // 볼
-  g += px(ox+2*S, oy+4*S, S,S, '#f5a0a0',0.5);
-  g += px(ox+6*S, oy+4*S, S,S, '#f5a0a0',0.5);
+  // 머리카락
+  g += px(ox+3*S, oy,    2*S, S,   c.hair);
+  g += px(ox+2*S, oy+S,  5*S, S,   c.hair);
+  // 얼굴
+  g += px(ox+2*S, oy+2*S,5*S, 4*S, c.skin);
+  g += px(ox+3*S, oy+3*S,S,   S,   '#1a1010'); // 눈L
+  g += px(ox+5*S, oy+3*S,S,   S,   '#1a1010'); // 눈R
+  g += px(ox+3*S, oy+5*S,3*S, S,   '#d06060'); // 입
+  g += px(ox+2*S, oy+4*S,S,   S,   '#f5a0a0',0.6); // 볼L
+  g += px(ox+6*S, oy+4*S,S,   S,   '#f5a0a0',0.6); // 볼R
+  // 몸통
+  g += px(ox+2*S, oy+7*S,5*S, 5*S, c.shirt);
+  g += px(ox+3*S, oy+7*S,3*S, S,   adjustColor(c.shirt,-30)); // 칼라
+  g += px(ox+2*S, oy+7*S,S,   5*S, adjustColor(c.shirt,-20)); // 왼 음영
+  g += px(ox+6*S, oy+7*S,S,   5*S, adjustColor(c.shirt,-30)); // 오른 음영
+  // 팔
+  g += px(ox+S,    oy+7*S,S,  4*S, c.shirt);
+  g += px(ox+7*S,  oy+7*S,S,  4*S, c.shirt);
+  g += px(ox+S,    oy+11*S,S, S,   c.skin);
+  g += px(ox+7*S,  oy+11*S,S, S,   c.skin);
+  // 다리
+  g += px(ox+2*S, oy+12*S,2*S,4*S, c.pants);
+  g += px(ox+5*S, oy+12*S,2*S,4*S, c.pants);
+  g += px(ox+2*S, oy+12*S,S,  4*S, adjustColor(c.pants,-25));
+  // 신발
+  g += px(ox+S,   oy+16*S,3*S,S,   c.shoe);
+  g += px(ox+5*S, oy+16*S,3*S,S,   c.shoe);
+  g += px(ox+S,   oy+17*S,2*S,S,   adjustColor(c.shoe,20));
+  g += px(ox+5*S, oy+17*S,2*S,S,   adjustColor(c.shoe,20));
+  // 깡통
+  g += px(ox-S,   oy+9*S, 3*S,4*S, '#b0a090');
+  g += px(ox-S,   oy+9*S, 3*S,S,   '#d0c0b0');
+  g += px(ox,     oy+10*S,S,  S,   'rgba(255,255,255,0.3)');
 
-  // === 몸통 ===
-  g += px(ox+2*S, oy+7*S, 5*S,5*S, c.shirt);
-  g += px(ox+3*S, oy+7*S, 3*S,S, adjustColor(c.shirt,-20)); // 칼라
-  g += px(ox+2*S, oy+7*S, S,5*S, adjustColor(c.shirt,-15)); // 왼쪽 음영
-  g += px(ox+6*S, oy+7*S, S,5*S, adjustColor(c.shirt,-25)); // 오른쪽 음영
-
-  // === 팔 ===
-  g += px(ox+S,   oy+7*S, S,4*S, c.shirt); // 왼팔
-  g += px(ox+7*S, oy+7*S, S,4*S, c.shirt); // 오른팔
-  g += px(ox+S,   oy+11*S,S,S,   c.skin);  // 왼손
-  g += px(ox+7*S, oy+11*S,S,S,   c.skin);  // 오른손
-
-  // === 다리 ===
-  g += px(ox+2*S, oy+12*S, 2*S,4*S, c.pants);
-  g += px(ox+5*S, oy+12*S, 2*S,4*S, c.pants);
-  g += px(ox+2*S, oy+12*S, S,4*S,   adjustColor(c.pants,-20)); // 음영
-
-  // === 신발 ===
-  g += px(ox+S,   oy+16*S, 3*S,S, c.shoe);
-  g += px(ox+5*S, oy+16*S, 3*S,S, c.shoe);
-  g += px(ox+S,   oy+17*S, 2*S,S, adjustColor(c.shoe,15));
-  g += px(ox+5*S, oy+17*S, 2*S,S, adjustColor(c.shoe,15));
-
-  // === 깡통 (왼손 앞) ===
-  g += px(ox-S, oy+9*S,  3*S,4*S, '#9a8a7a');
-  g += px(ox-S, oy+9*S,  3*S,S,   '#baa898');
-  g += px(ox,   oy+10*S, S,S,     'rgba(255,255,255,0.2)');
-
-  // === 모자/특수 아이템 ===
-  if (cid === 'paper_bag') {
-    g += px(ox+2*S, oy-3*S, 5*S,4*S, '#d4a840');
-    g += px(ox+3*S, oy-2*S, S,S,     '#1a1a1a'); // 구멍눈L
-    g += px(ox+5*S, oy-2*S, S,S,     '#1a1a1a'); // 구멍눈R
-    g += px(ox+2*S, oy+S,   5*S,S,   adjustColor('#d4a840',-20));
-  } else if (cid === 'crown') {
-    g += px(ox+2*S, oy-2*S, 5*S,2*S, '#d4a844'); // 왕관 밴드
-    g += px(ox+2*S, oy-4*S, S,2*S,   '#d4a844'); // 왼 뾰족
-    g += px(ox+4*S, oy-5*S, S,3*S,   '#d4a844'); // 가운데 뾰족
-    g += px(ox+6*S, oy-4*S, S,2*S,   '#d4a844'); // 오른 뾰족
-    g += px(ox+3*S, oy-2*S, S,S,     '#e8527a'); // 보석L
-    g += px(ox+5*S, oy-2*S, S,S,     '#44cc88'); // 보석R
-    g += px(ox+4*S, oy-4*S, S,S,     '#7ab4f0'); // 보석 위
-  } else if (cid === 'santa') {
-    g += px(ox+2*S, oy-S,   5*S,S,   '#f0f0f0'); // 흰 테두리
-    g += px(ox+3*S, oy-4*S, 4*S,3*S, '#cc2020'); // 빨간 모자
-    g += px(ox+5*S, oy-6*S, 2*S,2*S, '#cc2020');
-    g += px(ox+6*S, oy-7*S, S,S,     '#f0f0f0'); // 폼폼
-  } else if (cid === 'ninja') {
-    g += px(ox+S,   oy+S,   7*S,6*S, '#1a1a1a',0.85); // 복면
-    g += px(ox+2*S, oy+3*S, 5*S,S,   '#cc4040',0.7);  // 눈 부분 띠
-  } else if (cid === 'vip') {
-    g += px(ox+2*S, oy-4*S, 5*S,3*S, '#1a1a2a'); // 모자 통
-    g += px(ox+S,   oy-S,   7*S,S,   '#1a1a2a'); // 모자 챙
-    g += px(ox+3*S, oy-4*S, 3*S,S,   'rgba(255,255,255,0.15)'); // 광택
+  // 모자/액세서리
+  if (cid==='paper_bag') {
+    g += px(ox+2*S, oy-3*S,5*S, 4*S, '#d4a840');
+    g += px(ox+3*S, oy-2*S,S,   S,   '#2a1808');
+    g += px(ox+5*S, oy-2*S,S,   S,   '#2a1808');
+    g += px(ox+2*S, oy+S,  5*S, S,   adjustColor('#d4a840',-30));
+  } else if (cid==='crown') {
+    g += px(ox+2*S, oy-2*S,5*S, 2*S, '#d4a844');
+    g += px(ox+2*S, oy-4*S,S,   2*S, '#d4a844');
+    g += px(ox+4*S, oy-5*S,S,   3*S, '#d4a844');
+    g += px(ox+6*S, oy-4*S,S,   2*S, '#d4a844');
+    g += px(ox+3*S, oy-2*S,S,   S,   '#e8527a');
+    g += px(ox+5*S, oy-2*S,S,   S,   '#44cc88');
+    g += px(ox+4*S, oy-4*S,S,   S,   '#7ab4f0');
+  } else if (cid==='santa') {
+    g += px(ox+2*S, oy-S,  5*S, S,   '#f0f0f0');
+    g += px(ox+3*S, oy-4*S,4*S, 3*S, '#cc2020');
+    g += px(ox+5*S, oy-6*S,2*S, 2*S, '#cc2020');
+    g += px(ox+6*S, oy-7*S,S,   S,   '#f0f0f0');
+  } else if (cid==='ninja') {
+    g += px(ox+S,   oy+S,  7*S, 6*S, '#1a1a1a',0.9);
+    g += px(ox+2*S, oy+3*S,5*S, S,   '#cc3030',0.8);
+  } else if (cid==='vip') {
+    g += px(ox+2*S, oy-4*S,5*S, 3*S, '#1a1a2a');
+    g += px(ox+S,   oy-S,  7*S, S,   '#1a1a2a');
+    g += px(ox+3*S, oy-4*S,3*S, S,   'rgba(255,255,255,0.2)');
   }
-
   return g;
 }
 
-// 싸이월드 감성 방 배경들
+// 싸이월드 감성 방 배경들 (밝은 톤)
 function getRoomDecor(room) {
-  // 공통 바닥 타일 패턴
   const floorTile = (x,y,w,h,c1,c2) => {
-    let t='';
-    for(let tx=x;tx<x+w;tx+=8) for(let ty=y;ty<y+h;ty+=8) {
+    let t=''; for(let tx=x;tx<x+w;tx+=8) for(let ty=y;ty<y+h;ty+=8) {
       const c=((Math.floor((tx-x)/8)+(Math.floor((ty-y)/8)))%2===0)?c1:c2;
       t+=px(tx,ty,Math.min(8,x+w-tx),Math.min(8,y+h-ty),c);
-    }
-    return t;
+    } return t;
   };
 
-  if (room.id === 'room_default') return `
-    ${floorTile(0,148,320,72,'#3a2838','#342232')}
-    ${px(0,148,320,4,'#5a3858')}
-    ${px(218,18,88,3,'#6a4a6a')}
-    ${px(218,20,88,70,'#1a1028')}
-    ${px(226,28,72,54,'#222038')}
-    ${px(250,20,4,70,'rgba(255,255,255,0.06)')}
-    ${px(218,54,88,4,'rgba(255,255,255,0.06)')}
-    ${px(234,32,20,20,'rgba(255,220,100,0.18)')}
-    ${px(254,32,20,20,'rgba(200,220,255,0.1)')}
-    ${px(18,56,40,92,'#2a3a50')}
-    ${px(22,60,32,4,'#3a4a60')}
-    ${px(22,64,32,80,'#243040')}
-    ${px(24,66,6,4,'rgba(255,255,255,0.15)')}
-    ${px(18,56,40,4,'#4a5a70')}
-    ${px(22,102,32,3,'#3a4a60')}
-    ${px(100,148,120,4,'#5a3060')}
-    ${px(100,152,120,12,'#3a1848')}
-    ${[0,8,16,24,32,40,48,56,64,72,80,88,96,104,112].map(i=>px(100+i,148,4,12,'rgba(255,255,255,0.04)')).join('')}
-    ${px(28,72,10,6,'rgba(255,255,255,0.2)')}
-    ${px(40,78,6,3,'rgba(255,255,255,0.1)')}`;
+  if (room.id==='room_default') return `
+    ${floorTile(0,148,320,72,'#c8b898','#c0b090')}
+    ${px(0,148,320,3,'#a09070')}
+    ${px(218,18,88,3,'#c8a878')}
+    ${px(218,20,88,70,'#e8f0ff')}
+    ${px(226,28,72,54,'#d8e8f8')}
+    ${px(250,20,4,70,'rgba(255,255,255,0.5)')}
+    ${px(218,54,88,4,'rgba(255,255,255,0.4)')}
+    ${px(234,32,20,20,'rgba(255,240,180,0.5)')}
+    ${px(254,32,20,20,'rgba(200,220,255,0.4)')}
+    ${px(18,56,40,92,'#8ab0c8')}
+    ${px(22,60,32,4,'#a0c0d8')}
+    ${px(22,64,32,80,'#78a0b8')}
+    ${px(24,66,6,4,'rgba(255,255,255,0.4)')}
+    ${px(18,56,40,4,'#b0d0e8')}
+    ${px(22,102,32,3,'#90b8d0')}
+    ${px(100,148,120,4,'#b09880')}
+    ${px(100,152,120,12,'#a08870')}
+    ${[0,8,16,24,32,40,48,56,64,72,80,88,96,104,112].map(i=>px(100+i,148,4,12,'rgba(255,255,255,0.08)')).join('')}
+    ${px(28,72,10,6,'rgba(255,255,255,0.5)')}`;
 
-  if (room.id === 'room_cave') return `
-    ${floorTile(0,148,320,72,'#18141e','#141018')}
-    ${px(0,148,320,4,'#281e30')}
-    <polygon points="0,0 24,0 12,32" fill="#120e1a"/>
-    <polygon points="40,0 68,0 54,44" fill="#120e1a"/>
-    <polygon points="110,0 142,0 126,36" fill="#120e1a"/>
-    <polygon points="180,0 208,0 194,28" fill="#120e1a"/>
-    <polygon points="240,0 272,0 256,40" fill="#120e1a"/>
-    <polygon points="290,0 320,0 320,30" fill="#120e1a"/>
-    ${px(50,80,20,16,'rgba(20,80,20,0.6)')}
-    ${px(44,88,8,8,'rgba(20,80,20,0.4)')}
-    ${px(260,60,24,18,'rgba(20,80,20,0.5)')}
-    ${px(220,160,72,14,'rgba(40,80,140,0.5)')}
-    ${px(220,160,72,4,'rgba(80,140,200,0.4)')}
-    ${px(240,158,8,4,'rgba(180,220,255,0.3)')}
-    ${px(118,120,8,28,'#282018')}
-    ${px(110,116,24,8,'rgba(200,160,60,0.7)')}
-    ${px(112,124,4,4,'rgba(255,200,80,0.8)')}`;
+  if (room.id==='room_cave') return `
+    ${floorTile(0,148,320,72,'#4a4060','#40384a')}
+    ${px(0,148,320,3,'#6a5880')}
+    <polygon points="0,0 24,0 12,32" fill="#201828"/>
+    <polygon points="40,0 68,0 54,44" fill="#201828"/>
+    <polygon points="110,0 142,0 126,36" fill="#201828"/>
+    <polygon points="180,0 208,0 194,28" fill="#201828"/>
+    <polygon points="240,0 272,0 256,40" fill="#201828"/>
+    <polygon points="290,0 320,0 320,30" fill="#201828"/>
+    ${px(50,80,20,16,'rgba(60,160,60,0.5)')}
+    ${px(260,60,24,18,'rgba(60,160,60,0.4)')}
+    ${px(220,160,72,14,'rgba(80,120,200,0.6)')}
+    ${px(220,160,72,3,'rgba(140,180,255,0.5)')}
+    ${px(118,120,8,28,'#504040')}
+    ${px(110,116,24,8,'rgba(255,200,80,0.8)')}
+    ${px(112,124,4,4,'rgba(255,220,100,0.9)')}`;
 
-  if (room.id === 'room_rooftop') return `
-    ${px(0,0,320,148,'#0a1020')}
-    ${floorTile(0,148,320,72,'#3a2820','#342218')}
-    ${px(0,148,320,4,'#5a3a20')}
-    ${[...Array(20)].map((_,i)=>px(i*16+Math.sin(i)*4,8+Math.cos(i*2)*4,2,2,`rgba(255,255,200,${0.3+Math.random()*0.5})`)).join('')}
-    ${px(260,20,28,28,'rgba(255,220,100,0.15)')}
-    ${px(268,26,12,12,'rgba(255,220,100,0.2)')}
-    ${px(14,50,24,98,'#1a2838')}
-    ${px(16,54,20,6,'rgba(255,220,80,0.5)')}
-    ${px(16,66,20,6,'rgba(255,220,80,0.3)')}
-    ${px(16,78,20,6,'rgba(255,220,80,0.6)')}
-    ${px(50,36,20,112,'#162030')}
-    ${px(52,40,16,5,'rgba(255,220,80,0.4)')}
-    ${px(52,52,16,5,'rgba(255,220,80,0.7)')}
-    ${px(200,44,22,104,'#162030')}
-    ${px(202,48,18,5,'rgba(255,220,80,0.5)')}
-    ${px(238,30,26,118,'#1a2838')}
-    ${px(240,34,22,5,'rgba(255,220,80,0.3)')}
-    ${px(240,46,22,5,'rgba(255,220,80,0.6)')}
-    ${px(0,144,320,4,'#6a4a28')}`;
+  if (room.id==='room_rooftop') return `
+    ${px(0,0,320,148,'#1a3060')}
+    ${floorTile(0,148,320,72,'#8a6840','#7a5830')}
+    ${px(0,148,320,3,'#6a4820')}
+    ${[...Array(18)].map((_,i)=>px(i*18+4,10+Math.floor(i/3)*8,2,2,`rgba(255,255,200,${0.5+0.3*(i%3)})`)).join('')}
+    ${px(255,18,32,32,'rgba(255,230,100,0.25)')}
+    ${px(263,24,16,16,'rgba(255,230,100,0.35)')}
+    ${px(14,50,24,98,'#2a4060')}
+    ${px(16,54,20,6,'rgba(255,230,80,0.8)')}
+    ${px(16,68,20,6,'rgba(255,230,80,0.6)')}
+    ${px(16,82,20,6,'rgba(255,230,80,0.9)')}
+    ${px(50,36,20,112,'#223050')}
+    ${px(52,40,16,5,'rgba(255,230,80,0.7)')}
+    ${px(52,54,16,5,'rgba(255,230,80,0.9)')}
+    ${px(200,44,22,104,'#223050')}
+    ${px(202,48,18,5,'rgba(255,230,80,0.7)')}
+    ${px(238,30,26,118,'#2a4060')}
+    ${px(240,34,22,5,'rgba(255,230,80,0.5)')}
+    ${px(240,48,22,5,'rgba(255,230,80,0.8)')}
+    ${px(0,145,320,3,'#a08050')}`;
 
-  if (room.id === 'room_gosiwon') return `
-    ${floorTile(0,148,320,72,'#1e1418','#18100c')}
-    ${px(0,148,320,4,'#382020')}
-    ${px(102,6,116,8,'rgba(220,220,180,0.2)')}
-    ${px(108,14,4,134,'rgba(220,220,180,0.06)')}
-    ${px(208,14,4,134,'rgba(220,220,180,0.06)')}
-    ${px(8,42,84,8,'#2a1e20')}
-    ${px(8,50,4,58,'#221818')}
-    ${px(88,50,4,58,'#221818')}
-    ${px(14,28,10,14,'#1a2858')}
-    ${px(26,30,10,12,'#581a18')}
-    ${px(38,26,8,16,'#1a3818')}
-    ${px(52,28,8,14,'#402060')}
-    ${px(14,28,4,14,'rgba(255,255,255,0.08)')}
-    ${px(236,26,62,72,'#161420')}
-    ${px(236,26,62,14,'#3a0a18')}
-    ${px(244,30,12,6,'rgba(255,255,255,0.5)')}
-    ${[0,1,2,3,4].map(i=>[0,1].map(j=>px(240+j*28,44+i*10,10,8,`rgba(255,${i%2===0?220:180},80,${i%2===0?0.5:0.2})`))).flat().join('')}
-    ${px(80,106,48,42,'#2a1820')}
-    ${px(80,106,48,4,'#3a2830')}
-    ${px(84,110,40,34,'#221418')}
-    ${px(86,112,36,8,'#1a1020')}`;
+  if (room.id==='room_gosiwon') return `
+    ${floorTile(0,148,320,72,'#c8baa8','#c0b0a0')}
+    ${px(0,148,320,3,'#a09080')}
+    ${px(102,6,116,8,'rgba(255,255,200,0.7)')}
+    ${px(108,14,4,134,'rgba(200,190,170,0.3)')}
+    ${px(208,14,4,134,'rgba(200,190,170,0.3)')}
+    ${px(8,42,84,8,'#b09888')}
+    ${px(8,50,4,58,'#a08878')}
+    ${px(88,50,4,58,'#a08878')}
+    ${px(14,28,10,14,'#7090c8')}
+    ${px(26,30,10,12,'#c87070')}
+    ${px(38,26,8,16,'#70c870')}
+    ${px(52,28,8,14,'#9070c8')}
+    ${px(14,28,4,14,'rgba(255,255,255,0.3)')}
+    ${px(236,26,62,72,'#d8d0c0')}
+    ${px(236,26,62,14,'#e87878')}
+    ${px(244,30,12,6,'rgba(255,255,255,0.7)')}
+    ${[0,1,2,3,4].map(i=>[0,1].map(j=>px(240+j*28,44+i*10,10,8,i%2===0?'rgba(255,220,80,0.7)':'rgba(255,200,80,0.4)'))).flat().join('')}
+    ${px(80,106,48,42,'#c8b8a8')}
+    ${px(80,106,48,4,'#d8c8b8')}
+    ${px(84,110,40,34,'#b8a898')}`;
 
-  if (room.id === 'room_park') return `
-    ${px(0,0,320,148,'#080e18')}
-    ${floorTile(0,148,320,72,'#1a2810','#14200c')}
-    ${px(0,148,320,4,'#2a3818')}
-    ${[...Array(12)].map((_,i)=>px(i*28+6,6+i%3*8,2,2,`rgba(255,255,200,${0.4+i%3*0.2})`)).join('')}
-    ${px(260,24,24,24,'rgba(255,220,80,0.12)')}
-    ${px(266,28,12,12,'rgba(255,220,80,0.15)')}
-    ${px(24,76,10,72,'#2a1610')}
-    ${px(14,48,30,30,'#0a1e0a')}
-    ${px(8,56,18,22,'#0a1e0a')}
-    ${px(26,52,20,24,'#0c2010')}
-    ${px(20,46,12,10,'#0e240e')}
-    ${px(268,82,10,66,'#2a1610')}
-    ${px(256,54,30,30,'#0a1e0a')}
-    ${px(260,58,22,24,'#0c2010')}
-    ${px(90,136,148,8,'#3a2010')}
-    ${px(90,130,148,6,'#4a3020')}
-    ${px(92,144,14,20,'#2a1408')}
-    ${px(96,144,10,4,'#4a2a10')}
-    ${px(216,144,14,20,'#2a1408')}
-    ${px(220,144,10,4,'#4a2a10')}
-    ${px(130,130,60,6,'#2a1a08')}`;
+  if (room.id==='room_park') return `
+    ${px(0,0,320,148,'#5090d8')}
+    ${floorTile(0,148,320,72,'#60b050','#58a848')}
+    ${px(0,148,320,3,'#488038')}
+    ${px(40,20,30,30,'rgba(255,255,255,0.8)')}
+    ${px(60,10,20,20,'rgba(255,255,255,0.7)')}
+    ${px(80,25,25,25,'rgba(255,255,255,0.75)')}
+    ${px(230,15,40,30,'rgba(255,255,255,0.8)')}
+    ${px(255,8,30,25,'rgba(255,255,255,0.7)')}
+    ${px(270,28,250,250,'rgba(255,230,80,0)',0)}
+    <circle cx="272" cy="38" r="22" fill="rgba(255,220,60,0.9)"/>
+    <circle cx="272" cy="38" r="18" fill="rgba(255,240,100,0.95)"/>
+    ${px(24,76,12,72,'#8a5030')}
+    ${px(8,36,34,44,'#388028')}
+    ${px(14,46,22,34,'#48a038')}
+    ${px(10,56,14,24,'#308018')}
+    ${px(264,82,12,66,'#8a5030')}
+    ${px(248,48,36,40,'#388028')}
+    ${px(254,56,24,32,'#48a038')}
+    ${px(90,132,148,12,'#c8a060')}
+    ${px(90,128,148,6,'#d8b070')}
+    ${px(94,144,14,20,'#8a5028')}
+    ${px(98,144,10,4,'#b07038')}
+    ${px(216,144,14,20,'#8a5028')}
+    ${px(220,144,10,4,'#b07038')}
+    ${px(50,140,192,8,'#a09060')}`;
 
   return '';
 }
@@ -2755,39 +2750,35 @@ function renderDecorateList(tab) {
   const unownedItems = items.filter(item => !myItems.owned.includes(item.id));
   const listEl = document.getElementById('decorate-' + tab + '-list');
   if (!listEl) return;
-
   let html = '';
-
-  // 보유 아이템
   if (ownedItems.length) {
     html += '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;letter-spacing:.5px;">✅ 보유 아이템</div>';
     html += ownedItems.map(item => {
       const selected = item.id === selectedKey;
-      return `<div class="decorate-item-row ${selected ? 'selected' : ''}" data-id="${item.id}" data-tab="${tab}" onclick="selectDecorateItem('${item.id}','${tab}')">
-        <div class="decorate-item-preview">${item.emoji}</div>
+      return `<div class="decorate-item-row${selected?' selected':''}" data-id="${item.id}" data-tab="${tab}" onclick="selectDecorateItem('${item.id}','${tab}')">
+        <div class="decorate-item-preview" style="overflow:hidden;background:transparent;">${itemPreviewSvg(item)}</div>
         <div class="decorate-item-info">
           <div class="decorate-item-name">${item.name}</div>
           <div class="decorate-item-desc">${item.desc}</div>
         </div>
-        ${selected ? '<div style="color:var(--green);font-size:18px;">✓</div>' : ''}
+        ${selected ? '<div style="color:var(--green);font-size:20px;flex-shrink:0;">✓</div>' : ''}
       </div>`;
     }).join('');
   }
-
-  // 미보유 아이템 (잠금 표시)
   if (unownedItems.length) {
     html += '<div style="font-size:11px;color:var(--text3);font-weight:600;margin:14px 0 8px;letter-spacing:.5px;">🔒 미보유 (상점에서 구매)</div>';
-    html += unownedItems.map(item => `
-      <div class="decorate-item-row locked" onclick="closeOverlay('ov-decorate');openShop()">
-        <div class="decorate-item-preview" style="opacity:.4;">${item.emoji}</div>
-        <div class="decorate-item-info" style="opacity:.4;">
+    html += unownedItems.map(item => {
+      const price = getItemPrice(item.id);
+      return `<div class="decorate-item-row locked" onclick="closeOverlay('ov-decorate');openShop()">
+        <div class="decorate-item-preview" style="overflow:hidden;opacity:.4;">${itemPreviewSvg(item)}</div>
+        <div class="decorate-item-info" style="opacity:.5;">
           <div class="decorate-item-name">${item.name}</div>
-          <div class="decorate-item-desc">${item.desc} · ${item.price}점</div>
+          <div class="decorate-item-desc">${item.desc} · ${price}점</div>
         </div>
-        <div style="font-size:11px;color:var(--text3);">구매하기 ›</div>
-      </div>`).join('');
+        <div style="font-size:11px;color:var(--text3);flex-shrink:0;">구매하기 ›</div>
+      </div>`;
+    }).join('');
   }
-
   listEl.innerHTML = html;
 }
 
@@ -2824,27 +2815,57 @@ function switchShopTab(tab) {
   renderShopList(tab);
 }
 
+// 싸이월드 스타일 아이템 미니 프리뷰 SVG
+function itemPreviewSvg(item) {
+  const S = 2;
+  if (item.type === 'room') {
+    const r = item;
+    const decor = getRoomDecor(r);
+    return `<svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;" shape-rendering="crispEdges">
+      <rect width="320" height="220" fill="${r.bg}"/>
+      <rect x="0" y="0" width="320" height="148" fill="${r.wall}"/>
+      <rect x="0" y="148" width="320" height="72" fill="${r.floor}"/>
+      ${decor}
+      <g opacity="0.7">${drawChar(CHAR_ITEMS[0], 160, 106)}</g>
+    </svg>`;
+  }
+  // 캐릭터 프리뷰
+  const cid = item.id.replace('char_','');
+  const bg = { default:'#f5eee0', paper_bag:'#f5eacc', crown:'#fff8e0', santa:'#ffe0e0', ninja:'#e0e0e8', vip:'#e8e8f5' }[cid] || '#f0ece0';
+  return `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;" shape-rendering="crispEdges">
+    <rect width="80" height="100" fill="${bg}"/>
+    <g transform="translate(40,55)">${drawChar(item, 0, 0)}</g>
+  </svg>`;
+}
+
 function renderShopList(tab) {
   const items = tab === 'room' ? ROOM_ITEMS : CHAR_ITEMS;
   const equippedKey = tab === 'room' ? 'equippedRoom' : 'equippedChar';
   const listEl = document.getElementById('shop-' + tab + '-list');
   if (!listEl) return;
   listEl.innerHTML = items.map(item => {
+    const price = getItemPrice(item.id);
     const owned = myItems.owned.includes(item.id);
     const equipped = myItems[equippedKey] === item.id;
-    const canBuy = myTotalScore >= item.price;
+    const canBuy = myTotalScore >= price;
     let btnClass, btnText, btnAction;
-    if (equipped) { btnClass='equipped'; btnText='착용중'; btnAction=''; }
-    else if (owned) { btnClass='owned'; btnText='착용하기'; btnAction=`equipItem('${item.id}','${tab}')`; }
-    else if (item.price === 0) { btnClass='buy'; btnText='무료 착용'; btnAction=`buyItem('${item.id}','${tab}')`; }
-    else if (canBuy) { btnClass='buy'; btnText=item.price+'점 구매'; btnAction=`buyItem('${item.id}','${tab}')`; }
-    else { btnClass='no-money'; btnText=item.price+'점 필요'; btnAction=''; }
+    if (equipped)      { btnClass='equipped'; btnText='착용중';      btnAction=''; }
+    else if (owned)    { btnClass='owned';    btnText='착용하기';    btnAction=`equipItem('${item.id}','${tab}')`; }
+    else if (price===0){ btnClass='buy';      btnText='무료 착용';  btnAction=`buyItem('${item.id}','${tab}')`; }
+    else if (canBuy)   { btnClass='buy';      btnText=price+'점 구매'; btnAction=`buyItem('${item.id}','${tab}')`; }
+    else               { btnClass='no-money'; btnText=price+'점 필요'; btnAction=''; }
+
+    const previewW = tab === 'room' ? '100%' : '60px';
+    const previewH = tab === 'room' ? '80px' : '80px';
+
     return `<div class="shop-item-row">
-      <div class="shop-item-preview">${item.emoji}</div>
+      <div class="shop-item-preview" style="width:${previewW === '100%' ? '72px' : previewW};height:${previewH};overflow:hidden;background:transparent;">
+        ${itemPreviewSvg(item)}
+      </div>
       <div class="shop-item-info">
         <div class="shop-item-name">${item.name}${equipped?' <span style="font-size:10px;color:var(--green);">●착용중</span>':''}</div>
         <div class="shop-item-desc">${item.desc}</div>
-        <div class="shop-item-price">${item.price===0?'무료':item.price+'점'}</div>
+        <div class="shop-item-price">${price===0?'무료':price+'점'}</div>
       </div>
       <button class="shop-item-btn ${btnClass}" ${btnAction?`onclick="${btnAction}"`:''}>${btnText}</button>
     </div>`;
@@ -2855,9 +2876,10 @@ function buyItem(itemId, tab) {
   const items = tab === 'room' ? ROOM_ITEMS : CHAR_ITEMS;
   const item = items.find(i => i.id === itemId);
   if (!item) return;
-  if (item.price > 0 && myTotalScore < item.price) { showToast('누적 거지력이 부족해요'); return; }
+  const price = getItemPrice(itemId);
+  if (price > 0 && myTotalScore < price) { showToast('누적 거지력이 부족해요'); return; }
   if (!myItems.owned.includes(itemId)) {
-    myTotalScore -= item.price;
+    myTotalScore -= price;
     updateMyRankUI();
     if (window.GJ?.ready && myProfile.uid) {
       window.GJ.saveUser(myProfile.uid, { totalScore: myTotalScore }).catch(()=>{});
