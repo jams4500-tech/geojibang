@@ -1315,6 +1315,13 @@ window.GJ._getSettingsDoc = async (docId) => {
   return await getDoc(doc(db, 'geojibang_ranking', '_settings'));
 };
 
+window.GJ.listenMyScore = (uid, callback) => {
+  const userRef = doc(db, 'geojibang_users', uid);
+  return onSnapshot(userRef, (snap) => {
+    if (snap.exists()) callback(snap.data());
+  });
+};
+
 window.GJ.setSubscription = async (uid, isPremium) => {
   await updateDoc(doc(db, 'geojibang_users', uid), {
     isPremium,
@@ -1475,6 +1482,8 @@ window.GJ.initProfile = async () => {
       clearTimeout(updateMyRankUI._t);
       // UI만 업데이트, Firebase 재저장 없이
       _updateRankUIOnly();
+      // 실시간 점수 감시 시작 (어드민 수정 즉시 반영)
+      if (window.GJ.listenMyScore) startMyScoreListener(uid);
     } else {
       await window.GJ.saveUser(uid, {
         nick: profile.nick,
@@ -1533,7 +1542,25 @@ function timeAgo(date) {
 
 // 앱 로드 후 프로필 초기화
 setTimeout(() => window.GJ.initProfile(), 500);
-setTimeout(() => loadItemPrices(), 1000); // 아이템 가격 Firebase에서 로드
+setTimeout(() => loadItemPrices(), 1000);
+
+// 내 유저 문서 실시간 감시 — 어드민에서 점수 수정 시 즉시 반영
+function startMyScoreListener(uid) {
+  if (!uid || window._myScoreListenerActive) return;
+  window._myScoreListenerActive = true;
+  window.GJ.listenMyScore(uid, (data) => {
+    const remoteMonth = data.monthScore ?? 0;
+    const remoteTotal = data.totalScore ?? 0;
+    // debounce 타이머가 없을 때만 (내가 방금 저장한 게 아닐 때만) 반영
+    if (!updateMyRankUI._t && (remoteMonth !== myMonthScore || remoteTotal !== myTotalScore)) {
+      myMonthScore = remoteMonth;
+      myTotalScore = remoteTotal;
+      window.myMonthScore = myMonthScore;
+      window.myTotalScore = myTotalScore;
+      _updateRankUIOnly();
+    }
+  });
+}
 
 // 탭/앱이 다시 포커스될 때 Firebase에서 최신 점수 다시 로드
 // (어드민에서 수정 후 앱으로 돌아오면 자동 반영)
