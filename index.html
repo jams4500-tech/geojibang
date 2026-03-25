@@ -334,6 +334,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .post-del-btn { color:var(--red); }
 .post-del-btn:hover { border-color:var(--red); background:rgba(255,85,85,.1); }
 
+.decorate-item-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; border-radius:var(--radius-sm); }
+.decorate-item-row:last-child { border-bottom:none; }
+.decorate-item-row:hover { background:var(--surface2); }
+.decorate-item-row.selected { background:var(--pink-dim); border:1px solid rgba(232,82,122,0.3); border-radius:var(--radius-sm); padding:10px 8px; }
+.decorate-item-row.locked { cursor:pointer; opacity:.7; }
+.decorate-item-preview { width:48px; height:48px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; background:var(--surface2); }
+.decorate-item-name { font-size:13px; font-weight:600; color:var(--text); }
+.decorate-item-desc { font-size:11px; color:var(--text3); margin-top:2px; }
+
 .shop-tab { flex:1; padding:10px; background:transparent; border:none; color:var(--text3); font-size:13px; cursor:pointer; font-family:inherit; border-bottom:2px solid transparent; transition:all .15s; }
 .shop-tab.active { color:var(--pink); border-bottom-color:var(--pink); }
 .shop-item-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -952,7 +961,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="view-profile-bio">한 줄 소개가 없어요</div>
       </div>
       <div id="view-shop-btn" style="display:none;flex-direction:column;gap:6px;">
-        <button class="btn-pink" style="font-size:12px;padding:7px 14px;white-space:nowrap;" id="btn-open-shop">🏪 방 꾸미기</button>
+        <button class="btn-pink" style="font-size:12px;padding:7px 14px;white-space:nowrap;" id="btn-open-decorate">🏠 방 꾸미기</button>
         <button style="font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap;" id="btn-open-profile-edit">✏️ 프로필 편집</button>
       </div>
     </div>
@@ -984,13 +993,37 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div style="font-size:12px;color:var(--gold);">보유 누적 거지력 <b id="shop-my-score">0</b>점</div>
     </div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">구매는 누적 거지력 차감 · 월 거지력·랭킹 변동 없음</div>
-    <!-- 탭 -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;">
-      <button class="shop-tab active" id="stab-room" onclick="switchShopTab('room')">🏠 방 꾸미기</button>
-      <button class="shop-tab" id="stab-char" onclick="switchShopTab('char')">🧑 거지 꾸미기</button>
+      <button class="shop-tab active" id="stab-room" onclick="switchShopTab('room')">🏠 방 테마</button>
+      <button class="shop-tab" id="stab-char" onclick="switchShopTab('char')">🧑 거지 스킨</button>
     </div>
     <div id="shop-room-list"></div>
     <div id="shop-char-list" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- 방 꾸미기 오버레이 -->
+<div class="overlay" id="ov-decorate" onclick="closeOverlayOut(event,'ov-decorate')">
+  <div class="sheet" style="max-height:96vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="sheet-title" style="margin-bottom:0;">🏠 방 꾸미기</div>
+      <button class="btn-pink" style="font-size:12px;padding:7px 16px;" id="btn-decorate-save">저장하기</button>
+    </div>
+    <!-- 실시간 미리보기 -->
+    <div style="background:var(--surface2);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;position:relative;">
+      <svg id="decorate-room-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;"></svg>
+      <div style="position:absolute;bottom:6px;right:8px;font-size:10px;color:rgba(255,255,255,0.4);">미리보기</div>
+    </div>
+    <!-- 탭 -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <button class="shop-tab active" id="dtab-room" onclick="switchDecorateTab('room')">🏠 방 배경</button>
+      <button class="shop-tab" id="dtab-char" onclick="switchDecorateTab('char')">🧑 내 거지</button>
+    </div>
+    <!-- 방 배경 선택 -->
+    <div id="decorate-room-list"></div>
+    <!-- 거지 스킨 선택 -->
+    <div id="decorate-char-list" style="display:none;"></div>
   </div>
 </div>
 
@@ -2659,6 +2692,88 @@ function openMyProfile() {
   viewUserProfile(nick, bg, c, bio, myMonthScore, myTotalScore, true);
 }
 
+// ── 방 꾸미기 (보유 아이템 배치) ──────────────────────
+let decorateTempRoom = null; // 임시 선택 상태
+let decorateTempChar = null;
+
+function openDecorate() {
+  decorateTempRoom = myItems.equippedRoom;
+  decorateTempChar = myItems.equippedChar;
+  switchDecorateTab('room');
+  renderRoom('decorate-room-svg', decorateTempRoom, decorateTempChar);
+  document.getElementById('ov-decorate')?.classList.add('open');
+}
+
+function switchDecorateTab(tab) {
+  document.getElementById('dtab-room')?.classList.toggle('active', tab === 'room');
+  document.getElementById('dtab-char')?.classList.toggle('active', tab === 'char');
+  document.getElementById('decorate-room-list').style.display = tab === 'room' ? '' : 'none';
+  document.getElementById('decorate-char-list').style.display = tab === 'char' ? '' : 'none';
+  renderDecorateList(tab);
+}
+
+function renderDecorateList(tab) {
+  const items = tab === 'room' ? ROOM_ITEMS : CHAR_ITEMS;
+  const selectedKey = tab === 'room' ? decorateTempRoom : decorateTempChar;
+  const ownedItems = items.filter(item => myItems.owned.includes(item.id));
+  const unownedItems = items.filter(item => !myItems.owned.includes(item.id));
+  const listEl = document.getElementById('decorate-' + tab + '-list');
+  if (!listEl) return;
+
+  let html = '';
+
+  // 보유 아이템
+  if (ownedItems.length) {
+    html += '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;letter-spacing:.5px;">✅ 보유 아이템</div>';
+    html += ownedItems.map(item => {
+      const selected = item.id === selectedKey;
+      return `<div class="decorate-item-row ${selected ? 'selected' : ''}" data-id="${item.id}" data-tab="${tab}" onclick="selectDecorateItem('${item.id}','${tab}')">
+        <div class="decorate-item-preview">${item.emoji}</div>
+        <div class="decorate-item-info">
+          <div class="decorate-item-name">${item.name}</div>
+          <div class="decorate-item-desc">${item.desc}</div>
+        </div>
+        ${selected ? '<div style="color:var(--green);font-size:18px;">✓</div>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // 미보유 아이템 (잠금 표시)
+  if (unownedItems.length) {
+    html += '<div style="font-size:11px;color:var(--text3);font-weight:600;margin:14px 0 8px;letter-spacing:.5px;">🔒 미보유 (상점에서 구매)</div>';
+    html += unownedItems.map(item => `
+      <div class="decorate-item-row locked" onclick="closeOverlay('ov-decorate');openShop()">
+        <div class="decorate-item-preview" style="opacity:.4;">${item.emoji}</div>
+        <div class="decorate-item-info" style="opacity:.4;">
+          <div class="decorate-item-name">${item.name}</div>
+          <div class="decorate-item-desc">${item.desc} · ${item.price}점</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);">구매하기 ›</div>
+      </div>`).join('');
+  }
+
+  listEl.innerHTML = html;
+}
+
+function selectDecorateItem(itemId, tab) {
+  if (tab === 'room') decorateTempRoom = itemId;
+  else decorateTempChar = itemId;
+  // 미리보기 업데이트
+  renderRoom('decorate-room-svg', decorateTempRoom, decorateTempChar);
+  // 목록 새로고침 (선택 표시)
+  renderDecorateList(tab);
+}
+
+function saveDecoration() {
+  myItems.equippedRoom = decorateTempRoom;
+  myItems.equippedChar = decorateTempChar;
+  saveMyItems();
+  // 프로필 방도 업데이트
+  renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
+  document.getElementById('ov-decorate')?.classList.remove('open');
+  showToast('🏠 방 꾸미기 저장됐어요!');
+}
+
 function openShop() {
   document.getElementById('shop-my-score').textContent = myTotalScore;
   switchShopTab('room');
@@ -2745,13 +2860,17 @@ function _handleProfileClick(e) {
       openMyProfile();
       return;
     }
-    if (e.target.closest('#btn-open-shop')) {
-      openShop();
+    if (e.target.closest('#btn-open-decorate')) {
+      openDecorate();
       return;
     }
     if (e.target.closest('#btn-open-profile-edit')) {
       document.getElementById('ov-user-profile')?.classList.remove('open');
       document.getElementById('ov-profile')?.classList.add('open');
+      return;
+    }
+    if (e.target.closest('#btn-decorate-save')) {
+      saveDecoration();
       return;
     }
   } catch(err) {
@@ -3145,7 +3264,11 @@ window.viewUserProfile = viewUserProfile;
 window.viewUserProfileByUid = viewUserProfileByUid;
 window.openMyProfile = openMyProfile;
 window.openShop = openShop;
+window.openDecorate = openDecorate;
 window.switchShopTab = switchShopTab;
+window.switchDecorateTab = switchDecorateTab;
+window.selectDecorateItem = selectDecorateItem;
+window.saveDecoration = saveDecoration;
 window.buyItem = buyItem;
 window.equipItem = equipItem;
 window.buildRank = buildRank;
