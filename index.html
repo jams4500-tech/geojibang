@@ -625,20 +625,20 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       </div>
       <div id="tab-rank" class="section">
 
-        <!-- 거지왕 발표 배너 -->
-        <div id="king-banner" style="display:none;background:linear-gradient(135deg,#2a1020,#1a0a18);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:14px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:6px;">👑</div>
-          <div style="font-size:11px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">이달의 거지왕 발표</div>
-          <div style="font-family:'Black Han Sans',sans-serif;font-size:24px;color:var(--text);margin-bottom:2px;" id="king-name">-</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="king-score">거지력 214점 · 피드 31개</div>
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
-            <div style="background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--gold);font-weight:700;">🥇 1위 토스포인트 100,000P</div>
-            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);">🥈 2위 30,000P</div>
-            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);">🥉 3~5위 10,000P</div>
+        <!-- 지난달 거지왕 결과 -->
+        <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#2a1a08,#1a1208);border:1px solid rgba(212,168,68,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="font-size:32px;">👑</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">2025년 2월 거지왕</div>
+            <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--text);" id="last-king-name">-</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="last-king-score">거지력 0점</div>
           </div>
-          <div id="king-claim-area" style="display:none;">
-            <div style="font-size:13px;color:var(--green);font-weight:700;margin-bottom:8px;">🎉 축하해요! 리워드가 도착했어요</div>
-            <button style="background:linear-gradient(135deg,var(--gold),#c08000);color:#1a1200;border:none;border-radius:var(--radius);padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;" onclick="claimReward()">토스 포인트 수령하기</button>
+          <div id="last-king-list" style="margin-bottom:12px;"></div>
+          <!-- 내가 순위 안에 들었을 때 -->
+          <div id="my-reward-claim-area" style="display:none;background:rgba(68,204,136,.08);border:1px solid rgba(68,204,136,.2);border-radius:var(--radius-sm);padding:12px;text-align:center;">
+            <div style="font-size:13px;color:var(--green);font-weight:700;margin-bottom:4px;" id="my-reward-claim-title">🎉 리워드 대상자예요!</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:10px;" id="my-reward-claim-desc">토스포인트 10,000P 지급 대상</div>
+            <button style="background:linear-gradient(135deg,var(--gold),#c08000);color:#1a1200;border:none;border-radius:var(--radius-sm);padding:11px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;" id="my-reward-claim-btn" onclick="claimRankReward()">🏆 보상 받기 신청</button>
           </div>
         </div>
 
@@ -655,13 +655,12 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
           <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">🏆 이달의 랭킹/리워드</div>
           <div id="live-reward-list">
-            <!-- buildLiveRewardList()로 채워짐 -->
             <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">아직 랭킹 데이터가 없어요</div>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 리워드는 발표 후 24시간 내 자동 지급돼요</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 순위 안 들면 랭킹 탭에서 보상 받기 신청 가능</div>
         </div>
 
-        <div class="rank-header"><div class="rank-title">3월 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
@@ -692,19 +691,22 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <!-- 누적 거지력 환전 카드 -->
         <div style="background:var(--surface);border:1px solid var(--gold-dim);border-radius:var(--radius);padding:14px 16px;margin-top:10px;" id="total-score-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:13px;font-weight:500;color:var(--text);">💫 누적 거지력 환전</div>
-            <div style="font-size:10px;color:var(--text3);">월 랭킹과 별개</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);">💫 누적 거지력 → 토스포인트</div>
+            <div style="font-size:10px;color:var(--text3);">월 최대 100P</div>
           </div>
           <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px;">
-            누적 거지력 1000점 이상 보유 시<br>
-            <b style="color:var(--gold);">1000점 = 토스포인트 10P</b>로 환전할 수 있어요<br>
-            <span style="color:var(--text3);">환전해도 이번달 월 거지력 랭킹은 그대로예요</span>
+            <b style="color:var(--gold);">1000점 = 10P</b> · 광고 시청 후 환전<br>
+            <span style="color:var(--text3);">월 한도 10,000점(100P) · 랭킹 변동 없음</span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;">
             <span style="font-size:12px;color:var(--text2);">현재 누적 거지력</span>
             <span style="font-size:16px;font-weight:700;color:var(--gold);" id="total-conv-display">0점</span>
           </div>
-          <button class="btn-gold" id="total-score-conv-btn" onclick="convertTotalScore()" disabled style="font-size:13px;padding:12px;">1000점 이상 모이면 환전 가능</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text2);">이번달 환전 사용량</span>
+            <span style="font-size:13px;font-weight:700;color:var(--pink);" id="monthly-exchange-display">0 / 10,000점</span>
+          </div>
+          <button class="btn-gold" id="total-score-conv-btn" onclick="openExchangeAd()" disabled style="font-size:13px;padding:12px;width:100%;">1000점 이상 모이면 환전 가능</button>
         </div>
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
@@ -835,6 +837,34 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 </div><!-- .app -->
 
 <!-- overlays -->
+<div class="overlay" id="ov-exchange" onclick="closeOverlayOut(event,'ov-exchange')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">💫 토스포인트 환전</div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;color:var(--text3);">보유 누적 거지력</span>
+        <span style="font-weight:700;color:var(--gold);" id="exc-avail-pts">0점</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--text3);">이번달 남은 한도</span>
+        <span style="font-weight:700;color:var(--pink);" id="exc-remain-limit">10,000점</span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">환전할 점수 입력 <span style="font-size:11px;color:var(--text3);">(1000점 단위)</span></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <input type="number" id="exc-amount-input" class="ob-input" placeholder="1000" min="1000" step="1000" style="flex:1;font-size:16px;" oninput="updateExcPreview()">
+      <span style="font-size:13px;color:var(--text3);">점</span>
+    </div>
+    <div style="font-size:13px;color:var(--gold);text-align:center;margin-bottom:14px;font-weight:700;" id="exc-preview">→ 0 P</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.6;">
+      · 1000점 = 10P · 월 최대 10,000점(100P)<br>
+      · 환전해도 월 거지력 랭킹은 그대로예요
+    </div>
+    <button class="btn-pink" style="width:100%;padding:14px;font-size:15px;font-weight:700;" onclick="doExchangeScore()">환전하기</button>
+  </div>
+</div>
+
 <div class="overlay" id="ov-ad">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -1552,6 +1582,7 @@ function timeAgo(date) {
 // 앱 로드 후 프로필 초기화
 setTimeout(() => window.GJ.initProfile(), 500);
 setTimeout(() => loadItemPrices(), 1000);
+setTimeout(() => loadLastKing(), 2000);
 
 // 내 유저 문서 실시간 감시 — 어드민에서 점수 수정 시 즉시 반영
 function startMyScoreListener(uid) {
@@ -2211,11 +2242,17 @@ function _updateRankUIOnly() {
   if (el('my-grade-display')) { el('my-grade-display').textContent = grade.label; el('my-grade-display').style.color = grade.color; }
   const convBtn = el('total-score-conv-btn');
   if (convBtn) {
-    const convertable = myTotalScore >= 1000;
+    const used = getMonthlyExchangeUsed ? getMonthlyExchangeUsed() : 0;
+    const remain = 10000 - used;
+    const convertable = myTotalScore >= 1000 && remain > 0;
     convBtn.disabled = !convertable;
-    const sets = Math.floor(myTotalScore / 1000);
-    convBtn.textContent = convertable ? sets + '000점 → ' + (sets * 10) + 'P 환전하기' : '1000점 이상 모이면 환전 가능';
+    if (!convertable && remain <= 0) {
+      convBtn.textContent = '이번달 환전 한도 초과';
+    } else {
+      convBtn.textContent = convertable ? '광고 보고 환전하기 →' : '1000점 이상 모이면 환전 가능';
+    }
   }
+  if (typeof updateExchangeUI === 'function') updateExchangeUI();
   const nextEl = el('my-grade-next');
   if (nextEl) {
     const ng = TOTAL_GRADES.find(t => t.min > myTotalScore);
@@ -2302,21 +2339,146 @@ function doExchange(type,cost) {
   }
 }
 
-function convertTotalScore() {
-  if (myTotalScore < 1000) { showToast('1000점 이상 모여야 환전 가능해요'); return; }
-  // 1000점당 10P, 1000점 단위로 환전
-  const sets = Math.floor(myTotalScore / 1000);
-  const pts = sets * 10;
-  const deducted = sets * 1000;
-  myTotalScore -= deducted; // 누적 거지력에서만 차감, 월 거지력 그대로
+// ── 환전 시스템 (광고 + 월 한도) ─────────────────────
+const MONTHLY_EXCHANGE_LIMIT = 10000; // 월 최대 10,000점 = 100P
+const EXCHANGE_UNIT = 1000;           // 1000점 단위
+
+function getMonthlyExchangeKey() {
+  const d = new Date();
+  return 'gj_exchange_' + d.getFullYear() + '_' + (d.getMonth()+1);
+}
+function getMonthlyExchangeUsed() {
+  return parseInt(localStorage.getItem(getMonthlyExchangeKey()) || '0');
+}
+function addMonthlyExchangeUsed(pts) {
+  const cur = getMonthlyExchangeUsed();
+  localStorage.setItem(getMonthlyExchangeKey(), String(cur + pts));
+}
+
+function openExchangeAd() {
+  const used = getMonthlyExchangeUsed();
+  const remain = MONTHLY_EXCHANGE_LIMIT - used;
+  if (remain <= 0) { showToast('이번달 환전 한도를 모두 사용했어요 (월 10,000점)'); return; }
+  if (myTotalScore < EXCHANGE_UNIT) { showToast('1,000점 이상 모여야 환전 가능해요'); return; }
+  // 광고 시청 후 환전 오버레이 열기
+  watchAd(() => {
+    const used2 = getMonthlyExchangeUsed();
+    const remain2 = MONTHLY_EXCHANGE_LIMIT - used2;
+    const maxAvail = Math.min(myTotalScore, remain2);
+    document.getElementById('exc-avail-pts').textContent = myTotalScore.toLocaleString() + '점';
+    document.getElementById('exc-remain-limit').textContent = remain2.toLocaleString() + '점';
+    document.getElementById('exc-amount-input').value = Math.min(1000, maxAvail);
+    document.getElementById('exc-amount-input').max = maxAvail;
+    updateExcPreview();
+    openOverlay('ov-exchange');
+  });
+}
+
+window.updateExcPreview = function() {
+  const v = parseInt(document.getElementById('exc-amount-input').value) || 0;
+  const pts = Math.floor(v / EXCHANGE_UNIT) * 10;
+  document.getElementById('exc-preview').textContent = '→ 토스포인트 ' + pts + 'P';
+};
+
+window.doExchangeScore = function() {
+  const v = parseInt(document.getElementById('exc-amount-input').value) || 0;
+  if (v < EXCHANGE_UNIT) { showToast('최소 1,000점부터 환전 가능해요'); return; }
+  if (v % EXCHANGE_UNIT !== 0) { showToast('1,000점 단위로만 환전 가능해요'); return; }
+  const used = getMonthlyExchangeUsed();
+  const remain = MONTHLY_EXCHANGE_LIMIT - used;
+  if (v > remain) { showToast('이번달 남은 한도(' + remain.toLocaleString() + '점)를 초과해요'); return; }
+  if (v > myTotalScore) { showToast('보유 거지력이 부족해요'); return; }
+  const pts = Math.floor(v / EXCHANGE_UNIT) * 10;
+  myTotalScore -= v;
+  addMonthlyExchangeUsed(v);
   updateMyRankUI();
   if (window.GJ?.ready && myProfile.uid) {
     window.GJ.saveUser(myProfile.uid, { totalScore: myTotalScore }).catch(()=>{});
   }
-  showToast('🎉 토스포인트 ' + pts + 'P 환전 완료! (-' + deducted.toLocaleString() + '점)');
-  const convDisp = document.getElementById('total-conv-display');
-  if (convDisp) convDisp.textContent = myTotalScore + '점';
+  closeOverlay('ov-exchange');
+  showToast('🎉 토스포인트 ' + pts + 'P 환전 완료! (-' + v.toLocaleString() + '점)');
+};
+
+function updateExchangeUI() {
+  const used = getMonthlyExchangeUsed();
+  const el = document.getElementById('monthly-exchange-display');
+  if (el) el.textContent = used.toLocaleString() + ' / 10,000점';
 }
+
+// ── 지난달 거지왕 로드 ─────────────────────────────
+async function loadLastKing() {
+  if (!window.GJ?.ready) return;
+  try {
+    const now = new Date();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const ym = prevMonth.getFullYear() + '-' + String(prevMonth.getMonth()+1).padStart(2,'0');
+    const data = await window.GJ.getTopRankers(ym, 5);
+    if (!data || !data.length) return;
+
+    const section = document.getElementById('last-king-section');
+    if (!section) return;
+    section.style.display = 'block';
+
+    const monthLabel = prevMonth.getFullYear() + '년 ' + (prevMonth.getMonth()+1) + '월 거지왕';
+    document.getElementById('last-king-month').textContent = monthLabel;
+    document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
+    document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
+
+    const REWARDS_LIST = [100000,30000,10000,10000,10000];
+    const MEDALS = ['🥇','🥈','🥉','🥉','🥉'];
+    document.getElementById('last-king-list').innerHTML = data.map((w,i) =>
+      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>${MEDALS[i]}</span>
+          <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
+        </div>
+        <span style="font-size:12px;color:var(--gold);font-weight:700;">${REWARDS_LIST[i].toLocaleString()}P</span>
+      </div>`
+    ).join('');
+
+    // 내가 순위 안에 있으면 보상 받기 버튼 표시
+    const myRank = data.findIndex(w => w.uid === myProfile.uid || w.nick === myProfile.nick);
+    if (myRank >= 0) {
+      const claimKey = 'gj_claimed_' + ym;
+      const alreadyClaimed = localStorage.getItem(claimKey);
+      const claimArea = document.getElementById('my-reward-claim-area');
+      if (claimArea) {
+        claimArea.style.display = 'block';
+        document.getElementById('my-reward-claim-title').textContent =
+          '🎉 ' + (myRank+1) + '위 달성! 리워드 대상자예요';
+        document.getElementById('my-reward-claim-desc').textContent =
+          '토스포인트 ' + REWARDS_LIST[myRank].toLocaleString() + 'P 지급 대상';
+        const btn = document.getElementById('my-reward-claim-btn');
+        if (alreadyClaimed) {
+          btn.textContent = '✅ 신청 완료';
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+        }
+        btn.dataset.ym = ym;
+        btn.dataset.reward = REWARDS_LIST[myRank];
+      }
+    }
+  } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
+}
+
+window.claimRankReward = function() {
+  const btn = document.getElementById('my-reward-claim-btn');
+  const ym = btn.dataset.ym;
+  const reward = btn.dataset.reward;
+  if (!ym || !reward) return;
+  // 신청 기록 저장
+  localStorage.setItem('gj_claimed_' + ym, '1');
+  btn.textContent = '✅ 신청 완료';
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
+  // Firebase에 신청 기록 저장 (어드민에서 확인용)
+  if (window.GJ?.ready && myProfile.uid) {
+    window.GJ.saveUser(myProfile.uid, {
+      rewardClaim: { ym, reward: parseInt(reward), nick: myProfile.nick, claimedAt: new Date().toISOString() }
+    }).catch(()=>{});
+  }
+};
 
 function sharePiggyLink() {
   const url = window.location.href.split('?')[0];
