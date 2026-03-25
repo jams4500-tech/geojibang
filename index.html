@@ -2390,42 +2390,53 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile, 
 }
 
 async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
-  const isMyProfile = uid && myProfile.uid && uid === myProfile.uid;
+  const isMyProfile = !!(uid && myProfile.uid && uid === myProfile.uid);
 
-  // 내 프로필이면 최신 로컬값 바로 사용
+  // 내 프로필이면 로컬 최신값 즉시 사용
   if (isMyProfile) {
     viewUserProfile(
-      myProfile.nick || nick, myProfile.bg || bg, myProfile.c || c,
-      myProfile.bio || '', myMonthScore, myTotalScore, true,
-      myItems?.equippedRoom, myItems?.equippedChar
+      myProfile.nick || nick,
+      myProfile.bg   || bg,
+      myProfile.c    || c,
+      myProfile.bio  || '',
+      myMonthScore,
+      myTotalScore,
+      true,
+      myItems?.equippedRoom || 'room_default',
+      myItems?.equippedChar || 'char_default'
     );
     return;
   }
 
-  // 먼저 아는 정보로 즉시 표시 (방/스킨은 기본값)
+  // 남의 프로필 — 먼저 피드 데이터로 즉시 표시
   viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
 
-  // Firebase에서 정확한 정보 조회
-  if (uid && window.GJ?.ready) {
-    try {
-      const data = await window.GJ.loadUser(uid);
-      if (data) {
-        // monthScore: Firebase 값이 0이어도 그게 맞는 값
-        // items: Firebase에 저장된 equippedRoom/equippedChar 사용
-        const items = data.items || {};
-        viewUserProfile(
-          data.nick ?? nick,
-          data.avatarBg ?? bg,
-          data.avatarColor ?? c,
-          data.bio ?? '',
-          data.monthScore ?? 0,
-          data.totalScore ?? 0,
-          false,
-          items.equippedRoom || 'room_default',
-          items.equippedChar || 'char_default'
-        );
-      }
-    } catch(e) { console.warn('[거지방] 프로필 조회 실패', e); }
+  // uid 없으면 Firebase 조회 불가
+  if (!uid || !window.GJ?.ready) return;
+
+  try {
+    const data = await window.GJ.loadUser(uid);
+    console.log('[거지방] 프로필 조회 결과:', uid, data);
+    if (!data) return;
+
+    // 아이템: Firebase items 필드 또는 기본값
+    const equippedRoom = data.items?.equippedRoom || 'room_default';
+    const equippedChar = data.items?.equippedChar || 'char_default';
+
+    // Firebase에서 가져온 정확한 값으로 업데이트
+    viewUserProfile(
+      data.nick        || nick,
+      data.avatarBg    || bg,
+      data.avatarColor || c,
+      data.bio         || '',
+      typeof data.monthScore === 'number' ? data.monthScore : (monthScore ?? 0),
+      typeof data.totalScore === 'number' ? data.totalScore : 0,
+      false,
+      equippedRoom,
+      equippedChar
+    );
+  } catch(e) {
+    console.warn('[거지방] 프로필 조회 실패:', e);
   }
 }
 
