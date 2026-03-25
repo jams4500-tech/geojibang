@@ -1491,19 +1491,26 @@ window.GJ.initProfile = async () => {
       // 실시간 점수 감시 시작 (어드민 수정 즉시 반영)
       if (window.GJ.listenMyScore) startMyScoreListener(uid);
     } else {
-      await window.GJ.saveUser(uid, {
-        nick: profile.nick,
-        bio: profile.bio || '',
-        avatarBg: profile.bg,
-        avatarColor: profile.c,
-        monthScore: myMonthScore,
-        totalScore: myTotalScore,
-        isPremium: false
-      });
+      // 첫 접속 — Firebase에 유저 문서 생성
+      console.log('[거지방] 새 유저 Firebase 저장 시도:', uid);
+      try {
+        await window.GJ.saveUser(uid, {
+          nick: profile.nick,
+          bio: profile.bio || '',
+          avatarBg: profile.bg,
+          avatarColor: profile.c,
+          monthScore: myMonthScore,
+          totalScore: myTotalScore,
+          isPremium: false
+        });
+        console.log('[거지방] 유저 Firebase 저장 완료:', uid);
+      } catch(saveErr) {
+        console.error('[거지방] 유저 Firebase 저장 실패:', saveErr);
+      }
       _updateRankUIOnly();
     }
   } catch (e) {
-    console.warn('[거지방] Firestore 로드 실패, 로컬 데이터 사용:', e);
+    console.error('[거지방] Firestore 초기화 실패:', e);
     _updateRankUIOnly();
   }
 };
@@ -2417,7 +2424,11 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
   try {
     const data = await window.GJ.loadUser(uid);
     console.log('[거지방] 프로필 조회 결과:', uid, data);
-    if (!data) return;
+    // Firebase에 유저 문서가 없으면 피드에서 넘어온 데이터로만 표시
+    if (!data) {
+      viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
+      return;
+    }
 
     // 아이템: Firebase items 필드 또는 기본값
     const equippedRoom = data.items?.equippedRoom || 'room_default';
