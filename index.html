@@ -1311,6 +1311,10 @@ window.GJ.listenComments = (postId, callback) => {
 };
 
 // ── 구독 상태 ────────────────────────────────────────
+window.GJ._getSettingsDoc = async (docId) => {
+  return await getDoc(doc(db, 'geojibang_settings', docId));
+};
+
 window.GJ.setSubscription = async (uid, isPremium) => {
   await updateDoc(doc(db, 'geojibang_users', uid), {
     isPremium,
@@ -1529,6 +1533,7 @@ function timeAgo(date) {
 
 // 앱 로드 후 프로필 초기화
 setTimeout(() => window.GJ.initProfile(), 500);
+setTimeout(() => loadItemPrices(), 1000); // 아이템 가격 Firebase에서 로드
 
 // 탭/앱이 다시 포커스될 때 Firebase에서 최신 점수 다시 로드
 // (어드민에서 수정 후 앱으로 돌아오면 자동 반영)
@@ -2505,16 +2510,24 @@ function submitEditPost() {
 }
 // ── 아이템 상점 시스템 ──────────────────────────────────
 
-// 아이템 가격 (어드민에서 수정 가능 → localStorage gj_item_prices)
+// 아이템 가격 — Firebase geojibang_settings/item_prices 에서 로드
+// (어드민에서 변경 → 앱 재접속 시 자동 반영)
 const DEFAULT_ITEM_PRICES = {
   room_default:0, room_cave:200, room_rooftop:300, room_gosiwon:150, room_park:500,
   char_default:0, char_paper_bag:100, char_crown:400, char_santa:250, char_ninja:350, char_vip:500
 };
-function getItemPrices() {
-  try { return JSON.parse(localStorage.getItem('gj_item_prices') || 'null') || DEFAULT_ITEM_PRICES; }
-  catch(e) { return DEFAULT_ITEM_PRICES; }
+let _loadedItemPrices = null;
+async function loadItemPrices() {
+  try {
+    const snap = await window.GJ._getSettingsDoc('item_prices');
+    if (snap && snap.exists()) {
+      _loadedItemPrices = snap.data();
+    }
+  } catch(e) {}
 }
-function getItemPrice(id) { return getItemPrices()[id] ?? DEFAULT_ITEM_PRICES[id] ?? 0; }
+function getItemPrice(id) {
+  return (_loadedItemPrices?.[id] ?? DEFAULT_ITEM_PRICES[id] ?? 0);
+}
 
 const ROOM_ITEMS = [
   { id:'room_default', name:'기본 방',    desc:'거지의 소박한 방',              emoji:'🏠', type:'room', bg:'#f5f0e8', wall:'#e8dcc8', floor:'#d4c4a8' },
