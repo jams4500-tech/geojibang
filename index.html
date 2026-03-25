@@ -2219,24 +2219,36 @@ function resetCounseling() {
 
 // 유저 프로필 보기 (uid로 Firebase 조회)
 function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile) {
-  const av = document.getElementById('view-profile-av');
-  av.textContent = nick.charAt(0);
-  av.style.background = bg || '#3a1520';
-  av.style.color = c || '#e8527a';
-  document.getElementById('view-profile-nick').textContent = nick;
-  document.getElementById('view-profile-bio').textContent = bio || '한 줄 소개가 없어요';
-  document.getElementById('view-profile-month').textContent = monthScore || 0;
-  document.getElementById('view-profile-total').textContent = totalScore || 0;
-  const grade = getGrade(parseInt(totalScore) || 0);
-  const gradeEl = document.getElementById('view-profile-grade');
-  gradeEl.textContent = grade.label;
-  gradeEl.style.color = grade.color;
-  // 상점/편집 버튼: 내 프로필일 때만 표시
-  const shopBtn = document.getElementById('view-shop-btn');
-  if (shopBtn) shopBtn.style.display = isMyProfile ? 'flex' : 'none';
-  // 방 렌더링
-  renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
-  openOverlay('ov-user-profile');
+  try {
+    const av = document.getElementById('view-profile-av');
+    if (av) {
+      av.textContent = (nick || '?').charAt(0);
+      av.style.background = bg || '#3a1520';
+      av.style.color = c || '#e8527a';
+    }
+    const nickEl = document.getElementById('view-profile-nick');
+    if (nickEl) nickEl.textContent = nick || '익명';
+    const bioEl = document.getElementById('view-profile-bio');
+    if (bioEl) bioEl.textContent = bio || '한 줄 소개가 없어요';
+    const monthEl = document.getElementById('view-profile-month');
+    if (monthEl) monthEl.textContent = monthScore || 0;
+    const totalEl = document.getElementById('view-profile-total');
+    if (totalEl) totalEl.textContent = totalScore || 0;
+    const gradeEl = document.getElementById('view-profile-grade');
+    if (gradeEl) {
+      const grade = getGrade(parseInt(totalScore) || 0);
+      gradeEl.textContent = grade.label;
+      gradeEl.style.color = grade.color;
+    }
+    const shopBtn = document.getElementById('view-shop-btn');
+    if (shopBtn) shopBtn.style.display = isMyProfile ? 'flex' : 'none';
+    // 방 렌더링
+    try { renderRoom('profile-room-svg', myItems?.equippedRoom || 'room_default', myItems?.equippedChar || 'char_default'); } catch(re) {}
+    // 오버레이 열기
+    document.getElementById('ov-user-profile')?.classList.add('open');
+  } catch(err) {
+    console.error('[거지방] viewUserProfile 오류:', err);
+  }
 }
 
 async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
@@ -2686,24 +2698,35 @@ function equipItem(itemId, tab) {
 }
 
 // ── 프로필 클릭 이벤트 위임 (단일 리스너) ─────────────
-document.addEventListener('click', function(e) {
-  // profile-click 클래스 또는 그 자식 클릭
-  const target = e.target.closest('.profile-click');
-  if (target) {
-    e.stopPropagation();
-    const uid   = target.dataset.uid   || '';
-    const nick  = target.dataset.nick  || '익명';
-    const bg    = target.dataset.bg    || '#3a1520';
-    const c     = target.dataset.c     || '#e8527a';
-    const score = parseInt(target.dataset.score) || 0;
-    viewUserProfileByUid(uid, nick, bg, c, score);
-    return;
+// ── 프로필 클릭 이벤트 위임 ─────────────────────────────
+function _handleProfileClick(e) {
+  try {
+    const target = e.target.closest('.profile-click');
+    if (target) {
+      e.stopPropagation();
+      const uid   = target.dataset.uid   || '';
+      const nick  = target.dataset.nick  || '익명';
+      const bg    = target.dataset.bg    || '#3a1520';
+      const c     = target.dataset.c     || '#e8527a';
+      const score = parseInt(target.dataset.score) || 0;
+      viewUserProfileByUid(uid, nick, bg, c, score);
+      return;
+    }
+    if (e.target.closest('#header-profile-btn')) {
+      openMyProfile();
+    }
+  } catch(err) {
+    console.error('[거지방] 클릭 이벤트 오류:', err);
   }
-  // 헤더 프로필 버튼
-  if (e.target.closest('#header-profile-btn')) {
-    openMyProfile();
-  }
-});
+}
+// 즉시 + DOMContentLoaded 이중 등록으로 확실히
+document.addEventListener('click', _handleProfileClick);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.removeEventListener('click', _handleProfileClick);
+    document.addEventListener('click', _handleProfileClick);
+  });
+}
 
 function openOverlay(id){document.getElementById(id).classList.add('open');}
 function closeOverlay(id){document.getElementById(id)?.classList.remove('open');}
