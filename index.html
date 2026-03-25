@@ -651,15 +651,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div style="font-size:28px;">⏳</div>
         </div>
 
-        <!-- 이달의 랭킹/리워드 -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;">🏆 이달의 랭킹/리워드</div>
-          <div id="live-reward-list">
-            <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">아직 랭킹 데이터가 없어요</div>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7;">매달 1일 오전 8시 발표 · 순위 안 들면 랭킹 탭에서 보상 받기 신청 가능</div>
-        </div>
-
+        <!-- 이달 거지력 랭킹 -->
         <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
@@ -667,7 +659,6 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
           <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
           <div class="formula-row"><div class="formula-key">✏️ 피드에 글 쓰기</div><div class="formula-val">+1점</div></div>
-          <div class="formula-row"><div class="formula-key">유효 조건</div><div class="formula-val">피드에 지출 올린 후 반응 획득</div></div>
           <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 영구 보존</div>
         </div>
         <div id="rank-list"></div>
@@ -1397,6 +1388,7 @@ if (window.GJ?.ready) {
       RANKS.push({
         uid:   r.uid || '',
         name:  r.nick || '익명',
+        bio:   r.bio || '',
         desc:  '거지력 ' + (r.monthScore || 0) + '점',
         score: (r.monthScore || 0) + '점',
         monthScore: r.monthScore || 0,
@@ -2034,17 +2026,17 @@ function buildRank() {
         '</div>';
     }
     const uid = r.uid || '';
+    const bioStr = r.bio ? '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">' + r.bio + '</div>' : '';
     return '<div class="rank-row profile-click" data-uid="' + uid + '" data-nick="' + (r.name||'') + '" data-bg="' + r.bg + '" data-c="' + r.c + '" data-score="' + (r.monthScore||0) + '" style="cursor:pointer;">' +
       '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
       '<div class="rank-av" style="background:' + r.bg + ';color:' + r.c + ';">' + r.init + '</div>' +
       '<div class="rank-info">' +
         '<div class="rank-name">' + r.name + badge + '</div>' +
-        '<div class="rank-desc">' + r.desc + '</div>' +
+        bioStr +
       '</div>' +
       '<div class="rank-score">거지력 ' + r.score + '</div>' +
       '</div>';
   }).join('');
-  buildLiveRewardList();
 }
 
 /* ── 거지왕 발표 로직 ── */
@@ -2432,7 +2424,7 @@ async function loadLastKing() {
           <span>${MEDALS[i]}</span>
           <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
         </div>
-        <span style="font-size:12px;color:var(--gold);font-weight:700;">${REWARDS_LIST[i].toLocaleString()}P</span>
+        <span style="font-size:12px;color:var(--gold);font-weight:700;">토스포인트 ${REWARDS_LIST[i].toLocaleString()}P</span>
       </div>`
     ).join('');
 
