@@ -1277,6 +1277,10 @@ window.GJ.addPost = async (postData) => {
   return ref.id;
 };
 
+window.GJ.saveRoast = async (postId, text) => {
+  await updateDoc(doc(db, 'geojibang_posts', postId), { roastText: text });
+};
+
 window.GJ.loadPosts = async (limitN = 20) => {
   const q = query(COLS.posts(), orderBy('createdAt', 'desc'), limit(limitN));
   const snap = await getDocs(q);
@@ -1460,10 +1464,16 @@ window.GJ.listenPosts(async (posts) => {
     }
     insertAfter = el;
 
-    // AI 핀잔 (이미 있으면 스킵)
+    // AI 핀잔 — Firebase에 저장된 게 있으면 바로 표시, 없으면 생성
     const rt = document.getElementById('rt-' + p.id);
-    if (rt && rt.querySelector('.roast-loading')) {
-      window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+    if (rt) {
+      if (p.roastText) {
+        // 캐시된 핀잔 바로 표시
+        rt.textContent = p.roastText;
+      } else if (rt.querySelector('.roast-loading')) {
+        // 아직 없으면 AI 생성 (한 번만)
+        window.genRoast(p.id, `${p.desc} ${p.item} ${p.amount}`);
+      }
     }
   });
 });
@@ -1546,6 +1556,22 @@ window.GJ.publishPost = async (where, amount, memo) => {
     item: where,
     amount: parseInt(amount).toLocaleString() + '원',
   });
+  // 글 올리자마자 AI 핀잔 생성 → Firebase 저장 (이후 재호출 없음)
+  try {
+    const ctx = `${memo||''} ${where} ${amount}원`;
+    const r = await fetch('/api/roast', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ context: ctx })
+    });
+    const d = await r.json();
+    const text = d?.text || '말문이 막힙니다.';
+    const rtEl = document.getElementById('rt-' + postId);
+    if (rtEl) rtEl.textContent = text;
+    await window.GJ.saveRoast(postId, text);
+  } catch(e) {
+    const rtEl = document.getElementById('rt-' + postId);
+    if (rtEl) rtEl.textContent = '말문이 막힙니다. 반성하세요.';
+  }
   return postId;
 };
 
@@ -1907,13 +1933,24 @@ function addCmt(pid) {
   }
 }
 
-async function genRoast(pid,ctx) {
-  const el=document.getElementById('rt-'+pid);
+async function genRoast(pid, ctx) {
+  const el = document.getElementById('rt-' + pid);
+  if (!el) return;
   try {
-    const r=await fetch('/api/roast',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ context: ctx })});
-    const d=await r.json(); el.textContent=d?.text||'말문이 막힙니다.';
-  } catch { el.textContent='말문이 막힙니다. 반성하세요.'; }
+    const r = await fetch('/api/roast', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ context: ctx })
+    });
+    const d = await r.json();
+    const text = d?.text || '말문이 막힙니다.';
+    el.textContent = text;
+    // Firebase에 핀잔 저장 — 다음엔 재호출 없이 바로 표시
+    if (window.GJ?.ready) {
+      window.GJ.saveRoast(pid, text).catch(() => {});
+    }
+  } catch {
+    el.textContent = '말문이 막힙니다. 반성하세요.';
+  }
 }
 
 /* mine */
