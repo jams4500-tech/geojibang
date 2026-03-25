@@ -1204,7 +1204,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, serverTimestamp, increment
+  updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, where, serverTimestamp, increment
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const GJ_CONFIG = {
@@ -1240,6 +1240,13 @@ window.GJ.saveUser = async (uid, data) => {
 window.GJ.loadUser = async (uid) => {
   const snap = await getDoc(doc(db, 'geojibang_users', uid));
   return snap.exists() ? snap.data() : null;
+};
+
+window.GJ.loadUserByNick = async (nick) => {
+  if (!nick) return null;
+  const q = query(collection(db, 'geojibang_users'), where('nick', '==', nick), limit(1));
+  const snap = await getDocs(q);
+  return snap.empty ? null : snap.docs[0].data();
 };
 
 window.GJ.updateScore = async (uid, monthDelta, totalDelta) => {
@@ -2422,8 +2429,16 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
   if (!uid || !window.GJ?.ready) return;
 
   try {
-    const data = await window.GJ.loadUser(uid);
+    let data = await window.GJ.loadUser(uid);
     console.log('[거지방] 프로필 조회 결과:', uid, data);
+
+    // uid로 못 찾으면 닉네임으로 폴백 검색
+    if (!data && nick && window.GJ.loadUserByNick) {
+      console.log('[거지방] 닉네임으로 폴백 검색:', nick);
+      data = await window.GJ.loadUserByNick(nick);
+      console.log('[거지방] 닉네임 검색 결과:', data);
+    }
+
     // Firebase에 유저 문서가 없으면 피드에서 넘어온 데이터로만 표시
     if (!data) {
       viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
