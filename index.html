@@ -406,7 +406,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="header-badge">247명 참여중</div>
-          <div class="profile-btn" id="header-profile-btn" onclick="openMyProfile()">
+          <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
             <span class="profile-name" id="header-profile-name">거지</span>
           </div>
@@ -1648,10 +1648,14 @@ function makePost(p) {
        </div>`
     : '';
 
+  // 랭킹 뱃지 (거지왕/대장/반장인지 확인)
+  const rankIdx = RANKS.findIndex(r => r.uid && r.uid === p.authorUid);
+  const rankBadge = rankIdx === 0 ? ' 거지왕👑' : rankIdx === 1 ? ' 거지대장🎖' : rankIdx >= 2 && rankIdx <= 4 ? ' 거지반장📛' : '';
+
   el.innerHTML=`<div class="post-header">
-    <div class="avatar" style="background:${p.abg};color:${p.ac};cursor:pointer;" onclick="viewUserProfileByUid('${p.authorUid}','${p.name}','${p.abg}','${p.ac}',${parseInt(p.score)||0})">${p.init}</div>
+    <div class="avatar profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" style="background:${p.abg};color:${p.ac};cursor:pointer;">${p.init}</div>
     <div style="flex:1;">
-      <div class="post-name" style="cursor:pointer;" onclick="viewUserProfileByUid('${p.authorUid}','${p.name}','${p.abg}','${p.ac}',${parseInt(p.score)||0})">${p.name} · 거지력 ${p.score}점</div>
+      <div class="post-name profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" style="cursor:pointer;">${p.name}${rankBadge}</div>
       <div class="post-time">${p.time}</div>
     </div>
     ${myPostBtns}
@@ -1672,7 +1676,7 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;" onclick="viewUserProfileByUid('${c.authorUid||''}','${(c.authorName||'익명').replace(/'/g,"\\'")}','${c.authorBg||'#3a1520'}','${c.authorColor||'#e8527a'}',${c.authorMonthScore||0})">${(c.authorName||'익')[0]}</div><div><div class="comment-name" style="cursor:pointer;" onclick="viewUserProfileByUid('${c.authorUid||''}','${(c.authorName||'익명').replace(/'/g,"\\'")}','${c.authorBg||'#3a1520'}','${c.authorColor||'#e8527a'}',${c.authorMonthScore||0})">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" style="cursor:pointer;">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
@@ -1882,9 +1886,7 @@ function buildRank() {
         '</div>';
     }
     const uid = r.uid || '';
-    const safeNick = (r.name||'').replace(/'/g,"\\'");
-    const clickFn = `viewUserProfileByUid('${uid}','${safeNick}','${r.bg}','${r.c}',${r.monthScore||0})`;
-    return '<div class="rank-row" style="cursor:pointer;" onclick="' + clickFn + '">' +
+    return '<div class="rank-row profile-click" data-uid="' + uid + '" data-nick="' + (r.name||'') + '" data-bg="' + r.bg + '" data-c="' + r.c + '" data-score="' + (r.monthScore||0) + '" style="cursor:pointer;">' +
       '<div class="rank-num ' + (i<3?'top':'') + '">' + (i+1) + '</div>' +
       '<div class="rank-av" style="background:' + r.bg + ';color:' + r.c + ';">' + r.init + '</div>' +
       '<div class="rank-info">' +
@@ -2682,6 +2684,26 @@ function equipItem(itemId, tab) {
   renderShopList(tab);
   renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
 }
+
+// ── 프로필 클릭 이벤트 위임 (단일 리스너) ─────────────
+document.addEventListener('click', function(e) {
+  // profile-click 클래스 또는 그 자식 클릭
+  const target = e.target.closest('.profile-click');
+  if (target) {
+    e.stopPropagation();
+    const uid   = target.dataset.uid   || '';
+    const nick  = target.dataset.nick  || '익명';
+    const bg    = target.dataset.bg    || '#3a1520';
+    const c     = target.dataset.c     || '#e8527a';
+    const score = parseInt(target.dataset.score) || 0;
+    viewUserProfileByUid(uid, nick, bg, c, score);
+    return;
+  }
+  // 헤더 프로필 버튼
+  if (e.target.closest('#header-profile-btn')) {
+    openMyProfile();
+  }
+});
 
 function openOverlay(id){document.getElementById(id).classList.add('open');}
 function closeOverlay(id){document.getElementById(id)?.classList.remove('open');}
