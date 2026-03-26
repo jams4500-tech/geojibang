@@ -399,6 +399,20 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="ob-can">🥫</div>
     <div class="ob-logo">거지방</div>
     <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요<br>입장 전 닉네임을 설정해주세요</div>
+
+    <!-- 토스 로그인 버튼 (토스 미니앱 안에서만 표시) -->
+    <div id="toss-login-area" style="display:none;width:100%;margin-bottom:16px;">
+      <button class="ob-btn" id="toss-login-btn" onclick="loginWithToss()"
+        style="background:linear-gradient(135deg,#0064ff,#0040cc);margin-bottom:10px;opacity:1;">
+        🔵 토스 계정으로 1초 입장
+      </button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div style="flex:1;height:1px;background:var(--border2);"></div>
+        <span style="font-size:12px;color:var(--text3);">또는 직접 입력</span>
+        <div style="flex:1;height:1px;background:var(--border2);"></div>
+      </div>
+    </div>
+
     <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
     <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()">
     <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
@@ -1601,6 +1615,8 @@ function timeAgo(date) {
 setTimeout(() => window.GJ.initProfile(), 500);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
+// 토스 미니앱 환경이면 로그인 버튼 표시
+setTimeout(() => initTossLoginUI(), 100);
 
 // 내 유저 문서 실시간 감시 — 어드민에서 점수 수정 시 즉시 반영
 function startMyScoreListener(uid) {
@@ -3349,11 +3365,109 @@ function obBioCount() {
   document.getElementById('ob-bio-len').textContent = document.getElementById('ob-bio').value.length;
 }
 
+// ── 토스 로그인 연동 ─────────────────────────────────────
+// 앱인토스 SDK: @apps-in-toss/web-framework
+// 토스 미니앱 환경에서만 appLogin() 사용 가능
+
+function isTossApp() {
+  // 토스 미니앱 WebView 환경 감지
+  return typeof window.AppsInToss !== 'undefined'
+    || navigator.userAgent.includes('TossApp')
+    || new URLSearchParams(location.search).get('referrer') === 'toss';
+}
+
+// 앱 시작 시 토스 환경이면 버튼 표시
+function initTossLoginUI() {
+  if (isTossApp()) {
+    const area = document.getElementById('toss-login-area');
+    if (area) area.style.display = 'block';
+  }
+}
+
+async function loginWithToss() {
+  const btn = document.getElementById('toss-login-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '토스 연동 중...'; }
+
+  try {
+    // 1. 앱인토스 SDK로 authorizationCode 획득
+    let authorizationCode;
+    if (typeof window.AppsInToss?.appLogin === 'function') {
+      const result = await window.AppsInToss.appLogin();
+      authorizationCode = result?.authorizationCode;
+    } else {
+      throw new Error('토스 앱 환경이 아니에요. 닉네임으로 입장해주세요.');
+    }
+
+    if (!authorizationCode) throw new Error('토스 인가 코드를 받지 못했어요.');
+
+    // 2. 서버에서 authorizationCode → userKey 교환
+    const res = await fetch('/api/toss-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorizationCode }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || '서버 오류');
+
+    const { userKey, nick: tossNick } = data;
+    const tossUid = 'toss_' + userKey; // 토스 userKey를 UID로 사용
+
+    // 3. Firebase에서 기존 유저인지 확인
+    let existingUser = null;
+    if (window.GJ?.ready) {
+      existingUser = await window.GJ.loadUser(tossUid);
+    }
+
+    if (existingUser) {
+      // 기존 유저: 바로 로그인
+      myProfile = {
+        uid:  tossUid,
+        nick: existingUser.nick,
+        bio:  existingUser.bio || '',
+        bg:   existingUser.avatarBg    || '#3a1520',
+        c:    existingUser.avatarColor || '#e8527a',
+      };
+      myMonthScore = existingUser.monthScore || 0;
+      myTotalScore = existingUser.totalScore || 0;
+      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+      applyProfile();
+      _updateRankUIOnly();
+      document.getElementById('onboarding').classList.add('hidden');
+      setTimeout(() => {
+        document.getElementById('onboarding').style.display = 'none';
+        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+      }, 300);
+      showToast('토스 계정으로 로그인됐어요! 반갑습니다 🥫');
+    } else {
+      // 신규 유저: 닉네임 입력으로 넘어감 (토스 닉네임 있으면 자동 채움)
+      if (tossNick) {
+        const nickInput = document.getElementById('ob-nick');
+        if (nickInput) {
+          nickInput.value = tossNick.slice(0, 12);
+          document.getElementById('ob-nick-len').textContent = nickInput.value.length;
+        }
+      }
+      // UID를 토스 userKey로 예약
+      window._pendingTossUid = tossUid;
+      showToast('토스 계정 확인됐어요! 닉네임을 설정해주세요 👆');
+      if (btn) { btn.disabled = false; btn.textContent = '✅ 토스 연동 완료 - 닉네임 설정 후 입장'; }
+      obCheck();
+    }
+
+  } catch (e) {
+    console.warn('[거지방] 토스 로그인 실패:', e);
+    showToast('토스 로그인 실패: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🔵 토스 계정으로 1초 입장'; }
+  }
+}
+
 function completeOnboarding() {
   const nick = document.getElementById('ob-nick').value.trim();
   const bio = document.getElementById('ob-bio').value.trim();
   if (!nick) return;
-  const uid = 'gj_' + Date.now();
+  // 토스 로그인 완료됐으면 tossUid 사용, 아니면 임시 gj_ UID
+  const uid = window._pendingTossUid || ('gj_' + Date.now());
+  window._pendingTossUid = null; // 사용 후 초기화
   myProfile = { nick, bio, bg: '#3a1520', c: '#e8527a', uid };
   localStorage.setItem('gj_profile', JSON.stringify(myProfile));
   applyProfile();
