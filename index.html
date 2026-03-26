@@ -2971,8 +2971,8 @@ function _drawCharCore(char, cx, groundY, S) {
   }
   return g;
 }
-function drawCharSmall(char, cx, groundY) { return _drawCharCore(char, cx, groundY, 3); }
-function drawChar(char, cx, groundY)      { return _drawCharCore(char, cx, groundY, 6); }
+function drawCharSmall(char, cx, groundY) { return _drawCharCore(char, cx, groundY, 4); }
+function drawChar(char, cx, groundY)      { return _drawCharCore(char, cx, groundY, 10); }
 
 function getRoomDecor(room) {
   const floorTile = (x,y,w,h,c1,c2) => {
@@ -3099,13 +3099,13 @@ function renderRoom(svgId, roomId, charId) {
   if (!container) return;
   const room = ROOM_ITEMS.find(r => r.id === roomId) || ROOM_ITEMS[0];
   const char = CHAR_ITEMS.find(c => c.id === charId) || CHAR_ITEMS[0];
-  const charSvg = drawChar(char, 160, 148);
-  const svgContent = `<svg id="${svgId}" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;" shape-rendering="crispEdges">
-    <rect width="320" height="220" fill="${room.bg}"/>
-    <rect x="0" y="0" width="320" height="148" fill="${room.wall}" shape-rendering="crispEdges"/>
-    ${getRoomDecor(room)}
+  const charSvg = drawChar(char, 320, 296);
+  const svgContent = `<svg id="${svgId}" viewBox="0 0 640 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;" shape-rendering="crispEdges">
+    <rect width="640" height="440" fill="${room.bg}"/>
+    <rect x="0" y="0" width="640" height="296" fill="${room.wall}" shape-rendering="crispEdges"/>
+    <g transform="scale(2)">${getRoomDecor(room)}</g>
     <g>${charSvg}</g>
-    <text x="8" y="216" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.2)" shape-rendering="crispEdges">${room.name}</text>
+    <text x="16" y="432" font-family="monospace" font-size="14" fill="rgba(255,255,255,0.2)" shape-rendering="crispEdges">${room.name}</text>
   </svg>`;
   const oldSvg = document.getElementById(svgId);
   if (oldSvg) {
