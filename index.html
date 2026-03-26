@@ -468,20 +468,16 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           </button>
         </div>
 
-        <!-- 최근 지출 내역 (접힘/펼침) -->
+        <!-- 내 지출 내역 -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;" onclick="toggleTxList()">
-            <div style="font-size:13px;font-weight:500;color:var(--text);">최근 지출 내역</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);">내 지출 내역</div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <button class="refresh-btn" onclick="event.stopPropagation();syncAnim(this)">새로고침</button>
+              <span style="font-size:11px;color:var(--text3);">탭해서 수정/삭제</span>
               <span style="font-size:14px;color:var(--text3);" id="tx-toggle-icon">›</span>
             </div>
           </div>
-          <div id="mine-tx-list" style="display:none;border-top:1px solid var(--border);">
-            <div style="text-align:center;padding:24px 16px;color:var(--text3);font-size:13px;line-height:1.7;">
-              💳 토스 미니앱 연동 후<br>실제 결제 내역이 여기에 표시돼요
-            </div>
-          </div>
+          <div id="mine-tx-list" style="display:none;border-top:1px solid var(--border);"></div>
         </div>
 
         <!-- 내 소비 모아보기 (무료) -->
@@ -562,7 +558,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
                 </div>
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">저축 목표</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">지출 목표</div>
                 <div style="position:relative;">
                   <input class="text-input" id="saving-input" type="number" placeholder="0" style="padding-right:28px;font-size:14px;" oninput="updateFinance()">
                   <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">원</span>
@@ -580,17 +576,17 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             </div>
           </div>
 
-          <!-- 저축 목표 달성률 -->
+          <!-- 지출 목표 달성률 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
-            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">🎯 저축 목표 달성률</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">🎯 지출 목표 달성률</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;" id="savings-kpi">
               <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;">
                 <div style="font-size:16px;font-weight:700;color:var(--green);" id="savings-achieved">0원</div>
-                <div style="font-size:10px;color:var(--text3);margin-top:2px;">이번달 절약</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px;">남은 예산</div>
               </div>
               <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;">
                 <div style="font-size:16px;font-weight:700;color:var(--pink);" id="savings-goal-disp">0원</div>
-                <div style="font-size:10px;color:var(--text3);margin-top:2px;">저축 목표</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px;">지출 목표</div>
               </div>
               <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;">
                 <div style="font-size:16px;font-weight:700;color:var(--gold);" id="savings-pct-disp">0%</div>
@@ -600,7 +596,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
               <div id="savings-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:4px;transition:width .5s;width:0%;"></div>
             </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="savings-msg">월 수입과 저축 목표를 입력하면 달성률이 계산돼요</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="savings-msg">월 수입과 지출 목표를 입력하면 AI 조언을 받을 수 있어요</div>
           </div>
 
           <!-- 카테고리별 예산 설정 -->
@@ -610,6 +606,17 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
               <button onclick="openCatBudgetEdit()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">설정 ✏️</button>
             </div>
             <div id="cat-budget-list"></div>
+          </div>
+
+          <!-- AI 카테고리 조언 -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:13px;font-weight:500;color:var(--text);">🤖 AI 지출 조언</div>
+              <button onclick="generateCatAdvice()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">새로 받기</button>
+            </div>
+            <div id="cat-advice-text" style="font-size:13px;color:var(--text2);line-height:1.7;">
+              <div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            </div>
           </div>
 
           <!-- 이달 지출 캘린더 -->
@@ -1132,10 +1139,10 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:500;">구독 시 추가되는 기능</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
-          <span style="font-size:16px;">💰</span> 월 수입 입력 및 예산 자동 계산
+          <span style="font-size:16px;">💰</span> 월 수입·지출 목표 설정 및 AI 조언
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
-          <span style="font-size:16px;">🎯</span> 저축 목표 설정 및 진행률 트래킹
+          <span style="font-size:16px;">🎯</span> 지출 목표 설정 및 달성률 트래킹
         </div>
         <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
           <span style="font-size:16px;">🤖</span> AI 주간 소비 리포트 (매주 월요일)
@@ -1405,7 +1412,8 @@ window.GJ.listenPosts(async (posts) => {
       rxn: p.rxn || [0, 0, 0],
       authorUid: p.authorUid || '',
       authorRoom: p.authorRoom || 'room_default',
-      authorChar: p.authorChar || 'char_default'
+      authorChar: p.authorChar || 'char_default',
+      authorMonthSpend: p.authorMonthSpend || 0
     };
 
     const el = window.makePost(postObj);
@@ -1514,6 +1522,7 @@ window.GJ.publishPost = async (where, amount, memo) => {
     authorColor: window.myProfile.c,
     authorRoom: window.myItems?.equippedRoom || 'room_default',
     authorChar: window.myItems?.equippedChar || 'char_default',
+    authorMonthSpend: window.getMonthSpend ? window.getMonthSpend() : 0,
     desc: memo || '그냥 썼음',
     item: where,
     amount: parseInt(amount).toLocaleString() + '원',
@@ -1784,7 +1793,7 @@ function showTab(n) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
-  if (n === 'mine') { buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); }
+  if (n === 'mine') { buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxList(); const tl=document.getElementById('mine-tx-list'); if(tl)tl.style.display='block'; const ti=document.getElementById('tx-toggle-icon'); if(ti)ti.textContent='˅'; }
   if (n === 'geoji') {
     renderGeojiTab();
     // 실제 프로필 방+캐릭터 렌더링
@@ -1848,7 +1857,10 @@ function makePost(p) {
   el.innerHTML=`<div class="post-header">
     <div class="avatar profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" data-room="${p.authorRoom||'room_default'}" data-char="${p.authorChar||'char_default'}" style="background:${p.abg};color:${p.ac};cursor:pointer;">${p.init}</div>
     <div style="flex:1;">
-      <div class="post-name profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" data-room="${p.authorRoom||'room_default'}" data-char="${p.authorChar||'char_default'}" style="cursor:pointer;">${p.name}${rankBadge}</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <div class="post-name profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" data-room="${p.authorRoom||'room_default'}" data-char="${p.authorChar||'char_default'}" style="cursor:pointer;">${p.name}${rankBadge}</div>
+        ${p.authorMonthSpend > 0 ? `<span style="font-size:10px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:1px 6px;">${new Date().getMonth()+1}월 ${p.authorMonthSpend.toLocaleString()}원 지출</span>` : ''}
+      </div>
       <div class="post-time">${p.time}</div>
     </div>
     ${myPostBtns}
@@ -2022,14 +2034,124 @@ function toggleTxList() {
   const isOpen = list.style.display !== 'none';
   list.style.display = isOpen ? 'none' : 'block';
   icon.textContent = isOpen ? '›' : '˅';
+  if (!isOpen) buildTxList();
 }
+
+function getMonthSpend() {
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  const saved = JSON.parse(localStorage.getItem(key) || '[]');
+  return saved.reduce((s, r) => s + (r.amt || 0), 0);
+}
+window.getMonthSpend = getMonthSpend;
+
+function buildTxList() {
+  const el = document.getElementById('mine-tx-list');
+  if (!el) return;
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  const records = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!records.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">지출 내역이 없어요 🎉</div>';
+    return;
+  }
+  // 최신 순 정렬
+  const sorted = [...records].sort((a,b) => b.ts - a.ts);
+  el.innerHTML = sorted.map((r, i) => {
+    const idx = records.indexOf(r); // 원본 인덱스
+    const d = new Date(r.ts);
+    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px;" id="tx-row-${r.ts}">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;color:var(--text);">${r.where}</div>
+        <div style="font-size:11px;color:var(--text3);">${dateStr} · ${r.cat||'기타'}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--pink);">${(r.amt||0).toLocaleString()}원</div>
+      <button onclick="editTxRecord(${r.ts})" style="background:var(--surface2);border:none;border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text3);cursor:pointer;font-family:inherit;">수정</button>
+      <button onclick="deleteTxRecord(${r.ts})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;">×</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteTxRecord(ts) {
+  if (!confirm('이 지출 내역을 삭제할까요?\n피드에 올린 게시물은 삭제되지 않아요.')) return;
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  let records = JSON.parse(localStorage.getItem(key) || '[]');
+  const idx = records.findIndex(r => r.ts === ts);
+  if (idx === -1) return;
+  records.splice(idx, 1);
+  localStorage.setItem(key, JSON.stringify(records));
+  restoreSpendData();
+  buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar();
+  buildTxList();
+  showToast('삭제됐어요. 피드 게시물은 그대로 유지돼요.');
+}
+
+function editTxRecord(ts) {
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  const records = JSON.parse(localStorage.getItem(key) || '[]');
+  const rec = records.find(r => r.ts === ts);
+  if (!rec) return;
+
+  const existing = document.getElementById('ov-edit-tx');
+  if (existing) existing.remove();
+  const ov = document.createElement('div');
+  ov.id = 'ov-edit-tx';
+  ov.className = 'overlay open';
+  ov.onclick = e => { if (!e.target.closest('.sheet')) ov.remove(); };
+  ov.innerHTML = `<div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">지출 수정 ✏️</div>
+    <div class="sheet-sub">피드 게시물은 수정되지 않아요</div>
+    <div class="input-group">
+      <label class="input-label">어디서 썼어요?</label>
+      <input class="text-input" id="edit-tx-where" value="${rec.where}" placeholder="가맹점명">
+    </div>
+    <div class="input-group">
+      <label class="input-label">얼마 썼어요?</label>
+      <div class="amount-wrap">
+        <input class="text-input" id="edit-tx-amount" type="number" value="${rec.amt}" placeholder="0">
+        <span class="amount-suffix">원</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">카테고리</label>
+      <div class="cat-grid">
+        ${['🍔 식비','☕ 카페','🚕 교통','🛍 쇼핑','🎮 엔터','💊 건강','📚 교육','기타'].map(c =>
+          `<div class="cat-chip${rec.cat && c.includes(rec.cat) ? ' active':''}" onclick="selectCat(this)">${c}</div>`
+        ).join('')}
+      </div>
+    </div>
+    <button class="btn-pink" style="width:100%;padding:13px;" onclick="saveEditTxRecord(${ts})">수정 완료</button>
+    <button onclick="document.getElementById('ov-edit-tx').remove()" style="width:100%;padding:10px;margin-top:6px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">취소</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function saveEditTxRecord(ts) {
+  const where = document.getElementById('edit-tx-where')?.value.trim();
+  const amt = parseInt(document.getElementById('edit-tx-amount')?.value) || 0;
+  const cat = document.querySelector('#ov-edit-tx .cat-chip.active')?.textContent?.replace(/[^\uAC00-\uD7A3]/g,'').trim() || '기타';
+  if (!where || !amt) { showToast('가맹점과 금액을 입력해주세요'); return; }
+  const key = 'gj_spend_' + new Date().toISOString().slice(0,7);
+  const records = JSON.parse(localStorage.getItem(key) || '[]');
+  const idx = records.findIndex(r => r.ts === ts);
+  if (idx === -1) return;
+  records[idx] = { ...records[idx], where, amt, cat };
+  localStorage.setItem(key, JSON.stringify(records));
+  document.getElementById('ov-edit-tx')?.remove();
+  restoreSpendData();
+  buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar();
+  buildTxList();
+  showToast('✅ 수정됐어요. 피드 게시물은 그대로예요.');
+}
+
+
 
 function syncAnim(btn) { btn.textContent='불러오는 중...'; setTimeout(()=>btn.textContent='새로고침',1200); }
 function selectCat(el) { document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
 function checkManualForm() { document.getElementById('manual-share-btn').disabled=!(parseInt(document.getElementById('m-amount').value)>0); }
 function addToFeed(where,amount,memo) {
   const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
-  const p={id:pid,name:myProfile.nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0],authorUid:myProfile.uid||''};
+  const p={id:pid,name:myProfile.nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0],authorUid:myProfile.uid||'',authorRoom:myItems?.equippedRoom||'room_default',authorChar:myItems?.equippedChar||'char_default',authorMonthSpend:getMonthSpend()};
   const empty = document.getElementById('feed-empty');
   if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
@@ -3888,7 +4010,7 @@ function updateFinance() {
   document.getElementById('budget-bar').style.width = pct + '%';
   document.getElementById('budget-bar').style.background = pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--pink)';
   document.getElementById('budget-pct').textContent = '지출 ' + pct + '%';
-  // 저축 목표 달성률
+  // 지출 목표 달성률
   updateSavingsGoal(income, saving, total);
   // 카테고리 예산 목록
   buildCatBudgetList();
@@ -3896,20 +4018,22 @@ function updateFinance() {
   buildSpendCalendar();
 }
 
-function updateSavingsGoal(income, saving, total) {
-  const achieved = Math.max(0, income - saving - total); // 실제 절약 가능 금액
-  const pct = saving > 0 ? Math.min(100, Math.round(achieved / saving * 100)) : 0;
+function updateSavingsGoal(income, spendGoal, total) {
+  // 지출 목표: total이 spendGoal 이하면 달성
+  const pct = spendGoal > 0 ? Math.min(100, Math.round(total / spendGoal * 100)) : 0;
+  const saved = spendGoal > 0 ? Math.max(0, spendGoal - total) : 0;
   const el = id => document.getElementById(id);
-  if (el('savings-achieved')) el('savings-achieved').textContent = achieved.toLocaleString() + '원';
-  if (el('savings-goal-disp')) el('savings-goal-disp').textContent = saving.toLocaleString() + '원';
+  if (el('savings-achieved')) el('savings-achieved').textContent = saved.toLocaleString() + '원';
+  if (el('savings-goal-disp')) el('savings-goal-disp').textContent = spendGoal.toLocaleString() + '원';
   if (el('savings-pct-disp')) el('savings-pct-disp').textContent = pct + '%';
   if (el('savings-bar')) el('savings-bar').style.width = pct + '%';
+  if (el('savings-bar')) el('savings-bar').style.background = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'linear-gradient(90deg,var(--gold),var(--red))' : 'linear-gradient(90deg,var(--green),var(--gold))';
   if (el('savings-msg')) {
     el('savings-msg').textContent = pct >= 100
-      ? '🎉 이달 저축 목표 달성!'
-      : pct >= 70 ? '조금만 더 아끼면 목표 달성이에요!'
-      : pct >= 40 ? '꾸준히 절약 중이에요. 파이팅!'
-      : '아직 갈 길이 멀어요. 지출을 줄여봐요.';
+      ? '⚠️ 이달 지출 목표를 초과했어요!'
+      : pct >= 80 ? '⚡ 목표의 80%를 썼어요. 조심하세요!'
+      : pct >= 50 ? '👍 절반 넘게 썼어요. 잘 관리 중이에요.'
+      : '🎉 목표 범위 안에 있어요. 이 페이스로!';
   }
 }
 
@@ -4063,6 +4187,45 @@ if (_saved) {
       if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
     }, 600);
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
+}
+
+// ── AI 카테고리 조언 ──────────────────────────────────
+let _catAdviceTimer = null;
+async function generateCatAdvice() {
+  const el = document.getElementById('cat-advice-text');
+  if (!el) return;
+  // 디바운스 (탭 전환마다 호출 방지)
+  clearTimeout(_catAdviceTimer);
+  _catAdviceTimer = setTimeout(async () => {
+    el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    const income = parseInt(document.getElementById('income-input')?.value) || 0;
+    const spendGoal = parseInt(document.getElementById('saving-input')?.value) || 0;
+    const total = getTotal();
+    const savedBudgets = JSON.parse(localStorage.getItem('gj_cat_budgets') || '{}');
+    const catSummary = CAT_DATA.filter(c => c.amt > 0).map(c => {
+      const budget = savedBudgets[c.label] || 0;
+      return `${c.label}: ${c.amt.toLocaleString()}원${budget ? ' (예산 '+budget.toLocaleString()+'원)' : ''}`;
+    }).join(', ');
+    const daysLeft = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate() - new Date().getDate();
+    const prompt = `사용자의 이번달 지출 현황을 분석해서 짧고 실용적인 조언을 해줘. 반말로, 거지 챌린지 앱 특성상 약간 핀잔 섞인 톤으로.
+
+이번달 총 지출: ${total.toLocaleString()}원
+${income ? '월 수입: ' + income.toLocaleString() + '원' : ''}
+${spendGoal ? '지출 목표: ' + spendGoal.toLocaleString() + '원 (남은 일수: '+daysLeft+'일)' : ''}
+카테고리별: ${catSummary || '지출 없음'}
+
+지출 목표가 있으면 하루 남은 예산도 계산해서 알려줘. 가장 많이 쓴 카테고리 위주로 2~3문장으로.`;
+    try {
+      const r = await fetch('/api/roast', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: prompt, type: 'advice' })
+      });
+      const d = await r.json();
+      el.textContent = d?.text || '지출 데이터를 입력하면 AI 조언을 받을 수 있어요.';
+    } catch {
+      el.textContent = total > 0 ? '잠시 후 다시 시도해봐요.' : '지출을 기록하면 AI 조언을 받을 수 있어요 💡';
+    }
+  }, 800);
 }
 
 // ── 구독 취소 ──────────────────────────────────────────
