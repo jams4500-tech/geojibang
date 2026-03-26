@@ -109,6 +109,7 @@ tbody tr:hover td{background:var(--surface2);}
       <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon">👥</span>회원 관리</div>
       <div class="nav-item" onclick="showPage('ranking')" id="nav-ranking"><span class="nav-icon">🏆</span>랭킹 관리</div>
       <div class="nav-item" onclick="showPage('shop')" id="nav-shop"><span class="nav-icon">🏪</span>상점 가격 관리</div>
+      <div class="nav-item" onclick="showPage('challenge')" id="nav-challenge"><span class="nav-icon">🔥</span>챌린지 관리</div>
     </nav>
     <div class="sidebar-footer">pw: gj2026admin · v2.2</div>
   </div>
@@ -200,6 +201,7 @@ window.showPage = async page => {
     else if (page==='users')   await renderUsers(m);
     else if (page==='ranking') await renderRanking(m);
     else if (page==='shop')    await renderShop(m);
+    else if (page==='challenge') await renderChallenge(m);
   } catch(e) { m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`; console.error(e); }
 };
 
@@ -672,6 +674,164 @@ function toast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 3000);
 }
+
+// ── 챌린지 관리 ────────────────────────────────────────
+const DEFAULT_CHALLENGES = [
+  { id:'record3',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회', active:true },
+  { id:'feed1',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회', active:true },
+  { id:'comment1', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개', active:true },
+  { id:'share1',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회', active:true },
+];
+
+const CHALLENGE_TEMPLATES = [
+  { id:'record3',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회' },
+  { id:'record5',  icon:'✏️', title:'지출 기록하기',   target:5,  reward:50,  unit:'회' },
+  { id:'record7',  icon:'✏️', title:'지출 기록하기',   target:7,  reward:70,  unit:'회' },
+  { id:'feed1',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회' },
+  { id:'feed3',    icon:'📢', title:'피드에 올리기',    target:3,  reward:50,  unit:'회' },
+  { id:'comment1', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개' },
+  { id:'comment3', icon:'💬', title:'댓글 달기',        target:3,  reward:40,  unit:'개' },
+  { id:'share1',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회' },
+  { id:'reaction5',icon:'🙇', title:'반응 받기',        target:5,  reward:30,  unit:'개' },
+  { id:'login3',   icon:'📅', title:'앱 접속하기',      target:3,  reward:20,  unit:'일' },
+  { id:'login7',   icon:'📅', title:'7일 연속 접속',    target:7,  reward:100, unit:'일' },
+];
+
+async function renderChallenge(m) {
+  // 현재 설정 로드
+  const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+  const savedChallenges = settingSnap.exists() && settingSnap.data().weeklyChallenges
+    ? settingSnap.data().weeklyChallenges
+    : DEFAULT_CHALLENGES;
+
+  m.innerHTML = `
+  <div class="page-header"><div class="page-title">🔥 챌린지 관리</div></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+    <!-- 현재 활성 챌린지 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">현재 이주의 챌린지</div>
+        <button class="btn btn-pink btn-sm" onclick="saveChallenges()">💾 저장</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">앱에 표시될 챌린지를 설정해요. 최대 4개 활성화 가능.</div>
+      <div id="active-challenge-list">
+        ${savedChallenges.map((ch, i) => `
+        <div class="card" style="margin-bottom:8px;padding:12px;" id="ch-row-${i}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:18px;">${ch.icon}</span>
+            <input id="ch-title-${i}" value="${ch.title}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            <button onclick="removeChallengeRow(${i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">목표 횟수</div>
+              <input type="number" id="ch-target-${i}" value="${ch.target}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">거지력 보상</div>
+              <input type="number" id="ch-reward-${i}" value="${ch.reward}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">단위</div>
+              <input id="ch-unit-${i}" value="${ch.unit}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+          </div>
+          <input type="hidden" id="ch-id-${i}" value="${ch.id}">
+          <input type="hidden" id="ch-icon-${i}" value="${ch.icon}">
+        </div>`).join('')}
+      </div>
+      <div id="ch-empty" style="display:${savedChallenges.length===0?'block':'none'};font-size:12px;color:var(--text3);text-align:center;padding:16px;">템플릿에서 챌린지를 추가하세요</div>
+    </div>
+
+    <!-- 챌린지 템플릿 -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">챌린지 템플릿</div></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">클릭하면 현재 챌린지에 추가돼요.</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${CHALLENGE_TEMPLATES.map(t => `
+        <div onclick="addChallengeFromTemplate(${JSON.stringify(t).replace(/"/g,'&quot;')})"
+          style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid var(--border);transition:border-color .15s;"
+          onmouseover="this.style.borderColor='var(--pink)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${t.icon}</span>
+            <span style="font-size:13px;color:var(--text);">${t.title} <span style="color:var(--text3);">${t.target}${t.unit}</span></span>
+          </div>
+          <span style="font-size:12px;color:var(--gold);font-weight:700;">+${t.reward}점</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+let _challengeCount = 0;
+
+window.addChallengeFromTemplate = function(t) {
+  const list = document.getElementById('active-challenge-list');
+  if (!list) return;
+  const rows = list.querySelectorAll('[id^="ch-row-"]');
+  if (rows.length >= 4) { toast('최대 4개까지 설정 가능해요'); return; }
+  const i = Date.now(); // unique index
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = `ch-row-${i}`;
+  div.style.cssText = 'margin-bottom:8px;padding:12px;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="font-size:18px;">${t.icon}</span>
+      <input id="ch-title-${i}" value="${t.title}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+      <button onclick="this.closest('[id^=ch-row]').remove();checkEmpty()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">목표 횟수</div><input type="number" id="ch-target-${i}" value="${t.target}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">거지력 보상</div><input type="number" id="ch-reward-${i}" value="${t.reward}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">단위</div><input id="ch-unit-${i}" value="${t.unit}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+    </div>
+    <input type="hidden" id="ch-id-${i}" value="${t.id}">
+    <input type="hidden" id="ch-icon-${i}" value="${t.icon}">`;
+  list.appendChild(div);
+  document.getElementById('ch-empty').style.display = 'none';
+};
+
+window.removeChallengeRow = function(i) {
+  document.getElementById('ch-row-'+i)?.remove();
+  checkEmpty();
+};
+
+function checkEmpty() {
+  const list = document.getElementById('active-challenge-list');
+  const empty = document.getElementById('ch-empty');
+  if (!list || !empty) return;
+  empty.style.display = list.querySelectorAll('[id^="ch-row-"]').length === 0 ? 'block' : 'none';
+}
+
+window.saveChallenges = async function() {
+  const list = document.getElementById('active-challenge-list');
+  if (!list) return;
+  const rows = list.querySelectorAll('[id^="ch-row-"]');
+  const challenges = [];
+  rows.forEach(row => {
+    const i = row.id.replace('ch-row-', '');
+    const title  = document.getElementById('ch-title-'+i)?.value?.trim();
+    const target = parseInt(document.getElementById('ch-target-'+i)?.value) || 1;
+    const reward = parseInt(document.getElementById('ch-reward-'+i)?.value) || 10;
+    const unit   = document.getElementById('ch-unit-'+i)?.value?.trim() || '회';
+    const id     = document.getElementById('ch-id-'+i)?.value || 'custom';
+    const icon   = document.getElementById('ch-icon-'+i)?.value || '✏️';
+    if (title) challenges.push({ id, icon, title, target, reward, unit, active: true });
+  });
+  if (challenges.length === 0) { toast('챌린지를 최소 1개 추가해주세요'); return; }
+  try {
+    const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+    const existing = settingSnap.exists() ? settingSnap.data() : {};
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
+      ...existing,
+      weeklyChallenges: challenges
+    });
+    toast(`✅ 챌린지 ${challenges.length}개 저장됐어요! 앱에 즉시 반영돼요.`);
+  } catch(e) { toast('⚠️ 저장 실패: '+e.message); }
+};
 </script>
 </body>
 </html>

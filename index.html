@@ -1592,6 +1592,7 @@ setTimeout(() => window.GJ.initProfile(), 500);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
 setTimeout(() => buildWeeklyChallenges(), 600);
+setTimeout(() => loadWeeklyChallengesFromDB(), 3000);
 // 토스 미니앱 환경이면 로그인 버튼 표시
 setTimeout(() => initTossLoginUI(), 100);
 
@@ -3292,11 +3293,11 @@ function renderShopList(tab) {
     const previewH = tab === 'room' ? '80px' : '80px';
 
     return `<div class="shop-item-row">
-      <div class="shop-item-preview" style="width:${previewW === '100%' ? '72px' : previewW};height:${previewH};overflow:hidden;background:transparent;">
+      <div class="shop-item-preview" onclick="previewItem('${item.id}','${tab}')" style="width:${previewW === '100%' ? '72px' : previewW};height:${previewH};overflow:hidden;background:transparent;cursor:pointer;border-radius:8px;transition:transform .15s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
         ${itemPreviewSvg(item)}
       </div>
       <div class="shop-item-info">
-        <div class="shop-item-name">${item.name}${equipped?' <span style="font-size:10px;color:var(--green);">●착용중</span>':''}</div>
+        <div class="shop-item-name" onclick="previewItem('${item.id}','${tab}')" style="cursor:pointer;">${item.name}${equipped?' <span style="font-size:10px;color:var(--green);">●착용중</span>':''}</div>
         <div class="shop-item-desc">${item.desc}</div>
         <div class="shop-item-price">${price===0?'무료':price+'점'}</div>
       </div>
@@ -4191,6 +4192,87 @@ function tapGeojiChar() {
       showToast('🪙 동전 1개 획득!');
     });
   }
+}
+
+// ── 상점 아이템 큰 미리보기 ────────────────────────────
+function previewItem(itemId, tab) {
+  const item = (tab==='room' ? ROOM_ITEMS : CHAR_ITEMS).find(i=>i.id===itemId);
+  if (!item) return;
+
+  const existing = document.getElementById('ov-item-preview');
+  if (existing) existing.remove();
+
+  const owned = myItems.owned.includes(itemId);
+  const equippedKey = tab==='room' ? 'equippedRoom' : 'equippedChar';
+  const equipped = myItems[equippedKey] === itemId;
+  const price = getItemPrice(itemId);
+  const canBuy = myTotalScore >= price;
+
+  let btnHtml = '';
+  if (equipped) {
+    btnHtml = `<button disabled style="width:100%;padding:13px;background:rgba(68,204,136,.15);color:var(--green);border:1px solid var(--green);border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;">✅ 착용중</button>`;
+  } else if (owned) {
+    btnHtml = `<button onclick="equipItem('${itemId}','${tab}');document.getElementById('ov-item-preview').remove()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--green),#289060);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">착용하기</button>`;
+  } else if (price===0) {
+    btnHtml = `<button onclick="buyItem('${itemId}','${tab}');document.getElementById('ov-item-preview').remove()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--pink),#c2355a);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">무료 착용</button>`;
+  } else if (canBuy) {
+    btnHtml = `<button onclick="buyItem('${itemId}','${tab}');document.getElementById('ov-item-preview').remove()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#c08000);color:#1a1200;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">${price.toLocaleString()}점으로 구매</button>`;
+  } else {
+    btnHtml = `<button disabled style="width:100%;padding:13px;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;">거지력 ${price.toLocaleString()}점 필요</button>`;
+  }
+
+  // 큰 미리보기 SVG
+  let previewHtml = '';
+  if (tab === 'room') {
+    const decor = getRoomDecor(item);
+    previewHtml = `<svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:var(--radius-sm);" shape-rendering="crispEdges">
+      <rect width="320" height="220" fill="${item.bg}"/>
+      <rect x="0" y="0" width="320" height="148" fill="${item.wall}"/>
+      ${decor}
+      <g>${drawChar(CHAR_ITEMS.find(c=>c.id===myItems.equippedChar)||CHAR_ITEMS[0], 160, 148)}</g>
+    </svg>`;
+  } else {
+    const bgMap = {default:'#f5eee0',paper_bag:'#f5eacc',crown:'#fff8e0',santa:'#ffe0e0',ninja:'#e8e8f0',vip:'#e8e8f5'};
+    const cid = itemId.replace('char_','');
+    previewHtml = `<svg viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:200px;margin:0 auto;display:block;" shape-rendering="crispEdges">
+      <rect width="160" height="200" fill="${bgMap[cid]||'#f0ece0'}"/>
+      <g>${drawChar(item, 80, 170)}</g>
+    </svg>`;
+  }
+
+  const ov = document.createElement('div');
+  ov.id = 'ov-item-preview';
+  ov.className = 'overlay open';
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  ov.innerHTML = `<div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <span style="font-size:20px;">${item.emoji}</span>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">${item.name}</div>
+        <div style="font-size:12px;color:var(--text3);">${item.desc}</div>
+      </div>
+    </div>
+    <div style="border-radius:var(--radius-sm);overflow:hidden;margin-bottom:14px;background:var(--surface2);">
+      ${previewHtml}
+    </div>
+    ${btnHtml}
+    <button onclick="document.getElementById('ov-item-preview').remove()" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px;">닫기</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+// ── 주간 챌린지 Firebase 로드 ────────────────────────────
+async function loadWeeklyChallengesFromDB() {
+  if (!window.GJ?.ready) return;
+  try {
+    const snap = await window.GJ.loadRanking('_settings');
+    if (snap?.weeklyChallenges && snap.weeklyChallenges.length > 0) {
+      WEEKLY_CHALLENGES.length = 0;
+      snap.weeklyChallenges.forEach(c => WEEKLY_CHALLENGES.push(c));
+      buildWeeklyChallenges();
+    }
+  } catch(e) { console.warn('[거지방] 챌린지 로드 실패:', e); }
 }
 
 </script>
