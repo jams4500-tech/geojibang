@@ -2184,7 +2184,7 @@ function buildPiggyAds() {
 
 function updatePiggy() {
   document.getElementById('pig-count').textContent=coins;
-  document.getElementById('strip-coins').textContent=coins;
+  const _sc=document.getElementById('strip-coins'); if(_sc) _sc.textContent=coins;
   // hint
   if(todayEarned>=MAX_DAILY) { document.getElementById('pig-hint-icon').textContent='😴'; document.getElementById('pig-hint-text').textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요'; document.getElementById('pig-limit').textContent=''; }
   else { document.getElementById('pig-hint-icon').textContent='🙏'; document.getElementById('pig-hint-text').textContent=tapCount>0?`${tapCount}/3번 눌렀어요. 조금만 더!`:'깡통을 3번 눌러 동전을 구걸하세요'; document.getElementById('pig-limit').textContent=`오늘 ${todayEarned}/${MAX_DAILY}회 구걸`; }
@@ -2701,7 +2701,7 @@ function playLottery(type) {
     saveDayState();
     document.getElementById('lc-normal').classList.add('used');
     document.getElementById('pac-lotto-note').textContent = '오늘 사용 완료';
-    document.getElementById('strip-lotto-sub').textContent = '오늘 무료 사용 완료';
+    const _sl=document.getElementById('strip-lotto-sub'); if(_sl) _sl.textContent='오늘 무료 사용 완료';
     revealPrize(NORMAL_P);
     return;
   }
@@ -3988,7 +3988,7 @@ function buildCatBudgetList() {
 }
 
 // ── 주간 챌린지 ────────────────────────────────────────
-const WEEKLY_CHALLENGES = [
+var WEEKLY_CHALLENGES = [
   { id:'record3', icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
   { id:'feed1',   icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
   { id:'comment1',icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
@@ -4023,6 +4023,7 @@ function addChallengeProgress(id, add=1) {
 }
 
 function buildWeeklyChallenges() {
+  if (typeof WEEKLY_CHALLENGES === 'undefined') return;
   const el = document.getElementById('challenge-list');
   if (!el) return;
   const now = new Date();
