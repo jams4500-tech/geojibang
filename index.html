@@ -2455,24 +2455,33 @@ async function loadLastKing() {
   if (!window.GJ?.ready) return;
   try {
     const now = new Date();
+    // 지난달 먼저 확인, 없으면 이번달 확인 (어드민에서 이번달로 발표한 경우)
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const ym = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
+    const ymPrev = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
+    const ymCurr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-    // Firebase에서 발표된 데이터 직접 읽기 (없으면 숨김)
-    const rankingData = await window.GJ.loadRanking(ym);
+    let rankingData = await window.GJ.loadRanking(ymPrev);
+    let usedYm = ymPrev;
+    let usedMonth = prevMonth;
+
+    // 지난달 없으면 이번달 확인
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
-      // 발표 취소됐거나 아직 발표 안 됨 → 섹션 숨기기
-      const section = document.getElementById('last-king-section');
+      rankingData = await window.GJ.loadRanking(ymCurr);
+      usedYm = ymCurr;
+      usedMonth = now;
+    }
+
+    const section = document.getElementById('last-king-section');
+    if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
       if (section) section.style.display = 'none';
       return;
     }
 
     const data = rankingData.winners;
-    const section = document.getElementById('last-king-section');
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = `${prevMonth.getFullYear()}년 ${prevMonth.getMonth()+1}월 거지왕`;
+    const monthLabel = `${usedMonth.getFullYear()}년 ${usedMonth.getMonth()+1}월 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
@@ -2492,7 +2501,7 @@ async function loadLastKing() {
     // 내가 순위 안에 있으면 보상 받기 버튼 표시
     const myRank = data.findIndex(w => w.uid === myProfile.uid || w.nick === myProfile.nick);
     if (myRank >= 0) {
-      const claimKey = 'gj_claimed_' + ym;
+      const claimKey = 'gj_claimed_' + usedYm;
       const alreadyClaimed = localStorage.getItem(claimKey);
       const claimArea = document.getElementById('my-reward-claim-area');
       if (claimArea) {
@@ -2507,7 +2516,7 @@ async function loadLastKing() {
           btn.disabled = true;
           btn.style.opacity = '0.5';
         }
-        btn.dataset.ym = ym;
+        btn.dataset.ym = usedYm;
         btn.dataset.reward = REWARDS_LIST[myRank];
       }
     }
