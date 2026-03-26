@@ -1403,7 +1403,9 @@ window.GJ.listenPosts(async (posts) => {
       amount: p.amount || '0원',
       comments: [],
       rxn: p.rxn || [0, 0, 0],
-      authorUid: p.authorUid || ''
+      authorUid: p.authorUid || '',
+      authorRoom: p.authorRoom || 'room_default',
+      authorChar: p.authorChar || 'char_default'
     };
 
     const el = window.makePost(postObj);
@@ -1510,6 +1512,8 @@ window.GJ.publishPost = async (where, amount, memo) => {
     authorMonthScore: window.myMonthScore,
     authorBg: window.myProfile.bg,
     authorColor: window.myProfile.c,
+    authorRoom: window.myItems?.equippedRoom || 'room_default',
+    authorChar: window.myItems?.equippedChar || 'char_default',
     desc: memo || '그냥 썼음',
     item: where,
     amount: parseInt(amount).toLocaleString() + '원',
@@ -1536,12 +1540,20 @@ window.GJ.publishPost = async (where, amount, memo) => {
 // 댓글 Firebase 저장 래퍼
 window.GJ.submitComment = async (postId, text) => {
   const uid = window.myProfile.uid || 'anonymous';
+  // 프로필 로드 전엔 댓글 막기
+  const nick = window.myProfile.nick;
+  if (!nick || nick === '거지' && !uid.startsWith('gj_')) {
+    // 기본값이면 잠시 대기 후 재시도
+    await new Promise(r => setTimeout(r, 800));
+  }
   await window.GJ.addComment(postId, {
     authorUid: uid,
-    authorName: window.myProfile.nick,
-    authorBg: window.myProfile.bg,
-    authorColor: window.myProfile.c,
+    authorName: window.myProfile.nick || nick,
+    authorBg: window.myProfile.bg || '#3a1520',
+    authorColor: window.myProfile.c || '#e8527a',
     authorMonthScore: window.myMonthScore || 0,
+    authorRoom: window.myItems?.equippedRoom || 'room_default',
+    authorChar: window.myItems?.equippedChar || 'char_default',
     text
   });
 };
@@ -1834,9 +1846,9 @@ function makePost(p) {
   const rankBadge = rankIdx === 0 ? ' 거지왕👑' : rankIdx === 1 ? ' 거지대장🎖' : rankIdx >= 2 && rankIdx <= 4 ? ' 거지반장📛' : '';
 
   el.innerHTML=`<div class="post-header">
-    <div class="avatar profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" style="background:${p.abg};color:${p.ac};cursor:pointer;">${p.init}</div>
+    <div class="avatar profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" data-room="${p.authorRoom||'room_default'}" data-char="${p.authorChar||'char_default'}" style="background:${p.abg};color:${p.ac};cursor:pointer;">${p.init}</div>
     <div style="flex:1;">
-      <div class="post-name profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" style="cursor:pointer;">${p.name}${rankBadge}</div>
+      <div class="post-name profile-click" data-uid="${p.authorUid||''}" data-nick="${p.name}" data-bg="${p.abg}" data-c="${p.ac}" data-score="${parseInt(p.score)||0}" data-room="${p.authorRoom||'room_default'}" data-char="${p.authorChar||'char_default'}" style="cursor:pointer;">${p.name}${rankBadge}</div>
       <div class="post-time">${p.time}</div>
     </div>
     ${myPostBtns}
@@ -1857,7 +1869,7 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" style="cursor:pointer;">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
@@ -2676,7 +2688,7 @@ function viewUserProfile(nick, bg, c, bio, monthScore, totalScore, isMyProfile, 
   }
 }
 
-async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
+async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hintChar) {
   const isMyProfile = !!(uid && myProfile.uid && uid === myProfile.uid);
 
   // 내 프로필이면 로컬 최신값 즉시 사용
@@ -2695,8 +2707,10 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore) {
     return;
   }
 
-  // 남의 프로필 — 먼저 피드 데이터로 즉시 표시
-  viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
+  // 남의 프로필 — 댓글에 room/char 힌트가 있으면 즉시 반영
+  const initRoom = hintRoom || 'room_default';
+  const initChar = hintChar || 'char_default';
+  viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, initRoom, initChar);
 
   // uid 없으면 Firebase 조회 불가
   if (!uid || !window.GJ?.ready) return;
@@ -3489,7 +3503,9 @@ function _handleProfileClick(e) {
       const bg    = target.dataset.bg    || '#3a1520';
       const c     = target.dataset.c     || '#e8527a';
       const score = parseInt(target.dataset.score) || 0;
-      viewUserProfileByUid(uid, nick, bg, c, score);
+      const room  = target.dataset.room  || '';
+      const char  = target.dataset.char  || '';
+      viewUserProfileByUid(uid, nick, bg, c, score, room, char);
       return;
     }
     if (e.target.closest('#header-profile-btn')) {
