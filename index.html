@@ -643,7 +643,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#2a1a08,#1a1208);border:1px solid rgba(212,168,68,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
           <div style="text-align:center;margin-bottom:12px;">
             <div style="font-size:32px;">👑</div>
-            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">2025년 2월 거지왕</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">이주의 거지왕</div>
             <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--text);" id="last-king-name">-</div>
             <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="last-king-score">거지력 0점</div>
           </div>
@@ -659,14 +659,14 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <!-- D-day 카운트다운 -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">다음 거지왕 발표까지</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">다음 이주의 거지왕 발표까지</div>
             <div style="font-size:18px;font-weight:700;color:var(--pink);" id="rank-countdown">계산 중...</div>
           </div>
           <div style="font-size:28px;">⏳</div>
         </div>
 
         <!-- 이달 거지력 랭킹 -->
-        <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <div class="rank-header"><div class="rank-title">이주 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
@@ -711,7 +711,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <span style="font-size:12px;color:var(--text2);">이번달 환전 사용량</span>
             <span style="font-size:13px;font-weight:700;color:var(--pink);" id="monthly-exchange-display">0 / 10,000점</span>
           </div>
-          <button class="btn-gold" id="total-score-conv-btn" onclick="openExchangeAd()" disabled style="font-size:13px;padding:12px;width:100%;">1000점 이상 모이면 환전 가능</button>
+          <button class="btn-gold" id="total-score-conv-btn" disabled style="font-size:13px;padding:12px;width:100%;opacity:0.35;cursor:not-allowed;">🔒 환전 기능 준비 중</button>
         </div>
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
@@ -2028,17 +2028,22 @@ function shareManual() {
 
 /* rank */
 const REWARD_INFO = [
-  { medal:'🥇', title:'거지왕 👑',    titleColor:'var(--gold)',     pts:'100,000P', ptsColor:'var(--gold)' },
-  { medal:'🥈', title:'거지대장 🎖', titleColor:'var(--text2)',    pts:'30,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥇', title:'거지왕 👑',    titleColor:'var(--gold)',     pts:'5,000P', ptsColor:'var(--gold)' },
+  { medal:'🥈', title:'거지대장 🎖', titleColor:'var(--text2)',    pts:'3,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
 ];
 
 function buildLiveRewardList() {
   const el = document.getElementById('live-reward-list');
   if (!el) return;
-  el.innerHTML = Array.from({length: 5}).map((_, i) => {
+  el.innerHTML = Array.from({length: 10}).map((_, i) => {
     const r = RANKS[i];
     const info = REWARD_INFO[i];
     const isLast = i === 4;
@@ -2061,7 +2066,7 @@ function buildLiveRewardList() {
 
 function buildRank() {
   const list = document.getElementById('rank-list');
-  list.innerHTML = Array.from({length: 5}).map((_, i) => {
+  list.innerHTML = Array.from({length: 10}).map((_, i) => {
     const r = RANKS[i];
     const tb = RANK_TITLE_BADGE[i];
     const badge = tb
@@ -2095,7 +2100,12 @@ function buildRank() {
 /* ── 거지왕 발표 로직 ── */
 function getNextAnnouncementDate() {
   const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
+  // 다음 월요일 오전 8시
+  const day = now.getDay(); // 0=일, 1=월
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntilMonday);
+  next.setHours(8, 0, 0, 0);
   return next;
 }
 
@@ -2116,12 +2126,17 @@ function updateRankCountdown() {
   el.textContent = days + '일 ' + String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
 }
 
-const RANK_REWARDS = [100000, 30000, 10000, 10000, 10000];
-const RANK_LABELS = ['이달의 거지왕 선정!', '이달의 거지대장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!'];
+const RANK_REWARDS = [5000, 3000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
+const RANK_LABELS = ['이주의 거지왕 선정!', '이주의 거지대장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!'];
 const RANK_EMOJIS  = ['🥇', '🥈', '🥉', '🥉', '🥉'];
 const RANK_TITLE_BADGE = [
   { text: '거지왕 👑',    bg: 'linear-gradient(135deg,#f0c040,#c08000)', color: '#1a1200' },
   { text: '거지대장 🎖',  bg: 'linear-gradient(135deg,#b0b0c0,#707080)', color: '#0a0a14' },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
+  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
@@ -2147,7 +2162,7 @@ function showMyRewardCard(rankIdx) {
   const card = document.getElementById('my-reward-card');
   card.style.display = 'block';
   document.getElementById('my-reward-emoji').textContent = RANK_EMOJIS[rankIdx];
-  document.getElementById('my-reward-title').textContent = '이달의 ' + RANK_LABELS[rankIdx];
+  document.getElementById('my-reward-title').textContent = RANK_LABELS[rankIdx];
   document.getElementById('my-reward-desc').textContent =
     '토스포인트 ' + RANK_REWARDS[rankIdx].toLocaleString() + 'P 리워드가 준비됐어요';
   card.dataset.reward = RANK_REWARDS[rankIdx];
@@ -2456,9 +2471,22 @@ async function loadLastKing() {
   try {
     const now = new Date();
     // 지난달 먼저 확인, 없으면 이번달 확인 (어드민에서 이번달로 발표한 경우)
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const ymPrev = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
-    const ymCurr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    // 지난주 월요일 기준 주차 키 (YYYY-WXX)
+    function getWeekKey(date) {
+      const d = new Date(date);
+      d.setHours(0,0,0,0);
+      d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1)); // 월요일로
+      const year = d.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+      return `${year}-W${String(week).padStart(2,'0')}`;
+    }
+    const lastMonday = new Date(now);
+    lastMonday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1) - 7);
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+    const ymPrev = getWeekKey(lastMonday);
+    const ymCurr = getWeekKey(thisMonday);
 
     let rankingData = await window.GJ.loadRanking(ymPrev);
     let usedYm = ymPrev;
@@ -2481,7 +2509,7 @@ async function loadLastKing() {
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = `${usedMonth.getFullYear()}년 ${usedMonth.getMonth()+1}월 거지왕`;
+    const monthLabel = `${usedYm} 이주의 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';

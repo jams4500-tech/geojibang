@@ -157,8 +157,8 @@ const COLS = {
 };
 
 const GRADES=[{min:2000,label:'거지신 👑',color:'#e8527a'},{min:1000,label:'전설의 거지 🔥',color:'#f0c040'},{min:600,label:'거지 고수 ⚡',color:'#7ab4f0'},{min:300,label:'프로 거지 🎯',color:'#44cc88'},{min:100,label:'동네 거지 🥫',color:'#c0a8b4'},{min:0,label:'거지 새싹 🌱',color:'#7a5f68'}];
-const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛'];
-const REWARDS=[100000,30000,10000,10000,10000];
+const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛'];
+const REWARDS=[5000,3000,1000,1000,1000,1000,1000,1000,1000,1000];
 const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500};
 const ITEM_NAMES={room_default:'기본 방',room_cave:'지하 동굴방',room_rooftop:'옥탑방',room_gosiwon:'고시원',room_park:'공원 벤치',char_default:'기본 거지',char_paper_bag:'종이봉투 머리',char_crown:'거지왕 왕관',char_santa:'산타 거지',char_ninja:'닌자 거지',char_vip:'VIP 거지'};
 
@@ -399,39 +399,53 @@ window.delUser = async (id, nick) => {
 async function renderRanking(m) {
   const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(20)));
   const users = snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()}));
-  const now=new Date(), next=new Date(now.getFullYear(),now.getMonth()+1,1,8,0,0);
+  const now=new Date();
+  // 다음 월요일 계산
+  const dayOfWeek = now.getDay();
+  const daysUntilMonday = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntilMonday);
+  next.setHours(8, 0, 0, 0);
   const diff=next-now, dd=Math.floor(diff/86400000), hh=Math.floor((diff%86400000)/3600000);
 
-  // 이번달 발표 여부 확인
-  const ym = now.toFullYear ? now.toFullYear() : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const ymStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  // 이번주 주차 키 (YYYY-WXX)
+  function getThisWeekKey(d) {
+    const date = new Date(d||now);
+    date.setHours(0,0,0,0);
+    date.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+    const year = date.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const week = Math.ceil(((date - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${year}-W${String(week).padStart(2,'0')}`;
+  }
+  const ymStr = getThisWeekKey();
   const announcedSnap = await getDoc(doc(db,'geojibang_ranking', ymStr));
   const isAnnounced = announcedSnap.exists();
 
   m.innerHTML=`
-  <div class="page-header"><div class="page-title">🏆 랭킹 관리</div><div class="page-sub">다음 발표까지 ${dd}일 ${hh}시간</div></div>
+  <div class="page-header"><div class="page-title">🏆 랭킹 관리</div><div class="page-sub">다음 월요일까지 ${dd}일 ${hh}시간</div></div>
 
   ${isAnnounced ? `
   <div style="background:rgba(68,204,136,.08);border:1px solid rgba(68,204,136,.2);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
     <div>
-      <div style="font-size:13px;font-weight:700;color:var(--green);">✅ ${ymStr} 거지왕 발표 중</div>
-      <div style="font-size:12px;color:var(--text3);margin-top:3px;">앱 랭킹 탭에 발표 결과가 표시되고 있어요</div>
+      <div style="font-size:13px;font-weight:700;color:var(--green);">✅ ${ymStr} 이주 거지왕 발표 중</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">앱 랭킹 탭에 이번주 거지왕이 표시되고 있어요</div>
     </div>
     <button class="btn btn-red btn-sm" onclick="cancelKing('${ymStr}')">📢 발표 취소</button>
   </div>` : `
   <div style="background:rgba(255,85,85,.06);border:1px solid rgba(255,85,85,.15);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
     <div>
       <div style="font-size:13px;font-weight:700;color:var(--text2);">⏸ ${ymStr} 거지왕 미발표</div>
-      <div style="font-size:12px;color:var(--text3);margin-top:3px;">발표 전까지 앱에 지난달 거지왕이 표시되지 않아요</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">발표 전까지 앱에 지난주 거지왕이 표시되지 않아요</div>
     </div>
   </div>`}
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div class="card">
-      <div class="card-header"><div class="card-title">이달 TOP 5</div>
+      <div class="card-header"><div class="card-title">이주 TOP 10</div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-gold btn-sm" onclick="announceKing()" ${isAnnounced ? 'style="opacity:.5;" title="이미 발표됨 — 취소 후 재발표 가능"' : ''}>🎺 거지왕 발표</button>
-          <button class="btn btn-red btn-sm" onclick="resetMonthScores()">🔄 월 거지력 초기화</button>
+          <button class="btn btn-red btn-sm" onclick="resetMonthScores()">🔄 주간 거지력 초기화</button>
         </div>
       </div>
       <table><tr><th>순위/칭호</th><th>닉네임</th><th>월 거지력</th><th>리워드</th></tr>
@@ -459,16 +473,16 @@ async function renderRanking(m) {
 }
 
 window.resetMonthScores = async () => {
-  if (!confirm('모든 회원의 월 거지력을 0으로 초기화할까요?\n누적 거지력은 그대로 유지됩니다.')) return;
+  if (!confirm('모든 회원의 주간 거지력을 0으로 초기화할까요?\n누적 거지력은 그대로 유지됩니다.')) return;
   const snap = await getDocs(COLS.users());
   const batch = writeBatch(db);
   snap.docs.forEach(d=>batch.update(doc(db,'geojibang_users',d.id),{monthScore:0}));
   await batch.commit();
-  toast('✅ 월 거지력 초기화 완료'); showPage('ranking');
+  toast('✅ 주간 거지력 초기화 완료'); showPage('ranking');
 };
 
 window.cancelKing = async (ym) => {
-  if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 지난달 거지왕 섹션이 사라져요.`)) return;
+  if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 이번주 거지왕 섹션이 사라져요.`)) return;
   try {
     await deleteDoc(doc(db,'geojibang_ranking', ym));
     toast('✅ 거지왕 발표 취소됐어요. 앱에서 더 이상 표시되지 않아요.');
@@ -483,9 +497,9 @@ window.announceKing = async () => {
   if (existing.exists()) {
     if (!confirm(`이미 ${ymStr} 거지왕이 발표됐어요.\n다시 발표하면 기존 데이터가 덮어씌워져요. 계속할까요?`)) return;
   } else {
-    if (!confirm('이달의 거지왕을 발표할까요?\n앱 랭킹 탭에 즉시 표시돼요.')) return;
+    if (!confirm('이주의 거지왕을 발표할까요?\n앱 랭킹 탭에 즉시 표시돼요 (이번주 키: ' + ymStr + ').')) return;
   }
-  const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(5)));
+  const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
   const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
   await setDoc(doc(db,'geojibang_ranking', ymStr),{
     winners: winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
