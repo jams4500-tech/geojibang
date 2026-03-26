@@ -581,7 +581,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;" id="savings-kpi">
               <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;">
                 <div style="font-size:16px;font-weight:700;color:var(--green);" id="savings-achieved">0원</div>
-                <div style="font-size:10px;color:var(--text3);margin-top:2px;">남은 예산</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px;">남은 월 생활비</div>
               </div>
               <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;">
                 <div style="font-size:16px;font-weight:700;color:var(--pink);" id="savings-goal-disp">0원</div>
@@ -1773,7 +1773,7 @@ function submitWriteManual() {
     // 혼자만 알고 있기 — 피드에 안 올리고 가계부에만 반영
     addSpendRecord(where, amount, activeCat);
     // 챌린지 record3 진행 (지출 기록)
-    addChallengeProgress('record3');
+    addChallengeProgress('record');
     buildWeeklyChallenges();
     showToast('🔒 기록됐어요! 내 소비에 반영됐어요.');
   }
@@ -1970,7 +1970,7 @@ function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
 function addCmt(pid) {
   const inp=document.getElementById('ci-'+pid), txt=inp.value.trim(); if(!txt) return;
   inp.value='';
-  addChallengeProgress('comment1');
+  addChallengeProgress('comment');
   buildWeeklyChallenges();
   if(window.GJ?.ready) {
     // Firebase 저장만 — listenComments가 자동으로 UI 업데이트
@@ -2206,8 +2206,8 @@ function addToFeed(where,amount,memo) {
     window.GJ.updateScore(myProfile.uid, 1, 1).catch(()=>{});
   }
   // 챌린지 진행
-  addChallengeProgress('record3');
-  addChallengeProgress('feed1');
+  addChallengeProgress('record');
+  addChallengeProgress('feed');
   buildWeeklyChallenges();
   showToast('피드에 올렸어요 +1점! 혼나는 중...'); showTab('feed');
 }
@@ -4380,26 +4380,30 @@ function buildCatBudgetList() {
 
 // ── 주간 챌린지 ────────────────────────────────────────
 var WEEKLY_CHALLENGES = [
-  { id:'record3', icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
-  { id:'feed1',   icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
-  { id:'comment1',icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
-  { id:'share1',  icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
+  { id:'record3',  actionType:'record',  icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
+  { id:'feed1',    actionType:'feed',    icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
+  { id:'comment1', actionType:'comment', icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
+  { id:'share1',   actionType:'share',   icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
 ];
 
-function getChallengeKey(id) {
+function getChallengeKey(actionTypeOrId) {
   const now = new Date();
   const d = new Date(now);
   d.setDate(now.getDate() - (now.getDay()===0?6:now.getDay()-1));
-  return `gj_ch_${id}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  return `gj_ch_${actionTypeOrId}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function getChallengeProgress(id) {
-  return parseInt(localStorage.getItem(getChallengeKey(id))||'0');
+function getChallengeProgress(actionTypeOrId) {
+  // actionType 기반 키로 먼저 찾고, 없으면 id 기반으로도 시도 (하위 호환)
+  const key = getChallengeKey(actionTypeOrId);
+  return parseInt(localStorage.getItem(key)||'0');
 }
 
-function addChallengeProgress(id, add=1) {
-  const ch = WEEKLY_CHALLENGES.find(c=>c.id===id);
+function addChallengeProgress(actionTypeOrId, add=1) {
+  // actionType 또는 id로 챌린지 찾기 (둘 다 지원)
+  const ch = WEEKLY_CHALLENGES.find(c=>c.actionType===actionTypeOrId || c.id===actionTypeOrId);
   if (!ch) return;
+  const id = ch.id; // 실제 id 사용
   const cur = getChallengeProgress(id);
   if (cur >= ch.target) return;
   const next = Math.min(ch.target, cur+add);
@@ -4422,7 +4426,7 @@ function buildWeeklyChallenges() {
   const dEl = document.getElementById('challenge-days-left');
   if (dEl) dEl.textContent = daysLeft>0 ? daysLeft+'일 남음':'오늘 마감';
   el.innerHTML = WEEKLY_CHALLENGES.map(ch=>{
-    const prog = getChallengeProgress(ch.id);
+    const prog = getChallengeProgress(ch.actionType || ch.id);
     const done = prog >= ch.target;
     const pct = Math.min(100, prog/ch.target*100);
     return `<div style="background:${done?'rgba(68,204,136,0.08)':'var(--surface2)'};border-radius:var(--radius-sm);padding:10px 12px;border:1px solid ${done?'rgba(68,204,136,0.2)':'transparent'};">
@@ -4632,7 +4636,19 @@ async function loadWeeklyChallengesFromDB() {
     const snap = await window.GJ.loadRanking('_settings');
     if (snap?.weeklyChallenges && snap.weeklyChallenges.length > 0) {
       WEEKLY_CHALLENGES.length = 0;
-      snap.weeklyChallenges.forEach(c => WEEKLY_CHALLENGES.push(c));
+      snap.weeklyChallenges.forEach(c => {
+        // actionType이 없는 구버전 데이터면 id에서 추정
+        if (!c.actionType) {
+          if (c.id.startsWith('record')) c.actionType = 'record';
+          else if (c.id.startsWith('feed')) c.actionType = 'feed';
+          else if (c.id.startsWith('comment')) c.actionType = 'comment';
+          else if (c.id.startsWith('share')) c.actionType = 'share';
+          else if (c.id.startsWith('login')) c.actionType = 'login';
+          else if (c.id.startsWith('reaction')) c.actionType = 'reaction';
+          else c.actionType = c.id;
+        }
+        WEEKLY_CHALLENGES.push(c);
+      });
       buildWeeklyChallenges();
     }
   } catch(e) { console.warn('[거지방] 챌린지 로드 실패:', e); }

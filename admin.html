@@ -684,17 +684,13 @@ const DEFAULT_CHALLENGES = [
 ];
 
 const CHALLENGE_TEMPLATES = [
-  { id:'record3',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회' },
-  { id:'record5',  icon:'✏️', title:'지출 기록하기',   target:5,  reward:50,  unit:'회' },
-  { id:'record7',  icon:'✏️', title:'지출 기록하기',   target:7,  reward:70,  unit:'회' },
-  { id:'feed1',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회' },
-  { id:'feed3',    icon:'📢', title:'피드에 올리기',    target:3,  reward:50,  unit:'회' },
-  { id:'comment1', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개' },
-  { id:'comment3', icon:'💬', title:'댓글 달기',        target:3,  reward:40,  unit:'개' },
-  { id:'share1',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회' },
-  { id:'reaction5',icon:'🙇', title:'반응 받기',        target:5,  reward:30,  unit:'개' },
-  { id:'login3',   icon:'📅', title:'앱 접속하기',      target:3,  reward:20,  unit:'일' },
-  { id:'login7',   icon:'📅', title:'7일 연속 접속',    target:7,  reward:100, unit:'일' },
+  { id:'record',   actionType:'record',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회' },
+  { id:'feed',     actionType:'feed',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회' },
+  { id:'comment',  actionType:'comment', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개' },
+  { id:'share',    actionType:'share',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회' },
+  { id:'reaction', actionType:'reaction',icon:'🙇', title:'반응 받기',        target:5,  reward:30,  unit:'개' },
+  { id:'login3',   actionType:'login',   icon:'📅', title:'앱 접속하기',      target:3,  reward:20,  unit:'일' },
+  { id:'login7',   actionType:'login7',  icon:'📅', title:'7일 연속 접속',    target:7,  reward:100, unit:'일' },
 ];
 
 async function renderChallenge(m) {
@@ -740,6 +736,7 @@ async function renderChallenge(m) {
           </div>
           <input type="hidden" id="ch-id-${i}" value="${ch.id}">
           <input type="hidden" id="ch-icon-${i}" value="${ch.icon}">
+          <input type="hidden" id="ch-atype-${i}" value="${ch.actionType||ch.id}">
         </div>`).join('')}
       </div>
       <div id="ch-empty" style="display:${savedChallenges.length===0?'block':'none'};font-size:12px;color:var(--text3);text-align:center;padding:16px;">템플릿에서 챌린지를 추가하세요</div>
@@ -789,7 +786,8 @@ window.addChallengeFromTemplate = function(t) {
       <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">단위</div><input id="ch-unit-${i}" value="${t.unit}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
     </div>
     <input type="hidden" id="ch-id-${i}" value="${t.id}">
-    <input type="hidden" id="ch-icon-${i}" value="${t.icon}">`;
+    <input type="hidden" id="ch-icon-${i}" value="${t.icon}">
+    <input type="hidden" id="ch-atype-${i}" value="${t.actionType||t.id}">`;
   list.appendChild(div);
   document.getElementById('ch-empty').style.display = 'none';
 };
@@ -819,7 +817,8 @@ window.saveChallenges = async function() {
     const unit   = document.getElementById('ch-unit-'+i)?.value?.trim() || '회';
     const id     = document.getElementById('ch-id-'+i)?.value || 'custom';
     const icon   = document.getElementById('ch-icon-'+i)?.value || '✏️';
-    if (title) challenges.push({ id, icon, title, target, reward, unit, active: true });
+    const atype  = document.getElementById('ch-atype-'+i)?.value || id;
+    if (title) challenges.push({ id, actionType: atype, icon, title, target, reward, unit, active: true });
   });
   if (challenges.length === 0) { toast('챌린지를 최소 1개 추가해주세요'); return; }
   try {
