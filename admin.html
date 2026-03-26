@@ -492,12 +492,21 @@ window.cancelKing = async (ym) => {
 
 window.announceKing = async () => {
   const now = new Date();
-  const ymStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  function getWeekKey() {
+    const d = new Date(now);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1));
+    const year = d.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return year + '-W' + String(week).padStart(2,'0');
+  }
+  const ymStr = getWeekKey();
   const existing = await getDoc(doc(db,'geojibang_ranking', ymStr));
   if (existing.exists()) {
     if (!confirm(`이미 ${ymStr} 거지왕이 발표됐어요.\n다시 발표하면 기존 데이터가 덮어씌워져요. 계속할까요?`)) return;
   } else {
-    if (!confirm('이주의 거지왕을 발표할까요?\n앱 랭킹 탭에 즉시 표시돼요 (이번주 키: ' + ymStr + ').')) return;
+    if (!confirm(`이주의 거지왕을 발표할까요? (${ymStr})\n앱 랭킹 탭에 즉시 표시돼요.`)) return;
   }
   const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
   const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
