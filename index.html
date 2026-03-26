@@ -2490,13 +2490,11 @@ async function loadLastKing() {
 
     let rankingData = await window.GJ.loadRanking(ymPrev);
     let usedYm = ymPrev;
-    let usedMonth = prevMonth;
 
-    // 지난달 없으면 이번달 확인
+    // 지난주 없으면 이번주 확인
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
       rankingData = await window.GJ.loadRanking(ymCurr);
       usedYm = ymCurr;
-      usedMonth = now;
     }
 
     const section = document.getElementById('last-king-section');
