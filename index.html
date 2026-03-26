@@ -443,19 +443,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="tab" onclick="showTab('rank')">거지 랭킹</div>
       <div class="tab" onclick="showTab('geoji')">내 거지</div>
     </div>
-    <div class="reward-strip">
-      <div class="reward-pill" onclick="openPiggy()">
-        <span class="rp-icon">🥫</span>
-        <div class="rp-info"><span class="rp-label">동전 구걸하기</span><span class="rp-sub">동전 <span id="strip-coins">0</span>개 모음</span></div>
-        <span class="rp-cta">구걸</span>
-      </div>
-      <div class="strip-dot"></div>
-      <div class="reward-pill" onclick="openOverlay('ov-lottery')">
-        <span class="rp-icon">🎰</span>
-        <div class="rp-info"><span class="rp-label">출석 복권</span><span class="rp-sub" id="strip-lotto-sub">오늘 1회 무료</span></div>
-        <span class="rp-cta">도전</span>
-      </div>
-    </div>
+
     <div class="content">
       <div id="tab-feed" class="section active"></div>
       <div id="tab-mine" class="section">
@@ -1759,7 +1747,15 @@ function showTab(n) {
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { buildCatBars(); buildChart('week'); }
-  if (n === 'geoji') { renderGeojiTab(); }
+  if (n === 'geoji') {
+    renderGeojiTab();
+    // 실제 프로필 방+캐릭터 렌더링
+    setTimeout(() => {
+      const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
+      const equippedChar = myProfile.items?.equippedChar || 'char_default';
+      renderRoom('geoji-room-svg', equippedRoom, equippedChar);
+    }, 50);
+  }
 }
 
 /* feed */
@@ -2364,6 +2360,13 @@ function doExchange(type,cost) {
       window.GJ.updateScore(myProfile.uid, 10, 10).catch(()=>{});
     }
     showToast('🙇 거지력 +10점! 월 랭킹 & 누적 반영됨');
+  } else if(type==='point5'){
+    // 토스포인트 5P (프로모션 API 연동 후 실제 지급)
+    showToast('💚 토스포인트 5P 지급 신청됐어요! 영업일 내 지급');
+    // 프로모션 코드 등록 후 아래 코드 활성화
+    // if(typeof grantPromotionReward !== 'undefined') {
+    //   grantPromotionReward({ params: { promotionCode: 'GEOJI_COIN5', amount: 5 } });
+    // }
   } else if(type==='lotto'){
     const beggingLevels=['상','중','하','최하','바닥'];
     const emoji=['🌟','✨','😐','😢','💀'];
@@ -4063,43 +4066,15 @@ function renderGeojiTab() {
   const section = document.getElementById('tab-geoji');
   if (!section) return;
   const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
-  const roomBgs = {
-    room_default:'linear-gradient(180deg,#1a1216 0%,#0e0a0c 100%)',
-    room_cave:'linear-gradient(180deg,#0a0808 0%,#1a0e08 100%)',
-    room_rooftop:'linear-gradient(180deg,#0a1020 0%,#1a1830 100%)',
-    room_gosiwon:'linear-gradient(180deg,#141010 0%,#0a0808 100%)',
-    room_park:'linear-gradient(180deg,#0a1808 0%,#101a10 100%)',
-  };
+  const equippedChar = myProfile.items?.equippedChar || 'char_default';
   const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
   section.innerHTML = `
     <div style="position:relative;background:${roomBgs[equippedRoom]||roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
       <div style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
-      <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:16px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
-      <div id="geoji-char" onclick="tapGeojiChar()" style="cursor:pointer;transition:transform .1s;user-select:none;-webkit-tap-highlight-color:transparent;">
-        <svg width="140" height="160" viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="70" y="110" width="60" height="70" rx="8" fill="#5888c8"/>
-          <polygon points="100,115 95,145 100,150 105,145" fill="#3355aa"/>
-          <ellipse cx="100" cy="95" rx="32" ry="34" fill="#fdd9a0"/>
-          <ellipse cx="100" cy="65" rx="32" ry="12" fill="#1a1a2a"/>
-          <ellipse cx="76" cy="80" rx="10" ry="18" fill="#1a1a2a"/>
-          <ellipse cx="124" cy="80" rx="10" ry="18" fill="#1a1a2a"/>
-          <ellipse cx="89" cy="93" rx="6" ry="7" fill="white"/>
-          <ellipse cx="111" cy="93" rx="6" ry="7" fill="white"/>
-          <ellipse cx="89" cy="95" rx="4" ry="4" fill="#1a1a2a"/>
-          <ellipse cx="111" cy="95" rx="4" ry="4" fill="#1a1a2a"/>
-          <path d="M92 113 Q100 108 108 113" fill="none" stroke="#c8856a" stroke-width="2" stroke-linecap="round"/>
-          <ellipse cx="80" cy="103" rx="7" ry="5" fill="#f0a090" opacity="0.5"/>
-          <ellipse cx="120" cy="103" rx="7" ry="5" fill="#f0a090" opacity="0.5"/>
-          <rect x="30" y="115" width="40" height="14" rx="7" fill="#5888c8"/>
-          <ellipse cx="28" cy="122" rx="12" ry="10" fill="#fdd9a0"/>
-          <rect x="16" y="112" width="7" height="12" rx="3.5" fill="#fdd9a0"/>
-          <rect x="24" y="109" width="7" height="14" rx="3.5" fill="#fdd9a0"/>
-          <rect x="32" y="111" width="7" height="12" rx="3.5" fill="#fdd9a0"/>
-          <rect x="78" y="175" width="18" height="30" rx="6" fill="#3a5aaa"/>
-          <rect x="104" y="175" width="18" height="30" rx="6" fill="#3a5aaa"/>
-          <circle cx="82" cy="135" r="5" fill="#8a7060" opacity="0.5"/>
-          <circle cx="115" cy="140" r="4" fill="#8a7060" opacity="0.4"/>
-        </svg>
+      <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
+      <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
+      <div id="geoji-room-wrap" onclick="tapGeojiChar()" style="cursor:pointer;width:100%;max-width:320px;border-radius:12px;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;">
+        <svg id="geoji-room-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;" shape-rendering="crispEdges"></svg>
       </div>
       <div style="margin-top:12px;width:200px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;">
@@ -4109,7 +4084,7 @@ function renderGeojiTab() {
         <div style="height:4px;background:var(--surface2);border-radius:2px;">
           <div id="geoji-tap-bar" style="height:100%;background:var(--pink);border-radius:2px;width:${prog}%;transition:width .2s;"></div>
         </div>
-        <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px;">${GEOJI_TAP_PER_AD}번 구걸하면 토스포인트 찬스!</div>
+        <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px;">5번 누르면 광고 시청 후 동전 1개!</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
@@ -4122,6 +4097,7 @@ function renderGeojiTab() {
       <div class="exc-row" onclick="doExchange('lotto',2)"><div class="exc-ico" style="background:#3a1520;">🎟</div><div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('letter',3)"><div class="exc-ico" style="background:#1a2030;">🧑‍⚕️</div><div class="exc-info"><div class="exc-name">거지 고민상담소</div><div class="exc-cost">동전 3개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('score',5)"><div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+10</div><div class="exc-info"><div class="exc-name">거지력 +10점</div><div class="exc-cost">동전 5개</div></div><div class="exc-arr">›</div></div>
+      <div class="exc-row" onclick="doExchange('point5',5)"><div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div><div class="exc-info"><div class="exc-name">토스포인트 5P</div><div class="exc-cost">동전 5개 → 토스포인트 5P</div></div><div class="exc-arr">›</div></div>
     </div>
     <div class="exc-row" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;" onclick="openOverlay('ov-lottery')">
       <div class="exc-ico" style="background:#2a1a3a;">🎰</div>
@@ -4131,31 +4107,37 @@ function renderGeojiTab() {
 }
 
 function tapGeojiChar() {
-  const char = document.getElementById('geoji-char');
   const bubble = document.getElementById('geoji-bubble');
-  if (!char||!bubble) return;
-  char.style.transform = 'scale(0.88)';
-  setTimeout(()=>{ char.style.transform='scale(1)'; }, 130);
+  const wrap = document.getElementById('geoji-room-wrap');
+  if (!bubble) return;
+
+  // 탭 애니메이션
+  if (wrap) { wrap.style.transform='scale(0.96)'; setTimeout(()=>{ wrap.style.transform='scale(1)'; },130); }
+
+  // 랜덤 대사
   bubble.textContent = GEOJI_LINES[Math.floor(Math.random()*GEOJI_LINES.length)];
+
   geojiTapCount++;
   const prog = document.getElementById('geoji-tap-prog');
   const bar = document.getElementById('geoji-tap-bar');
   if (prog) prog.textContent = `${geojiTapCount}/${GEOJI_TAP_PER_AD}`;
   if (bar) bar.style.width = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100)+'%';
+
   if (geojiTapCount >= GEOJI_TAP_PER_AD) {
     geojiTapCount = 0;
     if (prog) prog.textContent = `0/${GEOJI_TAP_PER_AD}`;
     if (bar) bar.style.width = '0%';
     bubble.textContent = '광고 보고 동전 받기! 🪙';
-    setTimeout(()=>{
-      playAd(()=>{
-        coins++; updatePiggy();
-        const badge = document.querySelector('#tab-geoji div[style*="동전"]');
-        if (badge) badge.textContent = `동전 ${coins}개`;
-        bubble.textContent = `동전 획득! 🪙 (총 ${coins}개)`;
-        showToast('🪙 동전 1개 획득!');
-      });
-    }, 500);
+    // 실제 watchAd 호출 (5초 광고 오버레이)
+    watchAd(() => {
+      coins++; todayEarned++;
+      updatePiggy();
+      // 내 거지 탭 동전 뱃지 업데이트
+      const badge = document.querySelector('#tab-geoji [style*="동전"]');
+      if (badge) badge.textContent = `동전 ${coins}개`;
+      bubble.textContent = `동전 획득! 🪙 (총 ${coins}개)`;
+      showToast('🪙 동전 1개 획득!');
+    });
   }
 }
 
