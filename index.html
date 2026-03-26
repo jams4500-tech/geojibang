@@ -414,10 +414,10 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     </div>
 
     <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
-    <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()">
+    <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()" oncompositionend="obCheck()" onkeyup="obCheck()">
     <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
     <div class="ob-label">한 줄 소개 <span style="color:var(--text3);">(선택)</span></div>
-    <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()">
+    <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()" oncompositionend="obBioCount()" onkeyup="obBioCount()">
     <div class="ob-char"><span id="ob-bio-len">0</span>/30</div>
     <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled>거지방 입장하기 🚪</button>
   </div>
