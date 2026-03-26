@@ -428,6 +428,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="header-top">
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="sharePiggyLink()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">⚡ 공유</button>
           <div class="header-badge">247명 참여중</div>
           <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
@@ -2935,6 +2936,9 @@ const ROOM_ITEMS = [
   { id:'room_rooftop',name:'옥탑방',      desc:'월세 20만원짜리 뷰 맛집',        emoji:'🌇', type:'room', bg:'#1a2840', wall:'#243660', floor:'#8a6040' },
   { id:'room_gosiwon',name:'고시원',      desc:'침대 하나가 전부인 꿈의 공간',   emoji:'📦', type:'room', bg:'#e8e0d4', wall:'#d4c8b8', floor:'#c0b0a0' },
   { id:'room_park',   name:'공원 벤치',   desc:'임대료 0원 노숙 스팟',          emoji:'🌳', type:'room', bg:'#b8e4a8', wall:'#8ac888', floor:'#6aaa60' },
+  { id:'room_subway', name:'지하철 역사', desc:'막차 끊긴 후 잠드는 곳',        emoji:'🚇', type:'room', bg:'#2a2a3a', wall:'#383848', floor:'#4a4a5a' },
+  { id:'room_jjimjil',name:'찜질방',      desc:'24시간 500원짜리 안식처',       emoji:'🧖', type:'room', bg:'#4a2020', wall:'#5a2828', floor:'#3a1818' },
+  { id:'room_rooftop2',name:'옥상 별빛방',desc:'별이 보이는 고급(?) 야외 숙소', emoji:'✨', type:'room', bg:'#0a0820', wall:'#100c30', floor:'#6a5030' },
 ];
 
 const CHAR_ITEMS = [
@@ -2944,6 +2948,9 @@ const CHAR_ITEMS = [
   { id:'char_santa',     name:'산타 거지',     desc:'선물 대신 동전을 받는 산타',       emoji:'🎅', type:'char' },
   { id:'char_ninja',     name:'닌자 거지',     desc:'은밀하게 위대하게 구걸하는',       emoji:'🥷', type:'char' },
   { id:'char_vip',       name:'VIP 거지',      desc:'정장 입은 거지. 자존심은 있다.',   emoji:'🤵', type:'char' },
+  { id:'char_ghost',     name:'투명 거지',     desc:'존재 자체가 미스터리한 거지',      emoji:'👻', type:'char' },
+  { id:'char_chef',      name:'백수 셰프',     desc:'요리는 못하지만 복장은 셰프',      emoji:'👨‍🍳', type:'char' },
+  { id:'char_cowboy',    name:'카우보이 거지',  desc:'서부 개척시대 낭만 거지',         emoji:'🤠', type:'char' },
 ];
 
 let myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
@@ -2975,6 +2982,9 @@ function _drawCharCore(char, cx, groundY, S) {
     santa:     { skin:'#fce090', hair:'#f8f8f8', shirt:'#cc1010', pants:'#cc1010', shoe:'#080808', acc:'#f8f8f8' },
     ninja:     { skin:'#707070', hair:'#080808', shirt:'#101010', pants:'#101010', shoe:'#040404', acc:'#cc2020' },
     vip:       { skin:'#fce090', hair:'#0c0c18', shirt:'#f0f0f8', pants:'#0c0c28', shoe:'#040408', acc:'#d4a844' },
+    ghost:     { skin:'#d0d8f0', hair:'#9098b8', shirt:'#b0b8d8', pants:'#9098b8', shoe:'#707888', acc:'#a0a8c8' },
+    chef:      { skin:'#fce090', hair:'#1a1410', shirt:'#f8f8f8', pants:'#2a2a2a', shoe:'#101010', acc:'#e83030' },
+    cowboy:    { skin:'#fce090', hair:'#3a2010', shirt:'#c87040', pants:'#4a3020', shoe:'#2a1808', acc:'#c87040' },
   };
   const c = pal[cid] || pal.default;
   const ox = cx - 5*S;
@@ -3057,6 +3067,30 @@ function _drawCharCore(char, cx, groundY, S) {
     g += px(ox+S,   oy+3*S, 6*S, 2*S, '#cc3030');
     g += px(ox+S,   oy+3*S, S,   2*S, '#1a1a1a');
     g += px(ox+6*S, oy+3*S, S,   2*S, '#1a1a1a');
+  } else if (cid==='ghost') {
+    // 반투명 효과
+    g += px(ox+S,   oy-2*S, 6*S, 9*S, c.skin, 0.6);
+    g += px(ox,     oy+S,   S,   5*S, c.skin, 0.5);
+    g += px(ox+7*S, oy+S,   S,   5*S, c.skin, 0.5);
+  } else if (cid==='chef') {
+    // 셰프 모자 (높고 하얀 모자)
+    g += px(ox+S,   oy-6*S, 6*S, 6*S, '#f8f8f8');
+    g += px(ox+S,   oy-6*S, 6*S, S,   '#e8e8e8');
+    g += px(ox,     oy-2*S, 8*S, 2*S, '#f0f0f0');
+    g += px(ox+3*S, oy-4*S, 2*S, S,   '#e0e0e0');
+    // 앞치마
+    g += px(ox+2*S, oy+9*S, 4*S, 4*S, '#f0f0f0');
+    g += px(ox+3*S, oy+9*S, 2*S, S,   '#e0e0e0');
+  } else if (cid==='cowboy') {
+    // 카우보이 모자
+    g += px(ox,     oy-S,   8*S, 2*S, c.acc);
+    g += px(ox+S,   oy-4*S, 6*S, 3*S, c.acc);
+    g += px(ox+2*S, oy-4*S, 4*S, S,   adjustColor(c.acc,25));
+    g += px(ox-S,   oy-S,   S,   S,   c.acc);
+    g += px(ox+8*S, oy-S,   S,   S,   c.acc);
+    // 스카프
+    g += px(ox+S,   oy+7*S, 6*S, 2*S, '#cc3030');
+    g += px(ox+3*S, oy+9*S, 2*S, 2*S, '#cc3030');
   } else if (cid==='vip') {
     g += px(ox+S,   oy-4*S, 6*S, 4*S, '#181828');
     g += px(ox,     oy-S,   8*S, S,   '#181828');
@@ -3184,6 +3218,60 @@ function getRoomDecor(room) {
     ${px(216,144,14,20,'#8a5028')}
     ${px(220,144,10,4,'#b07038')}
     ${px(50,140,192,8,'#a09060')}`;
+
+  if (room.id==='room_subway') return `
+    ${floorTile(0,148,320,72,'#3a3a4a','#323242')}
+    ${px(0,148,320,4,'#5a5a6a')}
+    ${px(0,0,320,148,'#2a2a38')}
+    ${px(0,100,320,6,'#ffd060')}
+    ${px(0,106,320,4,'#ffb820')}
+    ${px(20,20,280,60,'#1a1a28')}
+    ${px(22,22,276,56,'#222235')}
+    ${[0,1,2,3,4,5].map(i=>px(30+i*46,28,36,44,'#1a2a4a')).join('')}
+    ${px(30,28,36,44,'#2a4a8a')}
+    ${px(32,30,32,40,'#1a3a7a')}
+    ${px(34,34,28,8,'rgba(180,220,255,0.7)')}
+    ${px(0,112,320,36,'#252535')}
+    ${px(0,136,320,12,'#353548')}
+    ${px(100,148,120,8,'#5a5a6a')}`;
+
+  if (room.id==='room_jjimjil') return `
+    ${floorTile(0,148,320,72,'#8a3030','#7a2828')}
+    ${px(0,148,320,4,'#6a2020')}
+    ${px(0,0,320,148,'#4a1818')}
+    ${px(0,0,320,12,'#3a1010')}
+    ${px(4,4,312,4,'#8a3030')}
+    ${px(240,20,60,80,'#3a1010')}
+    ${px(244,24,52,72,'#4a1818')}
+    ${px(246,28,48,4,'rgba(255,160,80,0.5)')}
+    ${px(246,46,48,4,'rgba(255,160,80,0.4)')}
+    ${px(246,64,48,4,'rgba(255,160,80,0.3)')}
+    ${px(10,30,80,60,'#5a2020')}
+    ${px(12,32,76,56,'#6a2828')}
+    ${px(18,36,20,20,'rgba(255,200,100,0.15)')}
+    ${px(18,36,4,20,'rgba(255,200,100,0.3)')}
+    ${px(100,112,120,28,'#7a3030')}
+    ${px(102,112,116,4,'rgba(255,200,150,0.15)')}`;
+
+  if (room.id==='room_rooftop2') return `
+    ${floorTile(0,148,320,72,'#6a5030','#5a4028')}
+    ${px(0,148,320,4,'#8a6840')}
+    ${px(0,0,320,148,'#080618')}
+    ${[...Array(20)].map((_,i)=>{const x=(i*47+13)%310;const y=6+(i%5)*22;const op=[0.9,0.6,0.8,0.5,0.95][i%5];return px(x,y,2,2,'#fffde0',op);}).join('')}
+    ${px(210,18,20,20,'rgba(255,220,80,0.12)')}
+    ${px(215,22,10,10,'rgba(255,240,120,0.22)')}
+    ${px(10,60,30,88,'#2a3050')}
+    ${px(14,64,22,5,'rgba(255,220,80,0.8)')}
+    ${px(14,80,22,5,'rgba(255,220,80,0.6)')}
+    ${px(14,96,22,5,'rgba(255,220,80,0.9)')}
+    ${px(270,40,30,108,'#2a3050')}
+    ${px(274,46,22,5,'rgba(255,220,80,0.7)')}
+    ${px(274,64,22,5,'rgba(255,220,80,0.5)')}
+    ${px(80,118,160,30,'#1a1828')}
+    ${px(82,120,156,26,'#222035')}
+    ${px(84,126,18,14,'rgba(100,150,255,0.5)')}
+    ${px(106,126,18,14,'rgba(255,150,100,0.4)')}
+    ${px(128,126,18,14,'rgba(100,200,150,0.5)')}`;
 
   return '';
 }
@@ -4030,6 +4118,7 @@ function openCatBudgetEdit() {
   const ov = document.createElement('div');
   ov.id = 'ov-cat-budget';
   ov.className = 'overlay open';
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
   ov.innerHTML = `<div class="sheet" style="max-height:80vh;overflow-y:auto;">
     <div class="sheet-handle"></div>
     <div class="sheet-title">📋 카테고리 예산 설정</div>
