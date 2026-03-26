@@ -2183,31 +2183,57 @@ function buildPiggyAds() {
 }
 
 function updatePiggy() {
-  document.getElementById('pig-count').textContent=coins;
-  const _sc=document.getElementById('strip-coins'); if(_sc) _sc.textContent=coins;
-  // hint
-  if(todayEarned>=MAX_DAILY) { document.getElementById('pig-hint-icon').textContent='😴'; document.getElementById('pig-hint-text').textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요'; document.getElementById('pig-limit').textContent=''; }
-  else { document.getElementById('pig-hint-icon').textContent='🙏'; document.getElementById('pig-hint-text').textContent=tapCount>0?`${tapCount}/3번 눌렀어요. 조금만 더!`:'깡통을 3번 눌러 동전을 구걸하세요'; document.getElementById('pig-limit').textContent=`오늘 ${todayEarned}/${MAX_DAILY}회 구걸`; }
+  const _get = id => document.getElementById(id);
+  const _set = (id, val) => { const el=_get(id); if(el) el.textContent=val; };
+
+  _set('pig-count', coins);
+  const _sc=_get('strip-coins'); if(_sc) _sc.textContent=coins;
+
+  // hint (깡통 페이지에만 존재)
+  const hintIcon = _get('pig-hint-icon');
+  const hintText = _get('pig-hint-text');
+  const pigLimit = _get('pig-limit');
+  if (hintIcon && hintText) {
+    if(todayEarned>=MAX_DAILY) {
+      hintIcon.textContent='😴';
+      hintText.textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요';
+      if(pigLimit) pigLimit.textContent='';
+    } else {
+      hintIcon.textContent='🙏';
+      hintText.textContent=tapCount>0?`${tapCount}/3번 눌렀어요. 조금만 더!`:'깡통을 3번 눌러 동전을 구걸하세요';
+      if(pigLimit) pigLimit.textContent=`오늘 ${todayEarned}/${MAX_DAILY}회 구걸`;
+    }
+  }
+
   // slots
-  const sl=document.getElementById('coin-slots'); sl.innerHTML='';
-  for(let i=0;i<MAX_DAILY;i++){ const s=document.createElement('div'); s.className='coin-slot'+(i<coins?' filled':''); sl.appendChild(s); }
-  // exchange locks
-  // 아이템 항상 활성화 - 동전 부족 시 doExchange에서 토스트
+  const sl=_get('coin-slots');
+  if(sl) {
+    sl.innerHTML='';
+    for(let i=0;i<MAX_DAILY;i++){ const s=document.createElement('div'); s.className='coin-slot'+(i<coins?' filled':''); sl.appendChild(s); }
+  }
+
   // bottom banner
-  const bb=document.getElementById('pig-bottom'); bb.style.display=coins>=5?'block':'none';
-  document.getElementById('pig-banner-n').textContent=coins;
+  const bb=_get('pig-bottom'); if(bb) bb.style.display=coins>=5?'block':'none';
+  _set('pig-banner-n', coins);
+
   // feed coin banner
-  const fb=document.getElementById('feed-cb'); if(fb){fb.style.display=coins>=5?'block':'none'; const fn=document.getElementById('fcb-n'); if(fn)fn.textContent=coins;}
-  // coin animation hint — can gets coins stacked as slots fill
-  const cv=document.getElementById('coin-anim');
-  if(cv) { cv.setAttribute('opacity', coins>0?'1':'0'); }
+  const fb=_get('feed-cb'); if(fb){ fb.style.display=coins>=5?'block':'none'; const fn=_get('fcb-n'); if(fn)fn.textContent=coins; }
+
+  // coin animation
+  const cv=_get('coin-anim');
+  if(cv) cv.setAttribute('opacity', coins>0?'1':'0');
+
   // convert sheet
-  document.getElementById('cv-n').textContent=coins+'개';
+  _set('cv-n', coins+'개');
   const sets=Math.floor(coins/5);
-  document.getElementById('cv-sets').textContent=sets+'묶음';
-  document.getElementById('cv-pts').textContent=sets+'P';
-  document.getElementById('cv-rem').textContent=(coins%5)+'개';
-  document.getElementById('cv-btn').disabled=coins<5;
+  _set('cv-sets', sets+'묶음');
+  _set('cv-pts', sets+'P');
+  _set('cv-rem', (coins%5)+'개');
+  const cvBtn=_get('cv-btn'); if(cvBtn) cvBtn.disabled=coins<5;
+
+  // 내 거지 탭 동전 뱃지 업데이트
+  const geojiBadge=document.querySelector('#tab-geoji [style*="동전"]');
+  if(geojiBadge) geojiBadge.textContent=`동전 ${coins}개`;
 }
 
 let tapCount = 0;
