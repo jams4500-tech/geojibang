@@ -5,10 +5,11 @@
       "maxDuration": 30
     }
   },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/admin", "dest": "/admin.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/((?!api|admin|terms).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
