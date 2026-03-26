@@ -3549,7 +3549,7 @@ if (document.readyState === 'loading') {
 
 function openOverlay(id){document.getElementById(id).classList.add('open');}
 function closeOverlay(id){document.getElementById(id)?.classList.remove('open');}
-function closeOverlayOut(e,id){if(e.target===document.getElementById(id))closeOverlay(id);}
+function closeOverlayOut(e,id){if(!e.target.closest('.sheet'))closeOverlay(id);}
 
 /* toast */
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -4118,7 +4118,7 @@ function openCatBudgetEdit() {
   const ov = document.createElement('div');
   ov.id = 'ov-cat-budget';
   ov.className = 'overlay open';
-  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  ov.onclick = e => { if(!e.target.closest('.sheet')) ov.remove(); };
   ov.innerHTML = `<div class="sheet" style="max-height:80vh;overflow-y:auto;">
     <div class="sheet-handle"></div>
     <div class="sheet-title">📋 카테고리 예산 설정</div>
@@ -4406,7 +4406,7 @@ function previewItem(itemId, tab) {
   const ov = document.createElement('div');
   ov.id = 'ov-item-preview';
   ov.className = 'overlay open';
-  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  ov.onclick = e => { if(!e.target.closest('.sheet')) ov.remove(); };
   ov.innerHTML = `<div class="sheet">
     <div class="sheet-handle"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
