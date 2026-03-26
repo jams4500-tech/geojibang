@@ -1816,7 +1816,7 @@ function showTab(n) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
-  if (n === 'mine') { buildCatBars(); buildChart('week'); }
+  if (n === 'mine') { buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); }
   if (n === 'geoji') {
     renderGeojiTab();
     // 실제 프로필 방+캐릭터 렌더링
@@ -3922,28 +3922,7 @@ function updateSavingsGoal(income, saving, total) {
   }
 }
 
-function buildCatBudgetList() {
-  const el = document.getElementById('cat-budget-list');
-  if (!el) return;
-  const income = parseInt(document.getElementById('income-input')?.value) || 0;
-  if (!income) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">월 수입을 입력하면 카테고리별 예산이 표시돼요</div>'; return; }
-  const total = getTotal();
-  const budgets = { '쇼핑': 0.15, '배달': 0.12, '엔터': 0.08, '카페': 0.08, '교통': 0.10, '식비': 0.20, '기타': 0.07 };
-  el.innerHTML = CAT_DATA.filter(c => c.amt > 0 || budgets[c.label]).map(c => {
-    const budget = Math.round((budgets[c.label] || 0.05) * income);
-    const usedPct = budget > 0 ? Math.min(100, Math.round(c.amt / budget * 100)) : 0;
-    const over = c.amt > budget;
-    return `<div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-        <span>${c.emoji} ${c.label}</span>
-        <span style="color:${over?'var(--red)':'var(--text3)'};">${c.amt.toLocaleString()}원 / ${budget.toLocaleString()}원 ${over?'⚠️초과':''}</span>
-      </div>
-      <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;">
-        <div style="height:100%;width:${usedPct}%;background:${over?'var(--red)':usedPct>80?'var(--gold)':'var(--green)'};border-radius:3px;transition:width .3s;"></div>
-      </div>
-    </div>`;
-  }).join('') || '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">지출이 없어요. 잘 하고 있어요! 🎉</div>';
-}
+
 
 function buildSpendCalendar() {
   const el = document.getElementById('spend-calendar');
@@ -4132,13 +4111,14 @@ function openCatBudgetEdit() {
         <span style="font-size:12px;color:var(--text3);">원</span>
       </div>
     </div>`).join('')}
-    <button class="btn-pink" style="width:100%;padding:12px;margin-top:8px;" onclick="saveCatBudgets(${JSON.stringify(cats)})">저장하기</button>
+    <button class="btn-pink" style="width:100%;padding:12px;margin-top:8px;" onclick="saveCatBudgets()">저장하기</button>
     <button onclick="document.getElementById('ov-cat-budget').remove()" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">닫기</button>
   </div>`;
   document.body.appendChild(ov);
 }
 
-function saveCatBudgets(cats) {
+function saveCatBudgets() {
+  const cats = ['식비','카페','교통','쇼핑','엔터','배달','기타'];
   const budgets = {};
   cats.forEach(c => {
     const v = parseInt(document.getElementById('cb-'+c)?.value);
