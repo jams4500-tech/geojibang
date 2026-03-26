@@ -2835,7 +2835,7 @@ function getItemPrice(id) {
 }
 
 const ROOM_ITEMS = [
-  { id:'room_default', name:'기본 방',    desc:'거지의 소박한 방',              emoji:'🏠', type:'room', bg:'#f5f0e8', wall:'#e8dcc8', floor:'#d4c4a8' },
+  { id:'room_default', name:'기본 방',    desc:'거지의 소박한 방',              emoji:'🏠', type:'room', bg:'#e8e0d0', wall:'#d4c4a0', floor:'#b8a888' },
   { id:'room_cave',   name:'지하 동굴방', desc:'햇빛이 안 들어오는 진정한 거지 거주지', emoji:'🗿', type:'room', bg:'#2a2438', wall:'#3a3250', floor:'#2e2840' },
   { id:'room_rooftop',name:'옥탑방',      desc:'월세 20만원짜리 뷰 맛집',        emoji:'🌇', type:'room', bg:'#1a2840', wall:'#243660', floor:'#8a6040' },
   { id:'room_gosiwon',name:'고시원',      desc:'침대 하나가 전부인 꿈의 공간',   emoji:'📦', type:'room', bg:'#e8e0d4', wall:'#d4c8b8', floor:'#c0b0a0' },
@@ -2874,12 +2874,12 @@ function adjustColor(hex, amt) {
 function _drawCharCore(char, cx, groundY, S) {
   const cid = (char?.id||'char_default').replace('char_','');
   const pal = {
-    default:   { skin:'#fdd9a0', hair:'#4a2010', shirt:'#6ab4f8', pants:'#3a5aaa', shoe:'#22120a', acc:'#e8527a' },
-    paper_bag: { skin:'#fdd9a0', hair:'#c8a840', shirt:'#f0d060', pants:'#8a6820', shoe:'#3a2010', acc:'#c8a840' },
-    crown:     { skin:'#fdd9a0', hair:'#2a1808', shirt:'#f8e880', pants:'#9a7020', shoe:'#1a1208', acc:'#d4a844' },
-    santa:     { skin:'#fdd9a0', hair:'#f8f8f8', shirt:'#dd2020', pants:'#dd2020', shoe:'#1a1a1a', acc:'#f8f8f8' },
-    ninja:     { skin:'#888888', hair:'#111111', shirt:'#181818', pants:'#181818', shoe:'#080808', acc:'#dd3030' },
-    vip:       { skin:'#fdd9a0', hair:'#181828', shirt:'#f8f8f8', pants:'#181838', shoe:'#080818', acc:'#d4a844' },
+    default:   { skin:'#fce090', hair:'#2a0e04', shirt:'#4a9ae0', pants:'#2a4090', shoe:'#0e0804', acc:'#e8527a' },
+    paper_bag: { skin:'#fce090', hair:'#a88020', shirt:'#d8b840', pants:'#6a5010', shoe:'#1a0e08', acc:'#c8a840' },
+    crown:     { skin:'#fce090', hair:'#180c04', shirt:'#e8d870', pants:'#7a5010', shoe:'#080604', acc:'#d4a844' },
+    santa:     { skin:'#fce090', hair:'#f8f8f8', shirt:'#cc1010', pants:'#cc1010', shoe:'#080808', acc:'#f8f8f8' },
+    ninja:     { skin:'#707070', hair:'#080808', shirt:'#101010', pants:'#101010', shoe:'#040404', acc:'#cc2020' },
+    vip:       { skin:'#fce090', hair:'#0c0c18', shirt:'#f0f0f8', pants:'#0c0c28', shoe:'#040408', acc:'#d4a844' },
   };
   const c = pal[cid] || pal.default;
   const ox = cx - 5*S;
@@ -2901,11 +2901,11 @@ function _drawCharCore(char, cx, groundY, S) {
   g += px(ox+5*S, oy+2*S, 2*S, 2*S, '#ffffff');
   g += px(ox+2*S, oy+2*S, S,   2*S, '#1a1a2a');
   g += px(ox+6*S, oy+2*S, S,   2*S, '#1a1a2a');
-  g += px(ox+S,   oy+2*S, S,   S,   '#6699ff',0.7);
-  g += px(ox+5*S, oy+2*S, S,   S,   '#6699ff',0.7);
+  g += px(ox+S,   oy+2*S, S,   S,   '#6699ff',1.0);
+  g += px(ox+5*S, oy+2*S, S,   S,   '#6699ff',1.0);
   // 볼 홍조
-  g += px(ox,     oy+3*S, 2*S, S,   '#ff9999',0.55);
-  g += px(ox+6*S, oy+3*S, 2*S, S,   '#ff9999',0.55);
+  g += px(ox,     oy+3*S, 2*S, S,   '#ff9999',0.85);
+  g += px(ox+6*S, oy+3*S, 2*S, S,   '#ff9999',0.85);
   // 입
   g += px(ox+2*S, oy+5*S, 4*S, S,   '#e07070');
   g += px(ox+3*S, oy+5*S, 2*S, S,   '#cc4444');
@@ -2932,7 +2932,7 @@ function _drawCharCore(char, cx, groundY, S) {
   // 깡통
   g += px(ox-2*S, oy+10*S,2*S, 3*S, '#c0a888');
   g += px(ox-2*S, oy+10*S,2*S, S,   '#e0c8a0');
-  g += px(ox-2*S, oy+11*S,S,   S,   'rgba(255,255,255,0.35)');
+  g += px(ox-2*S, oy+11*S,S,   S,   'rgba(255,255,255,0.6)');
   g += px(ox-2*S, oy+12*S,2*S, S,   '#a09070');
 
   // 모자/액세서리
@@ -2950,15 +2950,15 @@ function _drawCharCore(char, cx, groundY, S) {
     g += px(ox+2*S, oy-2*S, S,   S,   '#e8527a');
     g += px(ox+4*S, oy-2*S, S,   S,   '#7ab4f0');
     g += px(ox+6*S, oy-2*S, S,   S,   '#44cc88');
-    g += px(ox+3*S, oy-5*S, 2*S, S,   '#ffffff',0.5);
+    g += px(ox+3*S, oy-5*S, 2*S, S,   '#ffffff',0.9);
   } else if (cid==='santa') {
     g += px(ox,     oy-S,   8*S, 2*S, '#f8f8f8');
     g += px(ox+S,   oy-4*S, 6*S, 3*S, '#dd2020');
     g += px(ox+3*S, oy-6*S, 4*S, 2*S, '#dd2020');
     g += px(ox+6*S, oy-7*S, 2*S, 2*S, '#f8f8f8');
-    g += px(ox+2*S, oy-4*S, 2*S, S,   '#ff6666',0.5);
+    g += px(ox+2*S, oy-4*S, 2*S, S,   '#ff6666',0.9);
   } else if (cid==='ninja') {
-    g += px(ox,     oy-S,   8*S, 8*S, '#111111',0.88);
+    g += px(ox,     oy-S,   8*S, 8*S, '#111111',1.0);
     g += px(ox+S,   oy+3*S, 6*S, 2*S, '#cc3030');
     g += px(ox+S,   oy+3*S, S,   2*S, '#1a1a1a');
     g += px(ox+6*S, oy+3*S, S,   2*S, '#1a1a1a');
@@ -4097,8 +4097,8 @@ function renderGeojiTab() {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <button onclick="openOverlay('ov-room')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🏠 방 꾸미기</button>
-      <button onclick="openOverlay('ov-shop')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🛒 아이템 상점</button>
+      <button onclick="openDecorate()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🏠 방 꾸미기</button>
+      <button onclick="openShop()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🛒 아이템 상점</button>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;">
       <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">🥫 동전으로 구걸하기</div>
