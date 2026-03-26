@@ -468,8 +468,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           </div>
           <div id="challenge-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
-
-        <!-- 지출 입력 버튼 영역 -->
+        <!-- 지출 입력 버튼 -->
         <div style="margin-bottom:16px;">
           <button class="mine-action-btn" onclick="openManualInput()" style="width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;">
             <span style="font-size:24px;">✏️</span>
@@ -658,7 +657,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#2a1a08,#1a1208);border:1px solid rgba(212,168,68,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
           <div style="text-align:center;margin-bottom:12px;">
             <div style="font-size:32px;">👑</div>
-            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">이주의 거지왕</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">2025년 2월 거지왕</div>
             <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--text);" id="last-king-name">-</div>
             <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="last-king-score">거지력 0점</div>
           </div>
@@ -674,14 +673,14 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         <!-- D-day 카운트다운 -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">다음 이주의 거지왕 발표까지</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">다음 거지왕 발표까지</div>
             <div style="font-size:18px;font-weight:700;color:var(--pink);" id="rank-countdown">계산 중...</div>
           </div>
           <div style="font-size:28px;">⏳</div>
         </div>
 
         <!-- 이달 거지력 랭킹 -->
-        <div class="rank-header"><div class="rank-title">이주 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
@@ -726,7 +725,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <span style="font-size:12px;color:var(--text2);">이번달 환전 사용량</span>
             <span style="font-size:13px;font-weight:700;color:var(--pink);" id="monthly-exchange-display">0 / 10,000점</span>
           </div>
-          <button class="btn-gold" id="total-score-conv-btn" disabled style="font-size:13px;padding:12px;width:100%;opacity:0.35;cursor:not-allowed;">🔒 환전 기능 준비 중</button>
+          <button class="btn-gold" id="total-score-conv-btn" onclick="openExchangeAd()" disabled style="font-size:13px;padding:12px;width:100%;">1000점 이상 모이면 환전 가능</button>
         </div>
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
@@ -739,6 +738,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
       </div>
     </div>
+      <!-- 내 거지 탭 -->
+      <div id="tab-geoji" class="section"></div>
   </div>
 
   <!-- Begging can page -->
@@ -1080,6 +1081,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="sheet-handle"></div>
     <div class="sheet-title">지출 올리기 🥫</div>
     <div class="sheet-sub">혼날 각오가 됐다면 올려보세요</div>
+
+
 
     <!-- 직접 입력 뷰 -->
     <div id="write-manual-view">
@@ -1755,8 +1758,8 @@ function showTab(n) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
-  if (n === 'geoji') { renderGeojiTab(); }
   if (n === 'mine') { buildCatBars(); buildChart('week'); }
+  if (n === 'geoji') { renderGeojiTab(); }
 }
 
 /* feed */
@@ -1922,7 +1925,6 @@ function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
 function addCmt(pid) {
   const inp=document.getElementById('ci-'+pid), txt=inp.value.trim(); if(!txt) return;
   inp.value='';
-  // 챌린지 진행
   addChallengeProgress('comment1');
   buildWeeklyChallenges();
   if(window.GJ?.ready) {
@@ -2022,22 +2024,17 @@ function shareManual() {
 
 /* rank */
 const REWARD_INFO = [
-  { medal:'🥇', title:'거지왕 👑',    titleColor:'var(--gold)',     pts:'5,000P', ptsColor:'var(--gold)' },
-  { medal:'🥈', title:'거지대장 🎖', titleColor:'var(--text2)',    pts:'3,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
-  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'1,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥇', title:'거지왕 👑',    titleColor:'var(--gold)',     pts:'100,000P', ptsColor:'var(--gold)' },
+  { medal:'🥈', title:'거지대장 🎖', titleColor:'var(--text2)',    pts:'30,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
+  { medal:'🥉', title:'거지반장 📛', titleColor:'var(--text3)',    pts:'10,000P',  ptsColor:'var(--text2)' },
 ];
 
 function buildLiveRewardList() {
   const el = document.getElementById('live-reward-list');
   if (!el) return;
-  el.innerHTML = Array.from({length: 10}).map((_, i) => {
+  el.innerHTML = Array.from({length: 5}).map((_, i) => {
     const r = RANKS[i];
     const info = REWARD_INFO[i];
     const isLast = i === 4;
@@ -2060,7 +2057,7 @@ function buildLiveRewardList() {
 
 function buildRank() {
   const list = document.getElementById('rank-list');
-  list.innerHTML = Array.from({length: 10}).map((_, i) => {
+  list.innerHTML = Array.from({length: 5}).map((_, i) => {
     const r = RANKS[i];
     const tb = RANK_TITLE_BADGE[i];
     const badge = tb
@@ -2094,12 +2091,7 @@ function buildRank() {
 /* ── 거지왕 발표 로직 ── */
 function getNextAnnouncementDate() {
   const now = new Date();
-  // 다음 월요일 오전 8시
-  const day = now.getDay(); // 0=일, 1=월
-  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
-  const next = new Date(now);
-  next.setDate(now.getDate() + daysUntilMonday);
-  next.setHours(8, 0, 0, 0);
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
   return next;
 }
 
@@ -2120,17 +2112,12 @@ function updateRankCountdown() {
   el.textContent = days + '일 ' + String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
 }
 
-const RANK_REWARDS = [5000, 3000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
-const RANK_LABELS = ['이주의 거지왕 선정!', '이주의 거지대장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!', '이주의 거지반장 선정!'];
+const RANK_REWARDS = [100000, 30000, 10000, 10000, 10000];
+const RANK_LABELS = ['이달의 거지왕 선정!', '이달의 거지대장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!', '이달의 거지반장 선정!'];
 const RANK_EMOJIS  = ['🥇', '🥈', '🥉', '🥉', '🥉'];
 const RANK_TITLE_BADGE = [
   { text: '거지왕 👑',    bg: 'linear-gradient(135deg,#f0c040,#c08000)', color: '#1a1200' },
   { text: '거지대장 🎖',  bg: 'linear-gradient(135deg,#b0b0c0,#707080)', color: '#0a0a14' },
-  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
-  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
-  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
-  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
-  { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
   { text: '거지반장 📛',  bg: 'linear-gradient(135deg,#c87040,#8a4020)', color: '#fff'    },
@@ -2156,7 +2143,7 @@ function showMyRewardCard(rankIdx) {
   const card = document.getElementById('my-reward-card');
   card.style.display = 'block';
   document.getElementById('my-reward-emoji').textContent = RANK_EMOJIS[rankIdx];
-  document.getElementById('my-reward-title').textContent = RANK_LABELS[rankIdx];
+  document.getElementById('my-reward-title').textContent = '이달의 ' + RANK_LABELS[rankIdx];
   document.getElementById('my-reward-desc').textContent =
     '토스포인트 ' + RANK_REWARDS[rankIdx].toLocaleString() + 'P 리워드가 준비됐어요';
   card.dataset.reward = RANK_REWARDS[rankIdx];
@@ -2210,10 +2197,6 @@ function updatePiggy() {
   for(let i=0;i<MAX_DAILY;i++){ const s=document.createElement('div'); s.className='coin-slot'+(i<coins?' filled':''); sl.appendChild(s); }
   // exchange locks
   // 아이템 항상 활성화 - 동전 부족 시 doExchange에서 토스트
-  
-  
-  
-  
   // bottom banner
   const bb=document.getElementById('pig-bottom'); bb.style.display=coins>=5?'block':'none';
   document.getElementById('pig-banner-n').textContent=coins;
@@ -2465,30 +2448,19 @@ async function loadLastKing() {
   try {
     const now = new Date();
     // 지난달 먼저 확인, 없으면 이번달 확인 (어드민에서 이번달로 발표한 경우)
-    // 지난주 월요일 기준 주차 키 (YYYY-WXX)
-    function getWeekKey(date) {
-      const d = new Date(date);
-      d.setHours(0,0,0,0);
-      d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1)); // 월요일로
-      const year = d.getFullYear();
-      const startOfYear = new Date(year, 0, 1);
-      const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-      return `${year}-W${String(week).padStart(2,'0')}`;
-    }
-    const lastMonday = new Date(now);
-    lastMonday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1) - 7);
-    const thisMonday = new Date(now);
-    thisMonday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
-    const ymPrev = getWeekKey(lastMonday);
-    const ymCurr = getWeekKey(thisMonday);
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const ymPrev = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
+    const ymCurr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
     let rankingData = await window.GJ.loadRanking(ymPrev);
     let usedYm = ymPrev;
+    let usedMonth = prevMonth;
 
-    // 지난주 없으면 이번주 확인
+    // 지난달 없으면 이번달 확인
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
       rankingData = await window.GJ.loadRanking(ymCurr);
       usedYm = ymCurr;
+      usedMonth = now;
     }
 
     const section = document.getElementById('last-king-section');
@@ -2501,20 +2473,20 @@ async function loadLastKing() {
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = `${usedYm} 이주의 거지왕`;
+    const monthLabel = `${usedMonth.getFullYear()}년 ${usedMonth.getMonth()+1}월 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
 
-    const REWARDS_LIST = [5000, 3000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
-    const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+    const REWARDS_LIST = [100000,30000,10000,10000,10000];
+    const MEDALS = ['🥇','🥈','🥉','🥉','🥉'];
     document.getElementById('last-king-list').innerHTML = data.map((w,i) =>
-      `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:14px;">${MEDALS[i]}</span>
-          <span style="font-size:13px;color:${i===0?'var(--gold)':i===1?'var(--text2)':'var(--text)'};">${w.nick||'알 수 없음'}</span>
+          <span>${MEDALS[i]}</span>
+          <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
         </div>
-        <span style="font-size:12px;color:var(--gold);font-weight:700;">+${REWARDS_LIST[i].toLocaleString()}P</span>
+        <span style="font-size:12px;color:var(--gold);font-weight:700;">토스포인트 ${REWARDS_LIST[i].toLocaleString()}P</span>
       </div>`
     ).join('');
 
@@ -2543,81 +2515,36 @@ async function loadLastKing() {
   } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
 }
 
-window.claimRankReward = async function() {
+window.claimRankReward = function() {
   const btn = document.getElementById('my-reward-claim-btn');
   const ym = btn.dataset.ym;
   const reward = btn.dataset.reward;
   if (!ym || !reward) return;
-  if (btn.disabled) return;
-
-  // Firebase에서 이미 신청했는지 서버 기준으로 확인 (localStorage 우회 방지)
+  // 신청 기록 저장
+  localStorage.setItem('gj_claimed_' + ym, '1');
+  btn.textContent = '✅ 신청 완료';
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
+  // Firebase에 신청 기록 저장 (어드민에서 확인용)
   if (window.GJ?.ready && myProfile.uid) {
-    try {
-      btn.disabled = true;
-      btn.textContent = '확인 중...';
-
-      const userData = await window.GJ.loadUser(myProfile.uid);
-      const existingClaim = userData?.rewardClaims?.[ym];
-      if (existingClaim) {
-        // 이미 신청함
-        btn.textContent = '✅ 신청 완료';
-        btn.style.opacity = '0.5';
-        localStorage.setItem('gj_claimed_' + ym, '1');
-        showToast('이미 신청된 리워드예요.');
-        return;
-      }
-
-      // 신청 기록을 주차별 키로 Firebase에 저장 (merge로 기존 데이터 보존)
-      const claimData = {};
-      claimData[`rewardClaims.${ym}`] = {
-        reward: parseInt(reward),
-        nick: myProfile.nick,
-        claimedAt: new Date().toISOString(),
-        paid: false   // 어드민에서 지급 완료 시 true로 변경
-      };
-      await window.GJ.saveUser(myProfile.uid, claimData);
-
-      localStorage.setItem('gj_claimed_' + ym, '1');
-      btn.textContent = '✅ 신청 완료';
-      btn.style.opacity = '0.5';
-      showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
-
-    } catch(e) {
-      console.warn('[거지방] 리워드 신청 오류:', e);
-      btn.disabled = false;
-      btn.textContent = '🏆 보상 받기 신청';
-      showToast('신청 중 오류가 발생했어요. 다시 시도해주세요.');
-    }
-  } else {
-    // 비로그인 상태 (토스 로그인 안 한 경우) - localStorage만
-    localStorage.setItem('gj_claimed_' + ym, '1');
-    btn.textContent = '✅ 신청 완료';
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
-    showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
+    window.GJ.saveUser(myProfile.uid, {
+      rewardClaim: { ym, reward: parseInt(reward), nick: myProfile.nick, claimedAt: new Date().toISOString() }
+    }).catch(()=>{});
   }
 };
 
 function sharePiggyLink() {
   const url = window.location.href.split('?')[0];
-  const text = '나 지금 거지 챌린지에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
+  const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
   if (navigator.share) {
-    navigator.share({ title: '거지 챌린지', text, url }).then(() => {
-      addChallengeProgress('share1');
-      buildWeeklyChallenges();
-    }).catch(()=>{});
+    navigator.share({ title: '거지 챌린지', text, url }).catch(()=>{});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => {
-      addChallengeProgress('share1');
-      buildWeeklyChallenges();
-      showToast('📋 링크가 복사됐어요!');
-    });
+    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
   } else {
     const ta = document.createElement('textarea');
     ta.value = text; document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
-    addChallengeProgress('share1');
-    buildWeeklyChallenges();
     showToast('📋 링크가 복사됐어요!');
   }
 }
@@ -3764,17 +3691,6 @@ function confirmSubscribe() {
   generateReport();
 }
 
-function cancelSubscribe() {
-  if (!confirm('구독을 취소할까요?\n다음 결제일까지는 계속 이용할 수 있어요.')) return;
-  isPremium = false;
-  document.getElementById('premium-panel').style.display = 'none';
-  document.getElementById('premium-card').style.display = 'block';
-  if (window.GJ?.ready && myProfile.uid) {
-    window.GJ.setSubscription(myProfile.uid, false).catch(()=>{});
-  }
-  showToast('구독이 취소됐어요. 이용해주셔서 감사해요 🥫');
-}
-
 function updateFinance() {
   const income = parseInt(document.getElementById('income-input').value) || 0;
   const saving = parseInt(document.getElementById('saving-input').value) || 0;
@@ -3817,21 +3733,249 @@ function buildCatBudgetList() {
   const el = document.getElementById('cat-budget-list');
   if (!el) return;
   const income = parseInt(document.getElementById('income-input')?.value) || 0;
+  if (!income) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">월 수입을 입력하면 카테고리별 예산이 표시돼요</div>'; return; }
+  const total = getTotal();
+  const budgets = { '쇼핑': 0.15, '배달': 0.12, '엔터': 0.08, '카페': 0.08, '교통': 0.10, '식비': 0.20, '기타': 0.07 };
+  el.innerHTML = CAT_DATA.filter(c => c.amt > 0 || budgets[c.label]).map(c => {
+    const budget = Math.round((budgets[c.label] || 0.05) * income);
+    const usedPct = budget > 0 ? Math.min(100, Math.round(c.amt / budget * 100)) : 0;
+    const over = c.amt > budget;
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span>${c.emoji} ${c.label}</span>
+        <span style="color:${over?'var(--red)':'var(--text3)'};">${c.amt.toLocaleString()}원 / ${budget.toLocaleString()}원 ${over?'⚠️초과':''}</span>
+      </div>
+      <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${usedPct}%;background:${over?'var(--red)':usedPct>80?'var(--gold)':'var(--green)'};border-radius:3px;transition:width .3s;"></div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">지출이 없어요. 잘 하고 있어요! 🎉</div>';
+}
+
+function buildSpendCalendar() {
+  const el = document.getElementById('spend-calendar');
+  if (!el) return;
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay(); // 0=일
+  const key = `gj_spend_${year}-${String(month+1).padStart(2,'0')}`;
+  const saved = JSON.parse(localStorage.getItem(key) || '[]');
+  const spendDays = new Set(saved.map(s => new Date(s.ts).getDate()));
+  const days = ['일','월','화','수','목','금','토'];
+  let html = days.map(d => `<div style="font-size:9px;color:var(--text3);padding:2px 0;">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = d === now.getDate();
+    const hasSpend = spendDays.has(d);
+    html += `<div style="font-size:10px;padding:4px 2px;border-radius:4px;text-align:center;
+      background:${isToday ? 'var(--pink-dim)' : hasSpend ? 'rgba(232,82,122,0.12)' : 'transparent'};
+      color:${isToday ? 'var(--pink)' : hasSpend ? 'var(--pink-light)' : 'var(--text3)'};
+      font-weight:${isToday ? '700' : '400'};">
+      ${hasSpend ? '🔴' : d}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function generateReport() {
+  const el = document.getElementById('ai-report-text');
+  el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  const income = parseInt(document.getElementById('income-input')?.value) || 0;
+  const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
+  const totalSpend = CAT_DATA.reduce((s,c) => s + c.amt, 0);
+  try {
+    const res = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spendData: {
+          total: totalSpend,
+          categories: CAT_DATA.map(c => ({ label: c.label, amt: c.amt }))
+        },
+        income: income || undefined,
+        savingGoal: saving || undefined
+      })
+    });
+    const data = await res.json();
+    el.textContent = data?.text || '분석 중 오류가 발생했어요.';
+  } catch {
+    el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
+  }
+}
+
+buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
+
+// 오늘 복권 사용 상태 UI 반영
+if (lotteryUsed) {
+  document.getElementById('lc-normal')?.classList.add('used');
+  document.getElementById('pac-lotto-note') && (document.getElementById('pac-lotto-note').textContent = '오늘 사용 완료');
+  document.getElementById('strip-lotto-sub') && (document.getElementById('strip-lotto-sub').textContent = '오늘 무료 사용 완료');
+}
+if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
+  document.querySelector('.lc:not(#lc-normal)')?.classList.add('used');
+}
+
+// window에 노출 (Firebase module에서 접근)
+window.makePost = makePost;
+window.genRoast = genRoast;
+window.myProfile = myProfile;
+window.myMonthScore = myMonthScore;
+window.myTotalScore = myTotalScore;
+window.isPremium = isPremium;
+window.updateMyRankUI = updateMyRankUI;
+
+// 프로필/상점 관련 함수 전역 노출
+window.viewUserProfile = viewUserProfile;
+window.viewUserProfileByUid = viewUserProfileByUid;
+window.openMyProfile = openMyProfile;
+window.openShop = openShop;
+window.openDecorate = openDecorate;
+window.switchShopTab = switchShopTab;
+window.switchDecorateTab = switchDecorateTab;
+window.selectDecorateItem = selectDecorateItem;
+window.saveDecoration = saveDecoration;
+window.buyItem = buyItem;
+window.equipItem = equipItem;
+window.buildRank = buildRank;
+
+// addToFeed — Firebase 연동 버전으로 교체
+const _origAddToFeed = addToFeed;
+window.addToFeed = async function(where, amount, memo) {
+  // 로컬 즉시 표시
+  _origAddToFeed(where, amount, memo);
+  // Firebase 저장 (GJ 준비된 경우)
+  if (window.GJ?.ready) {
+    try {
+      await window.GJ.publishPost(where, amount, memo);
+    } catch(e) { console.warn('[거지방] 게시물 Firebase 저장 실패:', e); }
+  }
+};
+
+// 프로필 저장 — Firebase 동기화 추가
+const _origSaveProfile = saveProfile;
+window.saveProfile = async function() {
+  _origSaveProfile();
+  if (window.GJ?.ready && myProfile.uid) {
+    try {
+      await window.GJ.saveUser(myProfile.uid, {
+        nick: myProfile.nick,
+        bio: myProfile.bio,
+        avatarBg: myProfile.bg,
+        avatarColor: myProfile.c,
+        monthScore: myMonthScore,
+        totalScore: myTotalScore,
+      });
+    } catch(e) { console.warn('[거지방] 프로필 Firebase 저장 실패:', e); }
+  }
+};
+
+// 구독 확정 — Firebase 동기화 추가
+const _origConfirmSubscribe = confirmSubscribe;
+window.confirmSubscribe = async function() {
+  _origConfirmSubscribe();
+  if (window.GJ?.ready && myProfile.uid) {
+    try {
+      await window.GJ.setSubscription(myProfile.uid, true);
+    } catch(e) { console.warn('[거지방] 구독 Firebase 저장 실패:', e); }
+  }
+};
+
+// 저장된 프로필 있으면 온보딩 스킵
+const _saved = localStorage.getItem('gj_profile');
+if (_saved) {
+  try {
+    myProfile = JSON.parse(_saved);
+    if (!myProfile.uid) {
+      myProfile.uid = 'gj_' + Date.now();
+      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+    }
+    applyProfile();
+    const ob = document.getElementById('onboarding');
+    ob.style.display = 'none';
+    const bd = document.getElementById('ob-backdrop');
+    if (bd) bd.style.display = 'none';
+    // 기존 프로필 로드 시 피드 리스너 바로 시작
+    setTimeout(() => {
+      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+    }, 600);
+  } catch(e) { localStorage.removeItem('gj_profile'); }
+}
+
+// ── 구독 취소 ──────────────────────────────────────────
+function cancelSubscribe() {
+  if (!confirm('구독을 취소할까요?\n다음 결제일까지는 계속 이용할 수 있어요.')) return;
+  isPremium = false;
+  document.getElementById('premium-panel').style.display = 'none';
+  document.getElementById('premium-card').style.display = 'block';
+  if (window.GJ?.ready && myProfile.uid) {
+    window.GJ.setSubscription(myProfile.uid, false).catch(()=>{});
+  }
+  showToast('구독이 취소됐어요. 이용해주셔서 감사해요 🥫');
+}
+
+// ── 카테고리 예산 직접 설정 ────────────────────────────
+function openCatBudgetEdit() {
+  const cats = ['식비','카페','교통','쇼핑','엔터','배달','기타'];
+  const saved = JSON.parse(localStorage.getItem('gj_cat_budgets') || '{}');
+  const income = parseInt(document.getElementById('income-input')?.value) || 0;
+  const defaults = { '식비':0.20,'카페':0.08,'교통':0.10,'쇼핑':0.15,'엔터':0.08,'배달':0.12,'기타':0.07 };
+  const existing = document.getElementById('ov-cat-budget');
+  if (existing) existing.remove();
+  const ov = document.createElement('div');
+  ov.id = 'ov-cat-budget';
+  ov.className = 'overlay open';
+  ov.innerHTML = `<div class="sheet" style="max-height:80vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 카테고리 예산 설정</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">각 카테고리별 월 예산을 직접 입력하세요</div>
+    ${cats.map(c => `<div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${c}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" id="cb-${c}" class="ob-input" style="flex:1;font-size:14px;padding:8px 12px;"
+          placeholder="${income?Math.round(defaults[c]*income).toLocaleString():'예산 입력'}"
+          value="${saved[c]||''}">
+        <span style="font-size:12px;color:var(--text3);">원</span>
+      </div>
+    </div>`).join('')}
+    <button class="btn-pink" style="width:100%;padding:12px;margin-top:8px;" onclick="saveCatBudgets(${JSON.stringify(cats)})">저장하기</button>
+    <button onclick="document.getElementById('ov-cat-budget').remove()" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">닫기</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function saveCatBudgets(cats) {
+  const budgets = {};
+  cats.forEach(c => {
+    const v = parseInt(document.getElementById('cb-'+c)?.value);
+    if (v > 0) budgets[c] = v;
+  });
+  localStorage.setItem('gj_cat_budgets', JSON.stringify(budgets));
+  document.getElementById('ov-cat-budget')?.remove();
+  buildCatBudgetList();
+  showToast('✅ 예산이 저장됐어요');
+}
+
+// ── buildCatBudgetList (사용자 설정 예산 반영) ─────────
+function buildCatBudgetList() {
+  const el = document.getElementById('cat-budget-list');
+  if (!el) return;
+  const income = parseInt(document.getElementById('income-input')?.value) || 0;
   const savedBudgets = JSON.parse(localStorage.getItem('gj_cat_budgets') || '{}');
-  const defaultRatios = { '쇼핑': 0.15, '배달': 0.12, '엔터': 0.08, '카페': 0.08, '교통': 0.10, '식비': 0.20, '기타': 0.07 };
+  const defaultRatios = {'쇼핑':0.15,'배달':0.12,'엔터':0.08,'카페':0.08,'교통':0.10,'식비':0.20,'기타':0.07};
   const activeCats = CAT_DATA.filter(c => c.amt > 0 || savedBudgets[c.label]);
   if (!activeCats.length) {
     el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">지출이 없어요. 잘 하고 있어요! 🎉</div>';
     return;
   }
   el.innerHTML = activeCats.map(c => {
-    const budget = savedBudgets[c.label] || (income ? Math.round((defaultRatios[c.label] || 0.05) * income) : 0);
-    const usedPct = budget > 0 ? Math.min(100, Math.round(c.amt / budget * 100)) : 0;
+    const budget = savedBudgets[c.label] || (income ? Math.round((defaultRatios[c.label]||0.05)*income) : 0);
+    const usedPct = budget > 0 ? Math.min(100, Math.round(c.amt/budget*100)) : 0;
     const over = budget > 0 && c.amt > budget;
     return `<div style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
         <span>${c.emoji} ${c.label}</span>
-        <span style="color:${over?'var(--red)":'var(--text3)'};">${c.amt.toLocaleString()}원${budget?' / '+budget.toLocaleString()+'원':''}${over?' ⚠️초과':''}</span>
+        <span style="color:${over?'var(--red)':'var(--text3)'};">${c.amt.toLocaleString()}원${budget?' / '+budget.toLocaleString()+'원':''}${over?' ⚠️초과':''}</span>
       </div>
       <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;">
         <div style="height:100%;width:${usedPct}%;background:${over?'var(--red)':usedPct>80?'var(--gold)':'var(--green)'};border-radius:3px;transition:width .3s;"></div>
@@ -3839,3 +3983,182 @@ function buildCatBudgetList() {
     </div>`;
   }).join('');
 }
+
+// ── 주간 챌린지 ────────────────────────────────────────
+const WEEKLY_CHALLENGES = [
+  { id:'record3', icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
+  { id:'feed1',   icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
+  { id:'comment1',icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
+  { id:'share1',  icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
+];
+
+function getChallengeKey(id) {
+  const now = new Date();
+  const d = new Date(now);
+  d.setDate(now.getDate() - (now.getDay()===0?6:now.getDay()-1));
+  return `gj_ch_${id}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getChallengeProgress(id) {
+  return parseInt(localStorage.getItem(getChallengeKey(id))||'0');
+}
+
+function addChallengeProgress(id, add=1) {
+  const ch = WEEKLY_CHALLENGES.find(c=>c.id===id);
+  if (!ch) return;
+  const cur = getChallengeProgress(id);
+  if (cur >= ch.target) return;
+  const next = Math.min(ch.target, cur+add);
+  localStorage.setItem(getChallengeKey(id), String(next));
+  if (next >= ch.target) {
+    myMonthScore += ch.reward; myTotalScore += ch.reward;
+    updateMyRankUI();
+    if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, ch.reward, ch.reward).catch(()=>{});
+    showToast(`🎉 챌린지 달성! 거지력 +${ch.reward}점`);
+  }
+  buildWeeklyChallenges();
+}
+
+function buildWeeklyChallenges() {
+  const el = document.getElementById('challenge-list');
+  if (!el) return;
+  const now = new Date();
+  const daysLeft = now.getDay()===0 ? 0 : 7-now.getDay();
+  const dEl = document.getElementById('challenge-days-left');
+  if (dEl) dEl.textContent = daysLeft>0 ? daysLeft+'일 남음':'오늘 마감';
+  el.innerHTML = WEEKLY_CHALLENGES.map(ch=>{
+    const prog = getChallengeProgress(ch.id);
+    const done = prog >= ch.target;
+    const pct = Math.min(100, prog/ch.target*100);
+    return `<div style="background:${done?'rgba(68,204,136,0.08)':'var(--surface2)'};border-radius:var(--radius-sm);padding:10px 12px;border:1px solid ${done?'rgba(68,204,136,0.2)':'transparent'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span>${ch.icon}</span>
+          <span style="font-size:12px;font-weight:500;color:${done?'var(--green)':'var(--text)'};">${ch.title}</span>
+        </div>
+        <span style="font-size:11px;color:${done?'var(--green)':'var(--gold)'};font-weight:700;">${done?'✅ 완료':'거지력 +'+ch.reward+'점'}</span>
+      </div>
+      <div style="height:3px;background:var(--surface);border-radius:2px;">
+        <div style="height:100%;width:${pct}%;background:${done?'var(--green)':'var(--pink)'};border-radius:2px;transition:width .3s;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${prog}/${ch.target}${ch.unit}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 내 거지 탭 ────────────────────────────────────────
+const GEOJI_LINES = [
+  '한 푼만요... 제발요...😭','사장님 선하게 생기셨어요👀',
+  '배고파요... 라면값만요...🍜','저 오늘 아무것도 못 먹었어요😢',
+  '거스름돈이라도 주세요...','제 사정 좀 봐주세요...🙏',
+  '딱 커피 한 잔만요☕','세상에 이렇게 힘든 날이...💀',
+  '한번만요, 딱 한번만요!','착한 일 하면 복 받아요... 저한테요',
+  '저 진짜 거지력 최고예요💪','동전 하나에 제 인생이 걸렸어요',
+  '오늘 운세가 대박이래요! 같이 받으세요🎰','구걸도 실력이에요 (진심)',
+];
+let geojiTapCount = 0;
+const GEOJI_TAP_PER_AD = 5;
+
+function renderGeojiTab() {
+  const section = document.getElementById('tab-geoji');
+  if (!section) return;
+  const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
+  const roomBgs = {
+    room_default:'linear-gradient(180deg,#1a1216 0%,#0e0a0c 100%)',
+    room_cave:'linear-gradient(180deg,#0a0808 0%,#1a0e08 100%)',
+    room_rooftop:'linear-gradient(180deg,#0a1020 0%,#1a1830 100%)',
+    room_gosiwon:'linear-gradient(180deg,#141010 0%,#0a0808 100%)',
+    room_park:'linear-gradient(180deg,#0a1808 0%,#101a10 100%)',
+  };
+  const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
+  section.innerHTML = `
+    <div style="position:relative;background:${roomBgs[equippedRoom]||roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
+      <div style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
+      <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:16px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
+      <div id="geoji-char" onclick="tapGeojiChar()" style="cursor:pointer;transition:transform .1s;user-select:none;-webkit-tap-highlight-color:transparent;">
+        <svg width="140" height="160" viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="70" y="110" width="60" height="70" rx="8" fill="#5888c8"/>
+          <polygon points="100,115 95,145 100,150 105,145" fill="#3355aa"/>
+          <ellipse cx="100" cy="95" rx="32" ry="34" fill="#fdd9a0"/>
+          <ellipse cx="100" cy="65" rx="32" ry="12" fill="#1a1a2a"/>
+          <ellipse cx="76" cy="80" rx="10" ry="18" fill="#1a1a2a"/>
+          <ellipse cx="124" cy="80" rx="10" ry="18" fill="#1a1a2a"/>
+          <ellipse cx="89" cy="93" rx="6" ry="7" fill="white"/>
+          <ellipse cx="111" cy="93" rx="6" ry="7" fill="white"/>
+          <ellipse cx="89" cy="95" rx="4" ry="4" fill="#1a1a2a"/>
+          <ellipse cx="111" cy="95" rx="4" ry="4" fill="#1a1a2a"/>
+          <path d="M92 113 Q100 108 108 113" fill="none" stroke="#c8856a" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="80" cy="103" rx="7" ry="5" fill="#f0a090" opacity="0.5"/>
+          <ellipse cx="120" cy="103" rx="7" ry="5" fill="#f0a090" opacity="0.5"/>
+          <rect x="30" y="115" width="40" height="14" rx="7" fill="#5888c8"/>
+          <ellipse cx="28" cy="122" rx="12" ry="10" fill="#fdd9a0"/>
+          <rect x="16" y="112" width="7" height="12" rx="3.5" fill="#fdd9a0"/>
+          <rect x="24" y="109" width="7" height="14" rx="3.5" fill="#fdd9a0"/>
+          <rect x="32" y="111" width="7" height="12" rx="3.5" fill="#fdd9a0"/>
+          <rect x="78" y="175" width="18" height="30" rx="6" fill="#3a5aaa"/>
+          <rect x="104" y="175" width="18" height="30" rx="6" fill="#3a5aaa"/>
+          <circle cx="82" cy="135" r="5" fill="#8a7060" opacity="0.5"/>
+          <circle cx="115" cy="140" r="4" fill="#8a7060" opacity="0.4"/>
+        </svg>
+      </div>
+      <div style="margin-top:12px;width:200px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;">
+          <span>구걸 중...</span>
+          <span id="geoji-tap-prog">${geojiTapCount}/${GEOJI_TAP_PER_AD}</span>
+        </div>
+        <div style="height:4px;background:var(--surface2);border-radius:2px;">
+          <div id="geoji-tap-bar" style="height:100%;background:var(--pink);border-radius:2px;width:${prog}%;transition:width .2s;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px;">${GEOJI_TAP_PER_AD}번 구걸하면 토스포인트 찬스!</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <button onclick="openOverlay('ov-room')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🏠 방 꾸미기</button>
+      <button onclick="openOverlay('ov-shop')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">🛒 아이템 상점</button>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">🥫 동전으로 구걸하기</div>
+      <div class="exc-row" onclick="doExchange('fortune',1)"><div class="exc-ico" style="background:#2e2a1a;">🗣️</div><div class="exc-info"><div class="exc-name">구걸 멘트 뽑기</div><div class="exc-cost">동전 1개</div></div><div class="exc-arr">›</div></div>
+      <div class="exc-row" onclick="doExchange('lotto',2)"><div class="exc-ico" style="background:#3a1520;">🎟</div><div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div><div class="exc-arr">›</div></div>
+      <div class="exc-row" onclick="doExchange('letter',3)"><div class="exc-ico" style="background:#1a2030;">🧑‍⚕️</div><div class="exc-info"><div class="exc-name">거지 고민상담소</div><div class="exc-cost">동전 3개</div></div><div class="exc-arr">›</div></div>
+      <div class="exc-row" onclick="doExchange('score',5)"><div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+10</div><div class="exc-info"><div class="exc-name">거지력 +10점</div><div class="exc-cost">동전 5개</div></div><div class="exc-arr">›</div></div>
+    </div>
+    <div class="exc-row" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;" onclick="openOverlay('ov-lottery')">
+      <div class="exc-ico" style="background:#2a1a3a;">🎰</div>
+      <div class="exc-info"><div class="exc-name">출석 복권</div><div class="exc-cost">오늘 1회 무료</div></div>
+      <div class="exc-arr">›</div>
+    </div>`;
+}
+
+function tapGeojiChar() {
+  const char = document.getElementById('geoji-char');
+  const bubble = document.getElementById('geoji-bubble');
+  if (!char||!bubble) return;
+  char.style.transform = 'scale(0.88)';
+  setTimeout(()=>{ char.style.transform='scale(1)'; }, 130);
+  bubble.textContent = GEOJI_LINES[Math.floor(Math.random()*GEOJI_LINES.length)];
+  geojiTapCount++;
+  const prog = document.getElementById('geoji-tap-prog');
+  const bar = document.getElementById('geoji-tap-bar');
+  if (prog) prog.textContent = `${geojiTapCount}/${GEOJI_TAP_PER_AD}`;
+  if (bar) bar.style.width = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100)+'%';
+  if (geojiTapCount >= GEOJI_TAP_PER_AD) {
+    geojiTapCount = 0;
+    if (prog) prog.textContent = `0/${GEOJI_TAP_PER_AD}`;
+    if (bar) bar.style.width = '0%';
+    bubble.textContent = '광고 보고 동전 받기! 🪙';
+    setTimeout(()=>{
+      playAd(()=>{
+        coins++; updatePiggy();
+        const badge = document.querySelector('#tab-geoji div[style*="동전"]');
+        if (badge) badge.textContent = `동전 ${coins}개`;
+        bubble.textContent = `동전 획득! 🪙 (총 ${coins}개)`;
+        showToast('🪙 동전 1개 획득!');
+      });
+    }, 500);
+  }
+}
+
+</script>
+</body>
+</html>
