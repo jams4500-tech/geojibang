@@ -445,18 +445,26 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="tab" onclick="showTab('geoji')">내 거지</div>
     </div>
 
+    <!-- 이주의 거지 챌린지 (접히는 배너) -->
+    <div id="challenge-banner" style="background:linear-gradient(135deg,#1a1220,#0e0a18);border-bottom:1px solid rgba(232,82,122,0.15);">
+      <div onclick="toggleChallengeBanner()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;">🔥</span>
+          <span style="font-size:13px;font-weight:700;color:var(--pink);">이주의 거지 챌린지</span>
+          <span style="font-size:11px;color:var(--text3);" id="challenge-days-left">이번주</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--text3);" id="challenge-progress-summary"></span>
+          <span id="challenge-toggle-icon" style="font-size:14px;color:var(--text3);transition:transform .2s;">›</span>
+        </div>
+      </div>
+      <div id="challenge-list" style="display:none;padding:0 16px 12px;flex-direction:column;gap:8px;"></div>
+    </div>
     <div class="content">
       <div id="tab-feed" class="section active"></div>
       <div id="tab-mine" class="section">
 
-        <!-- 이주의 챌린지 -->
-        <div id="weekly-challenge-card" style="background:linear-gradient(135deg,#1a1220,#0e0a18);border:1px solid rgba(232,82,122,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div style="font-size:13px;font-weight:700;color:var(--pink);">🔥 이주의 거지 챌린지</div>
-            <div style="font-size:11px;color:var(--text3);" id="challenge-days-left">이번주</div>
-          </div>
-          <div id="challenge-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-        </div>
+
         <!-- 지출 입력 버튼 -->
         <div style="margin-bottom:16px;">
           <button class="mine-action-btn" onclick="openManualInput()" style="width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;">
@@ -4417,6 +4425,17 @@ function addChallengeProgress(actionTypeOrId, add=1) {
   buildWeeklyChallenges();
 }
 
+function toggleChallengeBanner() {
+  const list = document.getElementById('challenge-list');
+  const icon = document.getElementById('challenge-toggle-icon');
+  if (!list) return;
+  const isOpen = list.style.display !== 'none';
+  list.style.display = isOpen ? 'none' : 'flex';
+  if (icon) {
+    icon.style.transform = isOpen ? '' : 'rotate(90deg)';
+  }
+}
+
 function buildWeeklyChallenges() {
   if (typeof WEEKLY_CHALLENGES === 'undefined') return;
   const el = document.getElementById('challenge-list');
@@ -4425,6 +4444,12 @@ function buildWeeklyChallenges() {
   const daysLeft = now.getDay()===0 ? 0 : 7-now.getDay();
   const dEl = document.getElementById('challenge-days-left');
   if (dEl) dEl.textContent = daysLeft>0 ? daysLeft+'일 남음':'오늘 마감';
+
+  // 진행 요약 (완료 n / 전체 n)
+  const done_count = WEEKLY_CHALLENGES.filter(ch => getChallengeProgress(ch.actionType||ch.id) >= ch.target).length;
+  const sumEl = document.getElementById('challenge-progress-summary');
+  if (sumEl) sumEl.textContent = done_count > 0 ? `${done_count}/${WEEKLY_CHALLENGES.length} 완료` : '';
+
   el.innerHTML = WEEKLY_CHALLENGES.map(ch=>{
     const prog = getChallengeProgress(ch.actionType || ch.id);
     const done = prog >= ch.target;
