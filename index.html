@@ -1067,43 +1067,54 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 <div class="overlay" id="ov-write" onclick="closeOverlayOut(event,'ov-write')">
   <div class="sheet" style="max-height:90vh;overflow-y:auto;">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">지출 올리기 🥫</div>
-    <div class="sheet-sub">혼날 각오가 됐다면 올려보세요</div>
+    <div class="sheet-title" id="write-sheet-title">지출 입력하기 ✏️</div>
+    <div class="sheet-sub" id="write-sheet-sub">지출을 기록해요</div>
 
+    <!-- 모드 선택 탭 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button id="write-mode-private" onclick="setWriteMode('private')"
+        style="padding:10px;border-radius:var(--radius-sm);border:2px solid var(--pink);background:var(--pink-dim);color:var(--pink);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        🔒 혼자만 알고 있기
+      </button>
+      <button id="write-mode-feed" onclick="setWriteMode('feed')"
+        style="padding:10px;border-radius:var(--radius-sm);border:2px solid var(--border2);background:transparent;color:var(--text3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+        📢 피드에 올려 혼나기
+      </button>
+    </div>
 
-
-    <!-- 직접 입력 뷰 -->
-    <div id="write-manual-view">
-      <div class="input-group">
-        <label class="input-label">어디서 썼어요?</label>
-        <input class="text-input" id="write-where" placeholder="예) 스타벅스, 배민, 쿠팡..." oninput="checkWriteManual()">
+    <!-- 공통 입력 -->
+    <div class="input-group">
+      <label class="input-label">어디서 썼어요?</label>
+      <input class="text-input" id="write-where" placeholder="예) 스타벅스, 배민, 쿠팡..." oninput="checkWriteManual()">
+    </div>
+    <div class="input-group">
+      <label class="input-label">얼마 썼어요?</label>
+      <div class="amount-wrap">
+        <input class="text-input" id="write-amount" type="number" placeholder="0" oninput="checkWriteManual()">
+        <span class="amount-suffix">원</span>
       </div>
-      <div class="input-group">
-        <label class="input-label">얼마 썼어요?</label>
-        <div class="amount-wrap">
-          <input class="text-input" id="write-amount" type="number" placeholder="0" oninput="checkWriteManual()">
-          <span class="amount-suffix">원</span>
-        </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">카테고리</label>
+      <div class="cat-grid">
+        <div class="cat-chip" onclick="selectCat(this)">🍔 식비</div>
+        <div class="cat-chip" onclick="selectCat(this)">☕ 카페</div>
+        <div class="cat-chip" onclick="selectCat(this)">🚕 교통</div>
+        <div class="cat-chip" onclick="selectCat(this)">🛍 쇼핑</div>
+        <div class="cat-chip" onclick="selectCat(this)">🎮 엔터</div>
+        <div class="cat-chip" onclick="selectCat(this)">💊 건강</div>
+        <div class="cat-chip" onclick="selectCat(this)">📚 교육</div>
+        <div class="cat-chip" onclick="selectCat(this)">기타</div>
       </div>
+    </div>
+    <!-- 피드 모드일 때만 표시 -->
+    <div id="write-memo-area" style="display:none;">
       <div class="input-group">
-        <label class="input-label">카테고리</label>
-        <div class="cat-grid">
-          <div class="cat-chip" onclick="selectCat(this)">🍔 식비</div>
-          <div class="cat-chip" onclick="selectCat(this)">☕ 카페</div>
-          <div class="cat-chip" onclick="selectCat(this)">🚕 교통</div>
-          <div class="cat-chip" onclick="selectCat(this)">🛍 쇼핑</div>
-          <div class="cat-chip" onclick="selectCat(this)">🎮 엔터</div>
-          <div class="cat-chip" onclick="selectCat(this)">💊 건강</div>
-          <div class="cat-chip" onclick="selectCat(this)">📚 교육</div>
-          <div class="cat-chip" onclick="selectCat(this)">기타</div>
-        </div>
-      </div>
-      <div class="input-group">
-        <label class="input-label">한 줄 변명 <span style="color:var(--text3)">(선택)</span></label>
+        <label class="input-label">한 줄 변명 <span style="color:var(--text3)">(선택 — 더 신나게 혼내드림)</span></label>
         <textarea class="memo-input" id="write-memo" placeholder="이유가 있다면 적어보세요."></textarea>
       </div>
-      <button class="btn-pink" id="write-manual-btn" onclick="submitWriteManual()" disabled>올려서 혼나기</button>
     </div>
+    <button class="btn-pink" id="write-manual-btn" onclick="submitWriteManual()" disabled>기록하기</button>
   </div>
 </div>
 
@@ -1689,21 +1700,65 @@ const GOLDEN_P = [
 let writeSrc = 'toss';
 let selectedTxName = '', selectedTxAmount = '';
 
-function openWrite() { openOverlay('ov-write'); }
+let _writeMode = 'private'; // 'private' | 'feed'
+
+function setWriteMode(mode) {
+  _writeMode = mode;
+  const privBtn = document.getElementById('write-mode-private');
+  const feedBtn = document.getElementById('write-mode-feed');
+  const memoArea = document.getElementById('write-memo-area');
+  const submitBtn = document.getElementById('write-manual-btn');
+  const title = document.getElementById('write-sheet-title');
+  const sub = document.getElementById('write-sheet-sub');
+
+  if (mode === 'private') {
+    privBtn.style.borderColor = 'var(--pink)';
+    privBtn.style.background = 'var(--pink-dim)';
+    privBtn.style.color = 'var(--pink)';
+    feedBtn.style.borderColor = 'var(--border2)';
+    feedBtn.style.background = 'transparent';
+    feedBtn.style.color = 'var(--text3)';
+    memoArea.style.display = 'none';
+    if (title) title.textContent = '지출 기록하기 🔒';
+    if (sub) sub.textContent = '나만 볼 수 있어요. 내 소비에 반영돼요.';
+    if (submitBtn) submitBtn.textContent = '기록하기';
+    if (submitBtn) submitBtn.className = 'btn-pink';
+  } else {
+    feedBtn.style.borderColor = 'var(--pink)';
+    feedBtn.style.background = 'var(--pink-dim)';
+    feedBtn.style.color = 'var(--pink)';
+    privBtn.style.borderColor = 'var(--border2)';
+    privBtn.style.background = 'transparent';
+    privBtn.style.color = 'var(--text3)';
+    memoArea.style.display = 'block';
+    if (title) title.textContent = '피드에 올려 혼나기 🥫';
+    if (sub) sub.textContent = '혼날 각오가 됐다면 올려보세요';
+    if (submitBtn) submitBtn.textContent = '올려서 혼나기';
+    if (submitBtn) submitBtn.className = 'btn-pink';
+  }
+}
+
+function openWrite() {
+  setWriteMode('feed');
+  openOverlay('ov-write');
+}
+
+function openManualInput() {
+  setWriteMode('private');
+  openOverlay('ov-write');
+}
 
 function selectWriteSrc(src) {
-  writeSrc = src;
-  document.getElementById('wsrc-toss').classList.toggle('active', src==='toss');
-  document.getElementById('wsrc-manual').classList.toggle('active', src==='manual');
-  document.getElementById('write-toss-view').style.display = src==='toss' ? 'block' : 'none';
-  document.getElementById('write-manual-view').style.display = src==='manual' ? 'block' : 'none';
+  // 토스 연동 탭 제거 후 호환성 유지
+  setWriteMode(src === 'toss' ? 'feed' : 'private');
 }
 
 function selectTx(row, name, amount, cat) {
   document.querySelectorAll('.wtx-row').forEach(r => r.classList.remove('selected'));
   row.classList.add('selected');
   selectedTxName = name; selectedTxAmount = amount;
-  document.getElementById('write-toss-btn').disabled = false;
+  const btn = document.getElementById('write-toss-btn');
+  if (btn) btn.disabled = false;
 }
 
 function checkWriteManual() {
@@ -1727,16 +1782,29 @@ function submitWriteToss() {
 function submitWriteManual() {
   const where = document.getElementById('write-where').value.trim();
   const amount = document.getElementById('write-amount').value;
-  const memo = document.getElementById('write-memo').value.trim();
+  const memo = document.getElementById('write-memo')?.value.trim() || '';
   if (!where || !amount) return;
-  // 선택된 카테고리 chip 확인
-  const activeCat = document.querySelector('#write-manual-view .cat-chip.active')?.textContent || '';
+  // 카테고리
+  const activeCat = document.querySelector('.cat-chip.active')?.textContent || '';
   closeOverlay('ov-write');
-  addToFeed(where, amount, memo);
-  addSpendRecord(where, amount, activeCat); // 가계부 반영
+
+  if (_writeMode === 'feed') {
+    // 피드에 올리기 (기존 방식)
+    addToFeed(where, amount, memo);
+    addSpendRecord(where, amount, activeCat);
+  } else {
+    // 혼자만 알고 있기 — 피드에 안 올리고 가계부에만 반영
+    addSpendRecord(where, amount, activeCat);
+    // 챌린지 record3 진행 (지출 기록)
+    addChallengeProgress('record3');
+    buildWeeklyChallenges();
+    showToast('🔒 기록됐어요! 내 소비에 반영됐어요.');
+  }
+
+  // 입력 초기화
   document.getElementById('write-where').value = '';
   document.getElementById('write-amount').value = '';
-  document.getElementById('write-memo').value = '';
+  if (document.getElementById('write-memo')) document.getElementById('write-memo').value = '';
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('write-manual-btn').disabled = true;
 }
