@@ -4289,22 +4289,28 @@ function previewItem(itemId, tab) {
     btnHtml = `<button disabled style="width:100%;padding:13px;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;">거지력 ${price.toLocaleString()}점 필요</button>`;
   }
 
-  // 큰 미리보기 SVG
+  // 큰 미리보기 SVG — renderRoom과 동일한 고해상도 사용
   let previewHtml = '';
   if (tab === 'room') {
+    // 방 미리보기: renderRoom과 동일한 960×660 viewBox
     const decor = getRoomDecor(item);
-    previewHtml = `<svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:var(--radius-sm);" shape-rendering="crispEdges">
-      <rect width="320" height="220" fill="${item.bg}"/>
-      <rect x="0" y="0" width="320" height="148" fill="${item.wall}"/>
-      ${decor}
-      <g>${drawChar(CHAR_ITEMS.find(c=>c.id===myItems.equippedChar)||CHAR_ITEMS[0], 160, 148)}</g>
+    const charSvg = drawChar(CHAR_ITEMS.find(c=>c.id===myItems.equippedChar)||CHAR_ITEMS[0], 480, 444);
+    previewHtml = `<svg viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:var(--radius-sm);" shape-rendering="crispEdges">
+      <rect width="960" height="660" fill="${item.bg}"/>
+      <rect x="0" y="0" width="960" height="444" fill="${item.wall}"/>
+      <g transform="scale(3)">${decor}</g>
+      <g>${charSvg}</g>
     </svg>`;
   } else {
+    // 캐릭터 미리보기: S=18 기준 캐릭터 크기 계산
+    // 캐릭터 너비: 10*S=180, 높이: 19*S=342 (여유 포함)
+    // ox = cx - 5*S = 200 - 90 = 110, oy = groundY - 17*S = 360 - 306 = 54
     const bgMap = {default:'#f5eee0',paper_bag:'#f5eacc',crown:'#fff8e0',santa:'#ffe0e0',ninja:'#e8e8f0',vip:'#e8e8f5'};
     const cid = itemId.replace('char_','');
-    previewHtml = `<svg viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:200px;margin:0 auto;display:block;" shape-rendering="crispEdges">
-      <rect width="160" height="200" fill="${bgMap[cid]||'#f0ece0'}"/>
-      <g>${drawChar(item, 80, 170)}</g>
+    const charSvg = drawChar(item, 200, 360);
+    previewHtml = `<svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;margin:0 auto;display:block;border-radius:var(--radius-sm);" shape-rendering="crispEdges">
+      <rect width="400" height="420" fill="${bgMap[cid]||'#f0ece0'}"/>
+      <g>${charSvg}</g>
     </svg>`;
   }
 
