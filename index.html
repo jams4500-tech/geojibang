@@ -1751,8 +1751,8 @@ function showTab(n) {
     renderGeojiTab();
     // 실제 프로필 방+캐릭터 렌더링
     setTimeout(() => {
-      const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
-      const equippedChar = myProfile.items?.equippedChar || 'char_default';
+      const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
+      const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
       renderRoom('geoji-room-svg', equippedRoom, equippedChar);
     }, 50);
   }
@@ -3301,9 +3301,16 @@ function buyItem(itemId, tab) {
 function equipItem(itemId, tab) {
   const equippedKey = tab === 'room' ? 'equippedRoom' : 'equippedChar';
   myItems[equippedKey] = itemId;
+  // myProfile.items도 동기화
+  if (!myProfile.items) myProfile.items = {};
+  myProfile.items[equippedKey] = itemId;
   saveMyItems();
   renderShopList(tab);
   renderRoom('profile-room-svg', myItems.equippedRoom, myItems.equippedChar);
+  // 내 거지 탭이 열려있으면 즉시 반영
+  if (document.getElementById('tab-geoji')?.classList.contains('active')) {
+    renderRoom('geoji-room-svg', myItems.equippedRoom, myItems.equippedChar);
+  }
   // Firebase에도 저장 — 다른 사람이 내 프로필 볼 때 반영
   if (window.GJ?.ready && myProfile?.uid) {
     window.GJ.saveUser(myProfile.uid, {
