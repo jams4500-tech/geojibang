@@ -696,26 +696,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           </div>
         </div>
 
-        <!-- 누적 거지력 환전 카드 -->
-        <div style="background:var(--surface);border:1px solid var(--gold-dim);border-radius:var(--radius);padding:14px 16px;margin-top:10px;" id="total-score-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:13px;font-weight:500;color:var(--text);">💫 누적 거지력 → 토스포인트</div>
-            <div style="font-size:10px;color:var(--text3);">월 최대 100P</div>
-          </div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px;">
-            <b style="color:var(--gold);">1000점 = 10P</b> · 광고 시청 후 환전<br>
-            <span style="color:var(--text3);">월 한도 10,000점(100P) · 랭킹 변동 없음</span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;">
-            <span style="font-size:12px;color:var(--text2);">현재 누적 거지력</span>
-            <span style="font-size:16px;font-weight:700;color:var(--gold);" id="total-conv-display">0점</span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;">
-            <span style="font-size:12px;color:var(--text2);">이번달 환전 사용량</span>
-            <span style="font-size:13px;font-weight:700;color:var(--pink);" id="monthly-exchange-display">0 / 10,000점</span>
-          </div>
-          <button class="btn-gold" id="total-score-conv-btn" onclick="openExchangeAd()" disabled style="font-size:13px;padding:12px;width:100%;">1000점 이상 모이면 환전 가능</button>
-        </div>
+
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
         <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#1a2a14,#0e1a0a);border:1px solid rgba(68,204,136,.3);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
@@ -819,11 +800,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="exc-info"><div class="exc-name">거지력 +10점 올리기</div><div class="exc-cost">동전 5개 · 월 랭킹 & 누적 반영</div></div>
           <div class="exc-arr">›</div>
         </div>
-        <div class="exc-row" id="exc-point" onclick="event.stopPropagation();openConvert()">
-          <div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div>
-          <div class="exc-info"><div class="exc-name">전부 토스 포인트로 바꾸기</div><div class="exc-cost">동전 5개 = 토스포인트 5P</div></div>
-          <div class="exc-arr">›</div>
-        </div>
+
       </div>
       <!-- ad placeholder in can page -->
       <div id="piggy-ads" style="padding:0 16px 8px;"></div>
@@ -847,33 +824,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 </div><!-- .app -->
 
 <!-- overlays -->
-<div class="overlay" id="ov-exchange" onclick="closeOverlayOut(event,'ov-exchange')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">💫 토스포인트 환전</div>
-    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:12px;color:var(--text3);">보유 누적 거지력</span>
-        <span style="font-weight:700;color:var(--gold);" id="exc-avail-pts">0점</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="font-size:12px;color:var(--text3);">이번달 남은 한도</span>
-        <span style="font-weight:700;color:var(--pink);" id="exc-remain-limit">10,000점</span>
-      </div>
-    </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">환전할 점수 입력 <span style="font-size:11px;color:var(--text3);">(1000점 단위)</span></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-      <input type="number" id="exc-amount-input" class="ob-input" placeholder="1000" min="1000" step="1000" style="flex:1;font-size:16px;" oninput="updateExcPreview()">
-      <span style="font-size:13px;color:var(--text3);">점</span>
-    </div>
-    <div style="font-size:13px;color:var(--gold);text-align:center;margin-bottom:14px;font-weight:700;" id="exc-preview">→ 0 P</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.6;">
-      · 1000점 = 10P · 월 최대 10,000점(100P)<br>
-      · 환전해도 월 거지력 랭킹은 그대로예요
-    </div>
-    <button class="btn-pink" style="width:100%;padding:14px;font-size:15px;font-weight:700;" onclick="doExchangeScore()">환전하기</button>
-  </div>
-</div>
+
 
 <div class="overlay" id="ov-ad">
   <div class="sheet">
@@ -1834,7 +1785,7 @@ function buildFeed() {
   const feed = document.getElementById('tab-feed'); feed.innerHTML = '';
   // coin banner slot
   const bannerWrap = document.createElement('div'); bannerWrap.id = 'feed-cb'; bannerWrap.style.display = 'none';
-  bannerWrap.innerHTML = `<div class="coin-banner" onclick="openConvert()"><div class="cb-left"><div class="cb-pig">🥫</div><div><div class="cb-title">깡통에 동전 <b id="fcb-n" style="color:var(--gold);">0</b>개 구걸했어요</div><div class="cb-sub">토스 포인트로 바꿀 수 있어요 <b>(5개 = 1P)</b></div></div></div><div style="font-size:14px;color:var(--text3);">›</div></div>`;
+  bannerWrap.style.display="none"; // 환전 기능 제거됨
   feed.appendChild(bannerWrap);
   // 빈 상태 안내
   const emptyEl = document.createElement('div');
@@ -2283,11 +2234,11 @@ function updatePiggy() {
   }
 
   // bottom banner
-  const bb=_get('pig-bottom'); if(bb) bb.style.display=coins>=5?'block':'none';
+  const bb=_get('pig-bottom'); if(bb) bb.style.display='none'; // 환전 제거
   _set('pig-banner-n', coins);
 
-  // feed coin banner
-  const fb=_get('feed-cb'); if(fb){ fb.style.display=coins>=5?'block':'none'; const fn=_get('fcb-n'); if(fn)fn.textContent=coins; }
+  // feed coin banner (환전 제거로 숨김)
+  const fb=_get('feed-cb'); if(fb) fb.style.display='none';
 
   // coin animation
   const cv=_get('coin-anim');
@@ -2376,9 +2327,9 @@ function _updateRankUIOnly() {
     const convertable = myTotalScore >= 1000 && remain > 0;
     convBtn.disabled = !convertable;
     if (!convertable && remain <= 0) {
-      convBtn.textContent = '이번달 환전 한도 초과';
+      // convBtn 환전 제거됨
     } else {
-      convBtn.textContent = convertable ? '광고 보고 환전하기 →' : '1000점 이상 모이면 환전 가능';
+      // convBtn 환전 제거됨
     }
   }
   if (typeof updateExchangeUI === 'function') updateExchangeUI();
