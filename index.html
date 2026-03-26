@@ -3902,7 +3902,7 @@ if (_saved) {
     setTimeout(() => {
       if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
     }, 600);
-  } catch(e) { localStorage.removeItem('gj_profile'); }
+  } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
 
 // ── 구독 취소 ──────────────────────────────────────────
@@ -4068,8 +4068,16 @@ function renderGeojiTab() {
   const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
   const equippedChar = myProfile.items?.equippedChar || 'char_default';
   const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
+  // roomBgs를 함수 내부에서 직접 정의
+  const _roomBgs = {
+    room_default:'linear-gradient(180deg,#1a1216 0%,#0e0a0c 100%)',
+    room_cave:'linear-gradient(180deg,#0a0808 0%,#1a0e08 100%)',
+    room_rooftop:'linear-gradient(180deg,#0a1020 0%,#1a1830 100%)',
+    room_gosiwon:'linear-gradient(180deg,#141010 0%,#0a0808 100%)',
+    room_park:'linear-gradient(180deg,#0a1808 0%,#101a10 100%)',
+  };
   section.innerHTML = `
-    <div style="position:relative;background:${roomBgs[equippedRoom]||roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
+    <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
       <div style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
