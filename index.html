@@ -441,6 +441,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="tab active" onclick="showTab('feed')">피드</div>
       <div class="tab" onclick="showTab('mine')">내 지출</div>
       <div class="tab" onclick="showTab('rank')">거지 랭킹</div>
+      <div class="tab" onclick="showTab('geoji')">내 거지</div>
     </div>
     <div class="reward-strip">
       <div class="reward-pill" onclick="openPiggy()">
@@ -459,17 +460,23 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div id="tab-feed" class="section active"></div>
       <div id="tab-mine" class="section">
 
+        <!-- 이주의 챌린지 -->
+        <div id="weekly-challenge-card" style="background:linear-gradient(135deg,#1a1220,#0e0a18);border:1px solid rgba(232,82,122,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:700;color:var(--pink);">🔥 이주의 거지 챌린지</div>
+            <div style="font-size:11px;color:var(--text3);" id="challenge-days-left">이번주</div>
+          </div>
+          <div id="challenge-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
         <!-- 지출 입력 버튼 영역 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-          <button class="mine-action-btn" onclick="openTossSync()">
-            <span style="font-size:20px;display:block;margin-bottom:6px;">💳</span>
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">토스 연동하기</div>
-            <div style="font-size:11px;color:var(--text3);">최근 결제 불러오기</div>
-          </button>
-          <button class="mine-action-btn" onclick="openManualInput()">
-            <span style="font-size:20px;display:block;margin-bottom:6px;">✏️</span>
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">직접 입력하기</div>
-            <div style="font-size:11px;color:var(--text3);">가맹점·금액 직접 쓰기</div>
+        <div style="margin-bottom:16px;">
+          <button class="mine-action-btn" onclick="openManualInput()" style="width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;">
+            <span style="font-size:24px;">✏️</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">지출 입력하기</div>
+              <div style="font-size:11px;color:var(--text3);">지출을 기록하고 피드에 올려 혼나기</div>
+            </div>
           </button>
         </div>
 
@@ -547,6 +554,14 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
         <!-- 구독 중일 때 보이는 프리미엄 패널 (기본 숨김) -->
         <div id="premium-panel" style="display:none;">
+          <!-- 구독 취소 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">🤖 AI 가계부 코치 구독 중</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">월 990원 · 다음 결제일에 자동 갱신</div>
+            </div>
+            <button onclick="cancelSubscribe()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;">구독 취소</button>
+          </div>
           <!-- 월 재정 설정 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">💰 월 재정 설정</div>
@@ -604,7 +619,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
               <div style="font-size:13px;font-weight:500;color:var(--text);">📋 카테고리 예산 관리</div>
-              <div style="font-size:10px;color:var(--text3);">초과 시 알림</div>
+              <button onclick="openCatBudgetEdit()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">설정 ✏️</button>
             </div>
             <div id="cat-budget-list"></div>
           </div>
@@ -1066,38 +1081,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="sheet-title">지출 올리기 🥫</div>
     <div class="sheet-sub">혼날 각오가 됐다면 올려보세요</div>
 
-    <!-- 소스 선택 -->
-    <div class="write-source-grid">
-      <div class="write-src-card active" id="wsrc-toss" onclick="selectWriteSrc('toss')">
-        <span class="wsc-icon">💳</span>
-        <div class="wsc-title">토스 연동</div>
-        <div class="wsc-desc">최근 결제 내역에서<br>바로 선택</div>
-      </div>
-      <div class="write-src-card" id="wsrc-manual" onclick="selectWriteSrc('manual')">
-        <span class="wsc-icon">✏️</span>
-        <div class="wsc-title">직접 입력</div>
-        <div class="wsc-desc">가맹점·금액을<br>직접 쓰기</div>
-      </div>
-    </div>
-
-    <!-- 토스 연동 뷰 -->
-    <div id="write-toss-view">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">최근 결제 내역 · 하나 선택하세요</div>
-      <div class="write-tx-list" id="write-tx-list">
-        <div style="text-align:center;padding:24px 16px;color:var(--text3);font-size:13px;line-height:1.7;">
-          💳 토스 미니앱 연동 후<br>실제 결제 내역이 여기에 표시돼요<br>
-          <span style="font-size:11px;color:var(--text3);margin-top:4px;display:block;">지금은 직접 입력을 이용해주세요</span>
-        </div>
-      </div>
-      <div class="input-group">
-        <label class="input-label">한 줄 변명 <span style="color:var(--text3)">(선택 — 더 신나게 혼내드림)</span></label>
-        <textarea class="memo-input" id="write-toss-memo" placeholder="이유가 있다면 적어보세요."></textarea>
-      </div>
-      <button class="btn-pink" id="write-toss-btn" onclick="submitWriteToss()" disabled>올려서 혼나기</button>
-    </div>
-
     <!-- 직접 입력 뷰 -->
-    <div id="write-manual-view" style="display:none;">
+    <div id="write-manual-view">
       <div class="input-group">
         <label class="input-label">어디서 썼어요?</label>
         <input class="text-input" id="write-where" placeholder="예) 스타벅스, 배민, 쿠팡..." oninput="checkWriteManual()">
@@ -1615,6 +1600,7 @@ function timeAgo(date) {
 setTimeout(() => window.GJ.initProfile(), 500);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
+setTimeout(() => buildWeeklyChallenges(), 600);
 // 토스 미니앱 환경이면 로그인 버튼 표시
 setTimeout(() => initTossLoginUI(), 100);
 
@@ -1765,10 +1751,11 @@ function submitWriteManual() {
 
 /* FAB show only on feed tab */
 function showTab(n) {
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank'][i]===n));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji'][i]===n));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
+  if (n === 'geoji') { renderGeojiTab(); }
   if (n === 'mine') { buildCatBars(); buildChart('week'); }
 }
 
@@ -1935,6 +1922,9 @@ function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
 function addCmt(pid) {
   const inp=document.getElementById('ci-'+pid), txt=inp.value.trim(); if(!txt) return;
   inp.value='';
+  // 챌린지 진행
+  addChallengeProgress('comment1');
+  buildWeeklyChallenges();
   if(window.GJ?.ready) {
     // Firebase 저장만 — listenComments가 자동으로 UI 업데이트
     window.GJ.submitComment(pid, txt).catch(e => {
@@ -2012,6 +2002,10 @@ function addToFeed(where,amount,memo) {
   if(window.GJ?.ready && myProfile.uid) {
     window.GJ.updateScore(myProfile.uid, 1, 1).catch(()=>{});
   }
+  // 챌린지 진행
+  addChallengeProgress('record3');
+  addChallengeProgress('feed1');
+  buildWeeklyChallenges();
   showToast('피드에 올렸어요 +1점! 혼나는 중...'); showTab('feed');
 }
 function shareToss() {
@@ -2215,11 +2209,11 @@ function updatePiggy() {
   const sl=document.getElementById('coin-slots'); sl.innerHTML='';
   for(let i=0;i<MAX_DAILY;i++){ const s=document.createElement('div'); s.className='coin-slot'+(i<coins?' filled':''); sl.appendChild(s); }
   // exchange locks
-  document.getElementById('exc-fortune').classList.toggle('locked',coins<1);
-  document.getElementById('exc-lotto').classList.toggle('locked',coins<2);
-  document.getElementById('exc-letter').classList.toggle('locked',coins<3);
-  document.getElementById('exc-score').classList.toggle('locked',coins<5);
-  document.getElementById('exc-point').classList.toggle('locked',coins<5);
+  // 아이템 항상 활성화 - 동전 부족 시 doExchange에서 토스트
+  
+  
+  
+  
   // bottom banner
   const bb=document.getElementById('pig-bottom'); bb.style.display=coins>=5?'block':'none';
   document.getElementById('pig-banner-n').textContent=coins;
@@ -2549,36 +2543,81 @@ async function loadLastKing() {
   } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
 }
 
-window.claimRankReward = function() {
+window.claimRankReward = async function() {
   const btn = document.getElementById('my-reward-claim-btn');
   const ym = btn.dataset.ym;
   const reward = btn.dataset.reward;
   if (!ym || !reward) return;
-  // 신청 기록 저장
-  localStorage.setItem('gj_claimed_' + ym, '1');
-  btn.textContent = '✅ 신청 완료';
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
-  showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
-  // Firebase에 신청 기록 저장 (어드민에서 확인용)
+  if (btn.disabled) return;
+
+  // Firebase에서 이미 신청했는지 서버 기준으로 확인 (localStorage 우회 방지)
   if (window.GJ?.ready && myProfile.uid) {
-    window.GJ.saveUser(myProfile.uid, {
-      rewardClaim: { ym, reward: parseInt(reward), nick: myProfile.nick, claimedAt: new Date().toISOString() }
-    }).catch(()=>{});
+    try {
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+
+      const userData = await window.GJ.loadUser(myProfile.uid);
+      const existingClaim = userData?.rewardClaims?.[ym];
+      if (existingClaim) {
+        // 이미 신청함
+        btn.textContent = '✅ 신청 완료';
+        btn.style.opacity = '0.5';
+        localStorage.setItem('gj_claimed_' + ym, '1');
+        showToast('이미 신청된 리워드예요.');
+        return;
+      }
+
+      // 신청 기록을 주차별 키로 Firebase에 저장 (merge로 기존 데이터 보존)
+      const claimData = {};
+      claimData[`rewardClaims.${ym}`] = {
+        reward: parseInt(reward),
+        nick: myProfile.nick,
+        claimedAt: new Date().toISOString(),
+        paid: false   // 어드민에서 지급 완료 시 true로 변경
+      };
+      await window.GJ.saveUser(myProfile.uid, claimData);
+
+      localStorage.setItem('gj_claimed_' + ym, '1');
+      btn.textContent = '✅ 신청 완료';
+      btn.style.opacity = '0.5';
+      showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
+
+    } catch(e) {
+      console.warn('[거지방] 리워드 신청 오류:', e);
+      btn.disabled = false;
+      btn.textContent = '🏆 보상 받기 신청';
+      showToast('신청 중 오류가 발생했어요. 다시 시도해주세요.');
+    }
+  } else {
+    // 비로그인 상태 (토스 로그인 안 한 경우) - localStorage만
+    localStorage.setItem('gj_claimed_' + ym, '1');
+    btn.textContent = '✅ 신청 완료';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
   }
 };
 
 function sharePiggyLink() {
   const url = window.location.href.split('?')[0];
-  const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n우리는 거지다 앱 같이 해요 👉 ' + url;
+  const text = '나 지금 거지 챌린지에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
   if (navigator.share) {
-    navigator.share({ title: '우리는 거지다', text, url }).catch(()=>{});
+    navigator.share({ title: '거지 챌린지', text, url }).then(() => {
+      addChallengeProgress('share1');
+      buildWeeklyChallenges();
+    }).catch(()=>{});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+    navigator.clipboard.writeText(text).then(() => {
+      addChallengeProgress('share1');
+      buildWeeklyChallenges();
+      showToast('📋 링크가 복사됐어요!');
+    });
   } else {
     const ta = document.createElement('textarea');
     ta.value = text; document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
+    addChallengeProgress('share1');
+    buildWeeklyChallenges();
     showToast('📋 링크가 복사됐어요!');
   }
 }
@@ -3725,6 +3764,17 @@ function confirmSubscribe() {
   generateReport();
 }
 
+function cancelSubscribe() {
+  if (!confirm('구독을 취소할까요?\n다음 결제일까지는 계속 이용할 수 있어요.')) return;
+  isPremium = false;
+  document.getElementById('premium-panel').style.display = 'none';
+  document.getElementById('premium-card').style.display = 'block';
+  if (window.GJ?.ready && myProfile.uid) {
+    window.GJ.setSubscription(myProfile.uid, false).catch(()=>{});
+  }
+  showToast('구독이 취소됐어요. 이용해주셔서 감사해요 🥫');
+}
+
 function updateFinance() {
   const income = parseInt(document.getElementById('income-input').value) || 0;
   const saving = parseInt(document.getElementById('saving-input').value) || 0;
@@ -3767,174 +3817,25 @@ function buildCatBudgetList() {
   const el = document.getElementById('cat-budget-list');
   if (!el) return;
   const income = parseInt(document.getElementById('income-input')?.value) || 0;
-  if (!income) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">월 수입을 입력하면 카테고리별 예산이 표시돼요</div>'; return; }
-  const total = getTotal();
-  const budgets = { '쇼핑': 0.15, '배달': 0.12, '엔터': 0.08, '카페': 0.08, '교통': 0.10, '식비': 0.20, '기타': 0.07 };
-  el.innerHTML = CAT_DATA.filter(c => c.amt > 0 || budgets[c.label]).map(c => {
-    const budget = Math.round((budgets[c.label] || 0.05) * income);
+  const savedBudgets = JSON.parse(localStorage.getItem('gj_cat_budgets') || '{}');
+  const defaultRatios = { '쇼핑': 0.15, '배달': 0.12, '엔터': 0.08, '카페': 0.08, '교통': 0.10, '식비': 0.20, '기타': 0.07 };
+  const activeCats = CAT_DATA.filter(c => c.amt > 0 || savedBudgets[c.label]);
+  if (!activeCats.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">지출이 없어요. 잘 하고 있어요! 🎉</div>';
+    return;
+  }
+  el.innerHTML = activeCats.map(c => {
+    const budget = savedBudgets[c.label] || (income ? Math.round((defaultRatios[c.label] || 0.05) * income) : 0);
     const usedPct = budget > 0 ? Math.min(100, Math.round(c.amt / budget * 100)) : 0;
-    const over = c.amt > budget;
+    const over = budget > 0 && c.amt > budget;
     return `<div style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
         <span>${c.emoji} ${c.label}</span>
-        <span style="color:${over?'var(--red)':'var(--text3)'};">${c.amt.toLocaleString()}원 / ${budget.toLocaleString()}원 ${over?'⚠️초과':''}</span>
+        <span style="color:${over?'var(--red)":'var(--text3)'};">${c.amt.toLocaleString()}원${budget?' / '+budget.toLocaleString()+'원':''}${over?' ⚠️초과':''}</span>
       </div>
       <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;">
         <div style="height:100%;width:${usedPct}%;background:${over?'var(--red)':usedPct>80?'var(--gold)':'var(--green)'};border-radius:3px;transition:width .3s;"></div>
       </div>
     </div>`;
-  }).join('') || '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">지출이 없어요. 잘 하고 있어요! 🎉</div>';
+  }).join('');
 }
-
-function buildSpendCalendar() {
-  const el = document.getElementById('spend-calendar');
-  if (!el) return;
-  const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay(); // 0=일
-  const key = `gj_spend_${year}-${String(month+1).padStart(2,'0')}`;
-  const saved = JSON.parse(localStorage.getItem(key) || '[]');
-  const spendDays = new Set(saved.map(s => new Date(s.ts).getDate()));
-  const days = ['일','월','화','수','목','금','토'];
-  let html = days.map(d => `<div style="font-size:9px;color:var(--text3);padding:2px 0;">${d}</div>`).join('');
-  for (let i = 0; i < firstDay; i++) html += '<div></div>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = d === now.getDate();
-    const hasSpend = spendDays.has(d);
-    html += `<div style="font-size:10px;padding:4px 2px;border-radius:4px;text-align:center;
-      background:${isToday ? 'var(--pink-dim)' : hasSpend ? 'rgba(232,82,122,0.12)' : 'transparent'};
-      color:${isToday ? 'var(--pink)' : hasSpend ? 'var(--pink-light)' : 'var(--text3)'};
-      font-weight:${isToday ? '700' : '400'};">
-      ${hasSpend ? '🔴' : d}
-    </div>`;
-  }
-  el.innerHTML = html;
-}
-
-async function generateReport() {
-  const el = document.getElementById('ai-report-text');
-  el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-  const income = parseInt(document.getElementById('income-input')?.value) || 0;
-  const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
-  const totalSpend = CAT_DATA.reduce((s,c) => s + c.amt, 0);
-  try {
-    const res = await fetch('/api/report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        spendData: {
-          total: totalSpend,
-          categories: CAT_DATA.map(c => ({ label: c.label, amt: c.amt }))
-        },
-        income: income || undefined,
-        savingGoal: saving || undefined
-      })
-    });
-    const data = await res.json();
-    el.textContent = data?.text || '분석 중 오류가 발생했어요.';
-  } catch {
-    el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
-  }
-}
-
-buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
-
-// 오늘 복권 사용 상태 UI 반영
-if (lotteryUsed) {
-  document.getElementById('lc-normal')?.classList.add('used');
-  document.getElementById('pac-lotto-note') && (document.getElementById('pac-lotto-note').textContent = '오늘 사용 완료');
-  document.getElementById('strip-lotto-sub') && (document.getElementById('strip-lotto-sub').textContent = '오늘 무료 사용 완료');
-}
-if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
-  document.querySelector('.lc:not(#lc-normal)')?.classList.add('used');
-}
-
-// window에 노출 (Firebase module에서 접근)
-window.makePost = makePost;
-window.genRoast = genRoast;
-window.myProfile = myProfile;
-window.myMonthScore = myMonthScore;
-window.myTotalScore = myTotalScore;
-window.isPremium = isPremium;
-window.updateMyRankUI = updateMyRankUI;
-
-// 프로필/상점 관련 함수 전역 노출
-window.viewUserProfile = viewUserProfile;
-window.viewUserProfileByUid = viewUserProfileByUid;
-window.openMyProfile = openMyProfile;
-window.openShop = openShop;
-window.openDecorate = openDecorate;
-window.switchShopTab = switchShopTab;
-window.switchDecorateTab = switchDecorateTab;
-window.selectDecorateItem = selectDecorateItem;
-window.saveDecoration = saveDecoration;
-window.buyItem = buyItem;
-window.equipItem = equipItem;
-window.buildRank = buildRank;
-
-// addToFeed — Firebase 연동 버전으로 교체
-const _origAddToFeed = addToFeed;
-window.addToFeed = async function(where, amount, memo) {
-  // 로컬 즉시 표시
-  _origAddToFeed(where, amount, memo);
-  // Firebase 저장 (GJ 준비된 경우)
-  if (window.GJ?.ready) {
-    try {
-      await window.GJ.publishPost(where, amount, memo);
-    } catch(e) { console.warn('[거지방] 게시물 Firebase 저장 실패:', e); }
-  }
-};
-
-// 프로필 저장 — Firebase 동기화 추가
-const _origSaveProfile = saveProfile;
-window.saveProfile = async function() {
-  _origSaveProfile();
-  if (window.GJ?.ready && myProfile.uid) {
-    try {
-      await window.GJ.saveUser(myProfile.uid, {
-        nick: myProfile.nick,
-        bio: myProfile.bio,
-        avatarBg: myProfile.bg,
-        avatarColor: myProfile.c,
-        monthScore: myMonthScore,
-        totalScore: myTotalScore,
-      });
-    } catch(e) { console.warn('[거지방] 프로필 Firebase 저장 실패:', e); }
-  }
-};
-
-// 구독 확정 — Firebase 동기화 추가
-const _origConfirmSubscribe = confirmSubscribe;
-window.confirmSubscribe = async function() {
-  _origConfirmSubscribe();
-  if (window.GJ?.ready && myProfile.uid) {
-    try {
-      await window.GJ.setSubscription(myProfile.uid, true);
-    } catch(e) { console.warn('[거지방] 구독 Firebase 저장 실패:', e); }
-  }
-};
-
-// 저장된 프로필 있으면 온보딩 스킵
-const _saved = localStorage.getItem('gj_profile');
-if (_saved) {
-  try {
-    myProfile = JSON.parse(_saved);
-    if (!myProfile.uid) {
-      myProfile.uid = 'gj_' + Date.now();
-      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
-    }
-    applyProfile();
-    const ob = document.getElementById('onboarding');
-    ob.style.display = 'none';
-    const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
-    // 기존 프로필 로드 시 피드 리스너 바로 시작
-    setTimeout(() => {
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-    }, 600);
-  } catch(e) { localStorage.removeItem('gj_profile'); }
-}
-</script>
-</body>
-</html>
