@@ -2456,15 +2456,23 @@ async function loadLastKing() {
   try {
     const now = new Date();
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const ym = prevMonth.getFullYear() + '-' + String(prevMonth.getMonth()+1).padStart(2,'0');
-    const data = await window.GJ.getTopRankers(ym, 5);
-    if (!data || !data.length) return;
+    const ym = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
 
+    // Firebase에서 발표된 데이터 직접 읽기 (없으면 숨김)
+    const rankingData = await window.GJ.loadRanking(ym);
+    if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
+      // 발표 취소됐거나 아직 발표 안 됨 → 섹션 숨기기
+      const section = document.getElementById('last-king-section');
+      if (section) section.style.display = 'none';
+      return;
+    }
+
+    const data = rankingData.winners;
     const section = document.getElementById('last-king-section');
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = prevMonth.getFullYear() + '년 ' + (prevMonth.getMonth()+1) + '월 거지왕';
+    const monthLabel = `${prevMonth.getFullYear()}년 ${prevMonth.getMonth()+1}월 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
