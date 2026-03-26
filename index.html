@@ -3104,7 +3104,7 @@ function renderRoom(svgId, roomId, charId) {
     <rect width="960" height="660" fill="${room.bg}"/>
     <rect x="0" y="0" width="960" height="444" fill="${room.wall}" shape-rendering="crispEdges"/>
     <g transform="scale(3)">${getRoomDecor(room)}</g>
-    <g>${charSvg}</g>
+    <g id="geoji-char-group" style="transform-origin:480px 444px;transform-box:fill-box;">${charSvg}</g>
     <text x="20" y="648" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.2)" shape-rendering="crispEdges">${room.name}</text>
   </svg>`;
   const oldSvg = document.getElementById(svgId);
@@ -4127,8 +4127,20 @@ function tapGeojiChar() {
   const wrap = document.getElementById('geoji-room-wrap');
   if (!bubble) return;
 
-  // 탭 애니메이션
-  if (wrap) { wrap.style.transform='scale(0.96)'; setTimeout(()=>{ wrap.style.transform='scale(1)'; },130); }
+  // 고개 숙여 인사 애니메이션
+  const charGroup = document.getElementById('geoji-char-group');
+  if (charGroup) {
+    charGroup.style.transition = 'transform 0.15s ease-in';
+    charGroup.style.transformOrigin = '480px 444px';
+    charGroup.style.transform = 'rotate(-22deg) translateY(10px)';
+    setTimeout(() => {
+      charGroup.style.transition = 'transform 0.22s ease-out';
+      charGroup.style.transform = 'rotate(0deg) translateY(0px)';
+    }, 210);
+  } else if (wrap) {
+    wrap.style.transform = 'scale(0.96)';
+    setTimeout(() => { wrap.style.transform = 'scale(1)'; }, 130);
+  }
 
   // 랜덤 대사
   bubble.textContent = GEOJI_LINES[Math.floor(Math.random()*GEOJI_LINES.length)];
@@ -4144,11 +4156,9 @@ function tapGeojiChar() {
     if (prog) prog.textContent = `0/${GEOJI_TAP_PER_AD}`;
     if (bar) bar.style.width = '0%';
     bubble.textContent = '광고 보고 동전 받기! 🪙';
-    // 실제 watchAd 호출 (5초 광고 오버레이)
     watchAd(() => {
       coins++; todayEarned++;
       updatePiggy();
-      // 내 거지 탭 동전 뱃지 업데이트
       const badge = document.querySelector('#tab-geoji [style*="동전"]');
       if (badge) badge.textContent = `동전 ${coins}개`;
       bubble.textContent = `동전 획득! 🪙 (총 ${coins}개)`;
