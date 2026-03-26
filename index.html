@@ -1527,11 +1527,19 @@ window.GJ.initProfile = async () => {
         if (remote.items.equippedRoom) myItems.equippedRoom = remote.items.equippedRoom;
         if (remote.items.equippedChar) myItems.equippedChar = remote.items.equippedChar;
         if (remote.items.owned && Array.isArray(remote.items.owned)) {
-          // 로컬과 Firebase owned 합치기 (중복 제거)
           const merged = [...new Set([...myItems.owned, ...remote.items.owned])];
           myItems.owned = merged;
         }
         saveMyItems();
+      } else {
+        // items 없는 기존 유저 — 현재 로컬 아이템을 Firebase에 자동 저장
+        window.GJ.saveUser(uid, {
+          items: {
+            equippedRoom: myItems?.equippedRoom || 'room_default',
+            equippedChar: myItems?.equippedChar || 'char_default',
+            owned: myItems?.owned || ['room_default', 'char_default']
+          }
+        }).catch(()=>{});
       }
       if (remote.isPremium) {
         window.isPremium = true;
@@ -1558,7 +1566,12 @@ window.GJ.initProfile = async () => {
           avatarColor: profile.c,
           monthScore: myMonthScore,
           totalScore: myTotalScore,
-          isPremium: false
+          isPremium: false,
+          items: {
+            equippedRoom: myItems?.equippedRoom || 'room_default',
+            equippedChar: myItems?.equippedChar || 'char_default',
+            owned: myItems?.owned || ['room_default', 'char_default']
+          }
         });
         console.log('[거지방] 유저 Firebase 저장 완료:', uid);
       } catch(saveErr) {
@@ -2936,7 +2949,7 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
     return;
   }
 
-  // 남의 프로필 — 댓글에 room/char 힌트가 있으면 즉시 반영
+  // 남의 프로필 — 댓글/피드에서 넘어온 room/char 힌트로 즉시 표시
   const initRoom = hintRoom || 'room_default';
   const initChar = hintChar || 'char_default';
   viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, initRoom, initChar);
@@ -2955,15 +2968,15 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
       console.log('[거지방] 닉네임 검색 결과:', data);
     }
 
-    // Firebase에 유저 문서가 없으면 피드에서 넘어온 데이터로만 표시
+    // Firebase에 유저 문서가 없으면 힌트값 그대로 유지 (room_default로 덮어쓰지 않음)
     if (!data) {
-      viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, 'room_default', 'char_default');
+      viewUserProfile(nick, bg, c, '', monthScore ?? 0, 0, false, initRoom, initChar);
       return;
     }
 
-    // 아이템: Firebase items 필드 또는 기본값
-    const equippedRoom = data.items?.equippedRoom || 'room_default';
-    const equippedChar = data.items?.equippedChar || 'char_default';
+    // 아이템: Firebase items > 힌트값 > 기본값 순서로 우선순위
+    const equippedRoom = data.items?.equippedRoom || initRoom || 'room_default';
+    const equippedChar = data.items?.equippedChar || initChar || 'char_default';
 
     // Firebase에서 가져온 정확한 값으로 업데이트
     viewUserProfile(
