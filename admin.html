@@ -401,13 +401,36 @@ async function renderRanking(m) {
   const users = snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()}));
   const now=new Date(), next=new Date(now.getFullYear(),now.getMonth()+1,1,8,0,0);
   const diff=next-now, dd=Math.floor(diff/86400000), hh=Math.floor((diff%86400000)/3600000);
+
+  // 이번달 발표 여부 확인
+  const ym = now.toFullYear ? now.toFullYear() : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const ymStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const announcedSnap = await getDoc(doc(db,'geojibang_ranking', ymStr));
+  const isAnnounced = announcedSnap.exists();
+
   m.innerHTML=`
   <div class="page-header"><div class="page-title">🏆 랭킹 관리</div><div class="page-sub">다음 발표까지 ${dd}일 ${hh}시간</div></div>
+
+  ${isAnnounced ? `
+  <div style="background:rgba(68,204,136,.08);border:1px solid rgba(68,204,136,.2);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--green);">✅ ${ymStr} 거지왕 발표 중</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">앱 랭킹 탭에 발표 결과가 표시되고 있어요</div>
+    </div>
+    <button class="btn btn-red btn-sm" onclick="cancelKing('${ymStr}')">📢 발표 취소</button>
+  </div>` : `
+  <div style="background:rgba(255,85,85,.06);border:1px solid rgba(255,85,85,.15);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text2);">⏸ ${ymStr} 거지왕 미발표</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">발표 전까지 앱에 지난달 거지왕이 표시되지 않아요</div>
+    </div>
+  </div>`}
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div class="card">
       <div class="card-header"><div class="card-title">이달 TOP 5</div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-gold btn-sm" onclick="announceKing()">🎺 거지왕 발표</button>
+          <button class="btn btn-gold btn-sm" onclick="announceKing()" ${isAnnounced ? 'style="opacity:.5;" title="이미 발표됨 — 취소 후 재발표 가능"' : ''}>🎺 거지왕 발표</button>
           <button class="btn btn-red btn-sm" onclick="resetMonthScores()">🔄 월 거지력 초기화</button>
         </div>
       </div>
@@ -444,16 +467,31 @@ window.resetMonthScores = async () => {
   toast('✅ 월 거지력 초기화 완료'); showPage('ranking');
 };
 
+window.cancelKing = async (ym) => {
+  if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 지난달 거지왕 섹션이 사라져요.`)) return;
+  try {
+    await deleteDoc(doc(db,'geojibang_ranking', ym));
+    toast('✅ 거지왕 발표 취소됐어요. 앱에서 더 이상 표시되지 않아요.');
+    showPage('ranking');
+  } catch(e) { toast('⚠️ 실패: ' + e.message); }
+};
+
 window.announceKing = async () => {
-  if (!confirm('이달의 거지왕을 발표할까요?')) return;
+  const now = new Date();
+  const ymStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const existing = await getDoc(doc(db,'geojibang_ranking', ymStr));
+  if (existing.exists()) {
+    if (!confirm(`이미 ${ymStr} 거지왕이 발표됐어요.\n다시 발표하면 기존 데이터가 덮어씌워져요. 계속할까요?`)) return;
+  } else {
+    if (!confirm('이달의 거지왕을 발표할까요?\n앱 랭킹 탭에 즉시 표시돼요.')) return;
+  }
   const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(5)));
   const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
-  const ym = new Date().toISOString().slice(0,7);
-  await setDoc(doc(db,'geojibang_ranking',ym),{
+  await setDoc(doc(db,'geojibang_ranking', ymStr),{
     winners: winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
     announcedAt: serverTimestamp()
   });
-  toast('🎺 거지왕 발표 완료!'); showPage('ranking');
+  toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.'); showPage('ranking');
 };
 
 // ── 상점 가격 관리 ──────────────────────────────
