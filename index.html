@@ -958,7 +958,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     </div>
     <!-- 방 렌더링 -->
     <div style="background:var(--surface2);border-radius:var(--radius);overflow:hidden;margin-bottom:4px;">
-      <svg id="profile-room-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;"></svg>
+      <svg id="profile-room-svg" viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;" shape-rendering="crispEdges"></svg>
     </div>
     <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;" id="view-room-items-desc"></div>
   </div>
@@ -1455,6 +1455,11 @@ window.GJ.initProfile = async () => {
       if (remote.items) {
         if (remote.items.equippedRoom) myItems.equippedRoom = remote.items.equippedRoom;
         if (remote.items.equippedChar) myItems.equippedChar = remote.items.equippedChar;
+        if (remote.items.owned && Array.isArray(remote.items.owned)) {
+          // 로컬과 Firebase owned 합치기 (중복 제거)
+          const merged = [...new Set([...myItems.owned, ...remote.items.owned])];
+          myItems.owned = merged;
+        }
         saveMyItems();
       }
       if (remote.isPremium) {
@@ -3338,7 +3343,11 @@ function saveDecoration() {
   // Firebase에도 저장 — 다른 사람이 내 프로필 볼 때 반영
   if (window.GJ?.ready && myProfile?.uid) {
     window.GJ.saveUser(myProfile.uid, {
-      items: { equippedRoom: myItems.equippedRoom, equippedChar: myItems.equippedChar }
+      items: {
+        equippedRoom: myItems.equippedRoom,
+        equippedChar: myItems.equippedChar,
+        owned: myItems.owned
+      }
     }).catch(() => {});
   }
 }
@@ -3426,6 +3435,17 @@ function buyItem(itemId, tab) {
       window.GJ.saveUser(myProfile.uid, { totalScore: myTotalScore }).catch(()=>{});
     }
     myItems.owned.push(itemId);
+    saveMyItems();
+    // owned 목록도 Firebase에 저장
+    if (window.GJ?.ready && myProfile?.uid) {
+      window.GJ.saveUser(myProfile.uid, {
+        items: {
+          equippedRoom: myItems.equippedRoom,
+          equippedChar: myItems.equippedChar,
+          owned: myItems.owned
+        }
+      }).catch(()=>{});
+    }
   }
   equipItem(itemId, tab);
   document.getElementById('shop-my-score').textContent = myTotalScore;
@@ -3448,7 +3468,11 @@ function equipItem(itemId, tab) {
   // Firebase에도 저장 — 다른 사람이 내 프로필 볼 때 반영
   if (window.GJ?.ready && myProfile?.uid) {
     window.GJ.saveUser(myProfile.uid, {
-      items: { equippedRoom: myItems.equippedRoom, equippedChar: myItems.equippedChar }
+      items: {
+        equippedRoom: myItems.equippedRoom,
+        equippedChar: myItems.equippedChar,
+        owned: myItems.owned
+      }
     }).catch(() => {});
   }
 }
