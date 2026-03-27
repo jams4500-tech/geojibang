@@ -1485,7 +1485,20 @@ window.GJ.listenPosts(async (posts) => {
     }
     insertAfter = el;
     // 미니 캐릭터 아바타 적용
-    setTimeout(() => { const av=el.querySelector('.avatar.profile-click'); if(av){const c=av.dataset.char||'char_default';const bg=av.dataset.bg||'#3a1520';av.style.background=bg;av.style.padding='0';av.style.overflow='hidden';av.innerHTML=makeMiniCharSvg(c,36);} }, 0);
+    setTimeout(() => {
+      const av=el.querySelector('.avatar.profile-click');
+      if(av){
+        const c=av.dataset.char||'char_default', bg=av.dataset.bg||'#3a1520';
+        av.style.cssText='background:'+bg+';padding:0;overflow:hidden;width:36px;height:36px;border-radius:50%;flex-shrink:0;';
+        const svg=makeMiniCharSvg(c,36); if(svg) av.innerHTML=svg;
+      }
+      // 댓글 아바타도 적용
+      el.querySelectorAll('.comment-av.profile-click').forEach(ca=>{
+        const c=ca.dataset.char||'char_default', bg=ca.dataset.bg||'#3a1520';
+        ca.style.cssText='background:'+bg+';padding:0;overflow:hidden;width:28px;height:28px;border-radius:50%;flex-shrink:0;';
+        const svg=makeMiniCharSvg(c,28); if(svg) ca.innerHTML=svg;
+      });
+    }, 0);
 
     // 5개마다 광고 삽입
     const firebasePosts = feed.querySelectorAll('.post[data-firebase="1"]');
@@ -1721,7 +1734,8 @@ document.addEventListener('visibilitychange', async () => {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
-let coins = 0, todayEarned = 0, adCb = null;
+let coins = parseInt(localStorage.getItem('gj_coins') || '0');
+let todayEarned = 0, adCb = null;
 const MAX_DAILY = 5;
 const MAX_GOLDEN_DAILY = 3; // 꽝없는 복권 하루 3회 제한
 
@@ -1922,7 +1936,14 @@ function buildFeed() {
 
 function makePost(p) {
   const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
-  setTimeout(()=>{ const av=el.querySelector('.avatar.profile-click'); if(av){av.style.background=p.abg;av.style.padding='0';av.style.overflow='hidden';av.innerHTML=makeMiniCharSvg(p.authorChar||'char_default',36);} },0);
+  setTimeout(()=>{
+    const av=el.querySelector('.avatar.profile-click');
+    if(av){
+      av.style.cssText='background:'+p.abg+';padding:0;overflow:hidden;width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+      const svg=makeMiniCharSvg(p.authorChar||'char_default',36);
+      if(svg) av.innerHTML=svg; else av.textContent=p.init;
+    }
+  },0);
   const savedRxn = getSavedRxn(p.id);
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
   const rxnBtns = [0,1,2].map(i => {
@@ -2595,6 +2616,7 @@ function buildPiggyAds() {
 }
 
 function updatePiggy() {
+  localStorage.setItem('gj_coins', coins); // 동전 저장
   const _get = id => document.getElementById(id);
   const _set = (id, val) => { const el=_get(id); if(el) el.textContent=val; };
 
@@ -2645,7 +2667,7 @@ function updatePiggy() {
 
   // 내 거지 탭 동전 뱃지 업데이트
   const geojiBadge=document.getElementById('geoji-coin-badge');
-  if(geojiBadge) geojiBadge.textContent=`동전 ${coins}개`;
+  if(geojiBadge) geojiBadge.innerHTML=`🪙 <b>${coins}</b>개`;
 }
 
 let tapCount = 0;
@@ -4743,7 +4765,7 @@ function renderGeojiTab() {
   };
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
-      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🥫 ${coins}개</div>
+      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🪙 ${coins}개</div>
       <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${myTotalScore}점</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
@@ -4934,14 +4956,18 @@ async function loadWeeklyChallengesFromDB() {
 
 // ── 피드/댓글 아바타: 실제 drawCharSmall 활용 ──────────
 function makeMiniCharSvg(charId, size=36) {
-  const char = CHAR_ITEMS.find(c => c.id === charId) || CHAR_ITEMS[0];
-  // 작은 크기에 맞게 S=4 스케일로 그림 (머리+상체만 클로즈업)
+  // CHAR_ITEMS이 아직 안 로드됐으면 기본값
+  const charList = typeof CHAR_ITEMS !== 'undefined' ? CHAR_ITEMS : [];
+  const char = charList.find(c => c.id === charId) || charList[0];
+  if (!char) return ''; // 폴백
+  // drawCharSmall(char, cx, groundY) - S=4 기준, 캐릭터 높이 ≈ 17*S=68px
+  // viewBox를 상반신(머리+몸통)만 보이게 자르기
+  // 실제 캐릭터: cx 중심, groundY에서 위로 17*S=68px
   const S = 4;
   const cx = size / 2;
-  // drawCharSmall은 groundY 기준으로 그리므로, 얼굴이 보이게 위로 올림
-  const groundY = size * 1.4; // size보다 아래 → 상반신+얼굴만 보임
+  const groundY = size + S * 6; // 발이 size+24px 위치 → 머리~허리만 보임
   const charSvg = drawCharSmall(char, cx, groundY);
-  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges">${charSvg}</svg>`;
+  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges" style="display:block;">${charSvg}</svg>`;
 }
 // ── 거지력 현질 이스터에그 ─────────────────────────────
 function openGeojilryeokShop(amount) {
