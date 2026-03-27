@@ -431,7 +431,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="header-top">
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="sharePiggyLink()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">⚡ 공유</button>
+          <button onclick="sharePiggyLink()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">🎁 공유 리워드</button>
           <div class="header-badge">247명 참여중</div>
           <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
@@ -904,7 +904,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <span class="lc-badge lb-ad">광고 시청</span>
           <span class="lc-icon">🌟</span>
           <div class="lc-title">꽝 없는 복권</div>
-          <div class="lc-desc">꽝 없음<br>거지력 1~10점</div>
+          <div class="lc-desc">꽝 없음 · 하루 1회<br>거지력 1~10점</div>
         </div>
       </div>
     </div>
@@ -1727,7 +1727,7 @@ const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
 let coins = parseInt(localStorage.getItem('gj_coins') || '0');
 let todayEarned = 0, adCb = null;
 const MAX_DAILY = 5;
-const MAX_GOLDEN_DAILY = 3; // 꽝없는 복권 하루 3회 제한
+const MAX_GOLDEN_DAILY = 1; // 꽝없는 복권 하루 1회 제한
 
 // 오늘 날짜 키 (자정마다 초기화)
 const _todayKey = new Date().toISOString().slice(0,10);
@@ -1986,7 +1986,7 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;width:28px;height:28px;border-radius:50%;overflow:hidden;padding:0;flex-shrink:0;">${(()=>{const svg=makeMiniCharSvg(c.authorChar||'char_default',28);return svg||((c.authorName||'익')[0]);})()} </div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
@@ -3006,26 +3006,48 @@ window.claimRankReward = function() {
 };
 
 function sharePiggyLink() {
-  const url = 'intoss://geojibang';
-  const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
-  addChallengeProgress('share'); buildWeeklyChallenges();
-  if (navigator.share) {
-    navigator.share({ title: '거지 챌린지', text, url }).catch(() => {
-      // share 실패 시 클립보드로 폴백
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
-      }
+  // 공유 리워드 SDK (하루 3번, +10점)
+  const SHARE_REWARD_KEY = 'gj_share_' + new Date().toISOString().slice(0,10);
+  const shareCount = parseInt(localStorage.getItem(SHARE_REWARD_KEY) || '0');
+  if (shareCount >= 3) {
+    showToast('오늘 공유 리워드는 3번까지만 받을 수 있어요'); return;
+  }
+
+  if (typeof window.AppsInToss?.contactsViral === 'function') {
+    // 토스 공유 리워드 SDK
+    window.AppsInToss.contactsViral({
+      rewardId: '492ba2bd-f4fa-42c4-b6e3-72b1614ea5b0',
+      onSuccess: () => {
+        localStorage.setItem(SHARE_REWARD_KEY, String(shareCount + 1));
+        myMonthScore += 10; myTotalScore += 10; updateMyRankUI();
+        if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 10, 10, 'share').catch(()=>{});
+        addChallengeProgress('share'); buildWeeklyChallenges();
+        showToast('🎉 공유 완료! 거지력 +10점!');
+      },
+      onCancel: () => { showToast('공유를 취소했어요'); },
+      onError: (e) => { console.warn('[공유 리워드]', e); showToast('공유 중 오류가 발생했어요'); },
     });
-  } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
   } else {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    showToast('📋 링크가 복사됐어요!');
+    // 폴백: 일반 공유
+    const url = 'intoss://geojibang';
+    const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
+    addChallengeProgress('share'); buildWeeklyChallenges();
+    if (navigator.share) {
+      navigator.share({ title: '거지 챌린지', text, url }).then(() => {
+        localStorage.setItem(SHARE_REWARD_KEY, String(shareCount + 1));
+        myMonthScore += 10; myTotalScore += 10; updateMyRankUI();
+        if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 10, 10, 'share').catch(()=>{});
+        showToast('🎉 공유 완료! 거지력 +10점!');
+      }).catch(()=>{});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
   }
 }
-
 function openCounseling() {
   document.getElementById('counseling-input').value = '';
   document.getElementById('counseling-input-area').style.display = 'block';
@@ -3183,7 +3205,7 @@ function playLottery(type) {
   }
   if (type === 'golden') {
     if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
-      showToast('꽝없는 복권은 하루 3회까지만 가능해요');
+      showToast('꽝없는 복권은 하루 1회만 가능해요');
       return;
     }
     closeOverlay('ov-lottery');
@@ -4292,17 +4314,41 @@ function setChartPeriod(period, btn) {
   buildChart(period);
 }
 
-function openSubscribe() { openOverlay('ov-subscribe'); }
-
-function confirmSubscribe() {
-  isPremium = true;
-  closeOverlay('ov-subscribe');
-  document.getElementById('premium-card').style.display = 'none';
-  document.getElementById('premium-panel').style.display = 'block';
-  showToast('🎉 구독 완료! AI 코치가 시작됐어요');
-  generateReport();
+function openSubscribe() {
+  if (typeof window.IAP?.createOneTimePurchaseOrder === 'function') {
+    // 실제 인앱결제
+    const cleanup = window.IAP.createOneTimePurchaseOrder({
+      productId: 'ait.0000024599.c76f623e.518473a16f.4503186930',
+      processProductGrant: async (params) => {
+        // 결제 성공 → 구독 활성화
+        isPremium = true;
+        document.getElementById('premium-panel').style.display = 'block';
+        document.getElementById('premium-card').style.display = 'none';
+        if (window.GJ?.ready && myProfile.uid) {
+          window.GJ.setSubscription(myProfile.uid, true).catch(()=>{});
+        }
+        showToast('💎 가계부 구독이 시작됐어요!');
+        return true; // 지급 완료
+      },
+      onEvent: (e) => {
+        if (e.type === 'purchased') console.log('[IAP] 구매 완료');
+      },
+      onError: (e) => {
+        console.warn('[IAP] 결제 오류:', e);
+        showToast('결제 중 오류가 발생했어요. 다시 시도해주세요.');
+      },
+    });
+  } else {
+    // 폴백 (토스 앱 외 환경)
+    document.getElementById('premium-panel').style.display = 'block';
+    document.getElementById('premium-card').style.display = 'none';
+    isPremium = true;
+    if (window.GJ?.ready && myProfile.uid) {
+      window.GJ.setSubscription(myProfile.uid, true).catch(()=>{});
+    }
+    showToast('💎 가계부 구독이 시작됐어요!');
+  }
 }
-
 function restoreFinanceInputs() {
   const incomeEl = document.getElementById('income-input');
   const savingEl = document.getElementById('saving-input');
@@ -4808,13 +4854,10 @@ function renderGeojiTab() {
       <div class="exc-info"><div class="exc-name">출석 복권</div><div class="exc-cost">오늘 1회 무료</div></div>
       <div class="exc-arr">›</div>
     </div>
-    <!-- 광고 배너 -->
-    <div class="ad-card" style="margin-bottom:16px;">
-      <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-      <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-        <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-      </div>
-    </div>`;
+    <!-- 배너 광고 -->
+    <div class="ad-card" data-ad-slot="banner" id="geoji-ad-slot" style="margin-bottom:16px;width:100%;min-height:96px;overflow:hidden;"></div>`;
+  // 광고 부착 (동적 생성이라 별도 호출 필요)
+  setTimeout(() => { const el=document.getElementById('geoji-ad-slot'); if(el) attachBannerToEl(el); }, 100);
 }
 
 function tapGeojiChar() {
