@@ -466,13 +466,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="content">
       <div id="tab-feed" class="section active"></div>
       <div id="tab-mine" class="section">
-        <!-- 광고 배너 -->
-        <div class="ad-card" style="margin-bottom:12px;">
-          <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-          <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-            <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-          </div>
-        </div>
+        <!-- 배너 광고 -->
+        <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
 
 
         <!-- 지출 입력 버튼 -->
@@ -665,13 +660,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
       </div>
       <div id="tab-rank" class="section">
-        <!-- 광고 배너 -->
-        <div class="ad-card" style="margin-bottom:12px;">
-          <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-          <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-            <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-          </div>
-        </div>
+        <!-- 배너 광고 -->
+        <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
 
         <!-- 지난달 거지왕 결과 -->
         <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#fffbee,#fff5cc);border:1px solid rgba(154,104,0,.25);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
@@ -2020,10 +2010,9 @@ function initTossAds() {
         onInitialized: () => {
           _tossAdsReady = true;
           console.log('[TossAds] 배너 초기화 완료');
-          // 초기화 완료 후 배너 자리 찾아서 부착
+          // 모든 배너 자리에 부착
           document.querySelectorAll('[data-ad-slot]').forEach(el => {
-            const type = el.dataset.adSlot;
-            const adId = type === 'native' ? NATIVE_AD_ID : BANNER_AD_ID;
+            const adId = el.dataset.adSlot === 'native' ? NATIVE_AD_ID : BANNER_AD_ID;
             window.TossAds.attachBanner(adId, el, {
               theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
               callbacks: {
@@ -2097,19 +2086,38 @@ function makeAd(i) {
   el.className = 'ad-card';
   el.style.cssText = 'width:100%;min-height:96px;overflow:hidden;';
   el.id = 'toss-ad-slot-' + i;
-  el.dataset.adSlot = 'banner'; // TossAds가 초기화 완료 후 이 속성 찾아서 부착
-
-  if (_tossAdsReady && typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner.isSupported?.()) {
-    // 이미 초기화된 경우 즉시 부착
-    window.TossAds.attachBanner(BANNER_AD_ID, el, {
-      theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
-      callbacks: {
-        onNoFill: () => { el.style.display = 'none'; },
-        onAdFailedToRender: () => { el.style.display = 'none'; },
-      }
-    });
-  }
+  el.dataset.adSlot = 'banner';
+  attachBannerToEl(el);
   return el;
+}
+
+function attachBannerToEl(el) {
+  if (typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner?.isSupported?.()) {
+    if (_tossAdsReady) {
+      window.TossAds.attachBanner(BANNER_AD_ID, el, {
+        theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+        callbacks: {
+          onNoFill: () => { el.style.display = 'none'; },
+          onAdFailedToRender: () => { el.style.display = 'none'; },
+        }
+      });
+    } else {
+      // 초기화 대기 후 부착
+      const check = setInterval(() => {
+        if (_tossAdsReady) {
+          clearInterval(check);
+          window.TossAds.attachBanner(BANNER_AD_ID, el, {
+            theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+            callbacks: {
+              onNoFill: () => { el.style.display = 'none'; },
+              onAdFailedToRender: () => { el.style.display = 'none'; },
+            }
+          });
+        }
+      }, 500);
+      setTimeout(() => clearInterval(check), 10000);
+    }
+  }
 }
 
 function sharePost(btn) {
@@ -4956,18 +4964,23 @@ async function loadWeeklyChallengesFromDB() {
 
 // ── 피드/댓글 아바타: 실제 drawCharSmall 활용 ──────────
 function makeMiniCharSvg(charId, size=36) {
-  // CHAR_ITEMS이 아직 안 로드됐으면 기본값
   const charList = typeof CHAR_ITEMS !== 'undefined' ? CHAR_ITEMS : [];
   const char = charList.find(c => c.id === charId) || charList[0];
-  if (!char) return ''; // 폴백
-  // drawCharSmall(char, cx, groundY) - S=4 기준, 캐릭터 높이 ≈ 17*S=68px
-  // viewBox를 상반신(머리+몸통)만 보이게 자르기
-  // 실제 캐릭터: cx 중심, groundY에서 위로 17*S=68px
+  if (!char) return '';
+  // S=4, cx=20, groundY=80 기준 캐릭터 좌표:
+  //   머리카락 top: groundY - 19*S = 80-76 = 4
+  //   얼굴 top:     groundY - 17*S = 80-68 = 12
+  //   허리:         groundY - 8*S  = 80-32 = 48
+  //   발:           groundY        = 80
+  // viewBox를 머리(4)~허리(54)로 설정해서 얼굴+몸통 클로즈업
   const S = 4;
-  const cx = size / 2;
-  const groundY = size + S * 6; // 발이 size+24px 위치 → 머리~허리만 보임
+  const DRAW_W = 40;  // 10*S
+  const cx = DRAW_W / 2;
+  const groundY = 80;
   const charSvg = drawCharSmall(char, cx, groundY);
-  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges" style="display:block;">${charSvg}</svg>`;
+  // 머리카락 top=4, 보여줄 높이=50 (머리+몸통)
+  const vx = 0, vy = 2, vw = DRAW_W, vh = 52;
+  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges" style="display:block;">${charSvg}</svg>`;
 }
 // ── 거지력 현질 이스터에그 ─────────────────────────────
 function openGeojilryeokShop(amount) {

@@ -353,9 +353,9 @@ async function renderUsers(m) {
         <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td>
         <td>${u.isPremium?'<span class="badge badge-green">구독중</span>':'<span class="badge badge-gray">무료</span>'}</td>
         <td style="white-space:nowrap;">
-          <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">수정</button>
+          <button class="btn btn-ghost btn-sm" onclick="openScoreLog('${u.id}','${esc(u.nick||'')}')">📋 기록</button>
           <button class="btn btn-gold btn-sm" style="margin-left:4px;" onclick="openAdjustScore('${u.id}','${esc(u.nick||'')}')">점수 조정</button>
-          <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="openScoreLog('${u.id}','${esc(u.nick||'')}')">📋 기록</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="openEditUser('${u.id}')">수정</button>
           <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delUser('${u.id}','${esc(u.nick||'')}')">삭제</button>
         </td>
       </tr>`).join('')}
