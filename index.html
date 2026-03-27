@@ -7,34 +7,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0e0a0c;
-  --surface: #1a1216;
-  --surface2: #231820;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
+  --bg: #f5f4f2;
+  --surface: #ffffff;
+  --surface2: #f0eeec;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
   --pink: #e8527a;
-  --pink-light: #f0849f;
-  --pink-dim: rgba(232,82,122,0.15);
-  --pink-dim2: rgba(232,82,122,0.25);
-  --text: #f0e8ec;
-  --text2: #b89aa6;
-  --text3: #7a5f68;
-  --gold: #f0c040;
-  --gold-dim: rgba(240,192,64,0.15);
-  --green: #44cc88;
-  --red: #ff5555;
+  --pink-light: #c83060;
+  --pink-dim: rgba(232,82,122,0.10);
+  --pink-dim2: rgba(232,82,122,0.18);
+  --text: #191919;
+  --text2: #4a4a4a;
+  --text3: #888888;
+  --gold: #b07800;
+  --gold-dim: rgba(176,120,0,0.12);
+  --green: #1a9954;
+  --red: #e03040;
   --radius: 16px;
   --radius-sm: 10px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e4; color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
 .app { width: 100%; max-width: 420px; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; position: relative; }
-.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 18px 12px; position: sticky; top: 0; z-index: 100; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 14px 18px 12px; position: sticky; top: 0; z-index: 100; }
 .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
 .header-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; color: var(--pink); }
 .header-badge { font-size: 11px; background: var(--pink-dim); color: var(--pink-light); border: 1px solid var(--pink-dim2); padding: 3px 10px; border-radius: 20px; }
 .header-sub { font-size: 11px; color: var(--text3); }
-.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 64px; z-index: 99; }
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: sticky; top: 64px; z-index: 99; }
 .tab { flex: 1; padding: 11px 0; text-align: center; font-size: 13px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; font-weight: 500; }
 .tab.active { color: var(--pink); border-bottom-color: var(--pink); }
 .reward-strip { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
@@ -446,7 +446,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
-    <div id="challenge-banner" style="background:linear-gradient(135deg,#1a1220,#0e0a18);border-bottom:1px solid rgba(232,82,122,0.15);">
+    <div id="challenge-banner" style="background:linear-gradient(135deg,#fff5f7,#fde8ee);border-bottom:1px solid rgba(232,82,122,0.15);">
       <div onclick="toggleChallengeBanner()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:13px;">🔥</span>
@@ -529,7 +529,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
 
         <!-- 구독 업셀 카드 -->
-        <div style="background:linear-gradient(135deg,#2a1020,#1a1230);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card">
+        <div style="background:linear-gradient(135deg,#fff0f4,#fce8ee);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card">
           <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:.08;pointer-events:none;">🤖</div>
           <div style="font-size:10px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">PREMIUM</div>
           <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">가계부 맞춤 관리받기</div>
@@ -671,7 +671,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
 
         <!-- 지난달 거지왕 결과 -->
-        <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#2a1a08,#1a1208);border:1px solid rgba(212,168,68,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
+        <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#fffbf0,#fff8e0);border:1px solid rgba(176,120,0,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
           <div style="text-align:center;margin-bottom:12px;">
             <div style="font-size:32px;">👑</div>
             <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">2025년 2월 거지왕</div>
@@ -725,7 +725,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
 
         <!-- 거지력 현질 (이스터에그) -->
-        <div style="background:linear-gradient(135deg,#1a1030,#0e0820);border:1px solid rgba(150,100,255,0.3);border-radius:var(--radius);padding:14px 16px;margin-top:10px;">
+        <div style="background:linear-gradient(135deg,#f5f0ff,#ede8ff);border:1px solid rgba(120,80,220,0.2);border-radius:var(--radius);padding:14px 16px;margin-top:10px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <div>
               <div style="font-size:13px;font-weight:700;color:#b088ff;">💎 거지력 구매하기</div>
@@ -734,16 +734,16 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <div style="font-size:20px;">✨</div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-            <div onclick="openGeojilryeokShop(100)" style="background:rgba(150,100,255,0.1);border:1px solid rgba(150,100,255,0.25);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
+            <div onclick="openGeojilryeokShop(100)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.2);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
               <div style="font-size:14px;font-weight:700;color:#b088ff;">100점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 990</div>
             </div>
-            <div onclick="openGeojilryeokShop(500)" style="background:rgba(150,100,255,0.15);border:1px solid rgba(150,100,255,0.35);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;position:relative;">
+            <div onclick="openGeojilryeokShop(500)" style="background:rgba(120,80,220,0.10);border:1px solid rgba(120,80,220,0.3);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;position:relative;">
               <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);background:#b088ff;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;">인기</div>
               <div style="font-size:14px;font-weight:700;color:#b088ff;">500점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 3,900</div>
             </div>
-            <div onclick="openGeojilryeokShop(2000)" style="background:rgba(150,100,255,0.1);border:1px solid rgba(150,100,255,0.25);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
+            <div onclick="openGeojilryeokShop(2000)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.2);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
               <div style="font-size:14px;font-weight:700;color:#b088ff;">2000점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 9,900</div>
             </div>
@@ -754,7 +754,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
-        <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#1a2a14,#0e1a0a);border:1px solid rgba(68,204,136,.3);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
+        <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#f0fff8,#e8f8f0);border:1px solid rgba(26,153,84,.3);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
           <div style="font-size:24px;margin-bottom:6px;" id="my-reward-emoji">🥇</div>
           <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:2px;" id="my-reward-title">이달의 거지왕 선정!</div>
           <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="my-reward-desc">토스포인트 100,000P 리워드가 준비됐어요</div>
@@ -2790,7 +2790,7 @@ async function loadLastKing() {
     const REWARDS_LIST = [100000,30000,10000,10000,10000];
     const MEDALS = ['🥇','🥈','🥉','🥉','🥉'];
     document.getElementById('last-king-list').innerHTML = data.map((w,i) =>
-      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
         <div style="display:flex;align-items:center;gap:8px;">
           <span>${MEDALS[i]}</span>
           <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
@@ -4558,11 +4558,11 @@ function renderGeojiTab() {
   const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
   // roomBgs를 함수 내부에서 직접 정의
   const _roomBgs = {
-    room_default:'linear-gradient(180deg,#1a1216 0%,#0e0a0c 100%)',
-    room_cave:'linear-gradient(180deg,#0a0808 0%,#1a0e08 100%)',
-    room_rooftop:'linear-gradient(180deg,#0a1020 0%,#1a1830 100%)',
-    room_gosiwon:'linear-gradient(180deg,#141010 0%,#0a0808 100%)',
-    room_park:'linear-gradient(180deg,#0a1808 0%,#101a10 100%)',
+    room_default:'linear-gradient(180deg,#e8e0d0 0%,#d4c4a0 100%)',
+    room_cave:'linear-gradient(180deg,#2a2438 0%,#1a1828 100%)',
+    room_rooftop:'linear-gradient(180deg,#1a2840 0%,#243660 100%)',
+    room_gosiwon:'linear-gradient(180deg,#e8e0d4 0%,#d4c8b8 100%)',
+    room_park:'linear-gradient(180deg,#b8e4a8 0%,#8ac888 100%)',
   };
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
