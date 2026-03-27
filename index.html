@@ -1986,8 +1986,20 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;width:28px;height:28px;border-radius:50%;overflow:hidden;padding:0;flex-shrink:0;">${(()=>{const svg=makeMiniCharSvg(c.authorChar||'char_default',28);return svg||((c.authorName||'익')[0]);})()} </div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;width:28px;height:28px;border-radius:50%;overflow:hidden;padding:0;flex-shrink:0;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
+      // 댓글 아바타 적용
+      setTimeout(() => {
+        const cmlEl = document.getElementById('cml-' + p.id);
+        if (!cmlEl) return;
+        cmlEl.querySelectorAll('.comment-av.profile-click').forEach(ca => {
+          const charId = ca.dataset.char || 'char_default';
+          const bg = ca.dataset.bg || '#3a1520';
+          ca.style.cssText = 'background:'+bg+';padding:0;overflow:hidden;width:28px;height:28px;border-radius:50%;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+          const svg = makeMiniCharSvg(charId, 28);
+          if (svg) ca.innerHTML = svg;
+        });
+      }, 0);
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
     });
@@ -3993,7 +4005,7 @@ function closeOverlayOut(e,id){if(!e.target.closest('.sheet'))closeOverlay(id);}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 /* ── Profile & Onboarding ── */
-let myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
+let myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a', uid: '' };
 let selectedBg = '#3a1520', selectedC = '#e8527a';
 
 function obCheck() {
@@ -4339,14 +4351,9 @@ function openSubscribe() {
       },
     });
   } else {
-    // 폴백 (토스 앱 외 환경)
-    document.getElementById('premium-panel').style.display = 'block';
-    document.getElementById('premium-card').style.display = 'none';
-    isPremium = true;
-    if (window.GJ?.ready && myProfile.uid) {
-      window.GJ.setSubscription(myProfile.uid, true).catch(()=>{});
-    }
-    showToast('💎 가계부 구독이 시작됐어요!');
+    // 토스 앱 환경이 아닌 경우 - IAP 불가 안내
+    showToast('토스 앱에서만 구독이 가능해요');
+    console.warn('[IAP] window.IAP가 없습니다. 토스 앱 환경에서 실행해주세요.');
   }
 }
 function restoreFinanceInputs() {
@@ -4551,7 +4558,7 @@ if (_saved) {
     }
     applyProfile();
     const ob = document.getElementById('onboarding');
-    ob.style.display = 'none';
+    if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
     const bd = document.getElementById('ob-backdrop');
     if (bd) bd.style.display = 'none';
     // 기존 프로필 로드 시 피드 리스너 바로 시작
@@ -4806,8 +4813,11 @@ const GEOJI_TAP_PER_AD = 5;
 function renderGeojiTab() {
   const section = document.getElementById('tab-geoji');
   if (!section) return;
-  const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
-  const equippedChar = myProfile.items?.equippedChar || 'char_default';
+  if (typeof CHAR_ITEMS === 'undefined' || typeof ROOM_ITEMS === 'undefined') {
+    setTimeout(renderGeojiTab, 200); return;
+  }
+  const equippedRoom = (myItems?.equippedRoom) || myProfile.items?.equippedRoom || 'room_default';
+  const equippedChar = (myItems?.equippedChar) || myProfile.items?.equippedChar || 'char_default';
   const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
   // roomBgs를 함수 내부에서 직접 정의
   const _roomBgs = {
