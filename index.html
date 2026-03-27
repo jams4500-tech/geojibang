@@ -1986,42 +1986,107 @@ function makePost(p) {
 
 // TossAds 초기화 (앱 로드 시 1회)
 let _tossAdsReady = false;
+const BANNER_AD_ID = 'ait-ad-test-banner-id';           // 배너 리스트형
+const NATIVE_AD_ID = 'ait-ad-test-native-image-id';     // 배너 피드형
+const INTERSTITIAL_AD_ID = 'ait-ad-test-interstitial-id'; // 전면형
+const REWARDED_AD_ID = 'ait-ad-test-rewarded-id';        // 리워드형
+
 function initTossAds() {
-  if (typeof window.TossAds === 'undefined') return;
-  if (!window.TossAds.initialize.isSupported()) return;
-  window.TossAds.initialize({
-    callbacks: {
-      onInitialized: () => { _tossAdsReady = true; console.log('[TossAds] 초기화 완료'); },
-      onInitializationFailed: (e) => console.warn('[TossAds] 초기화 실패:', e),
-    }
+  // TossAds 배너 SDK
+  if (typeof window.TossAds !== 'undefined' && window.TossAds.initialize?.isSupported?.()) {
+    window.TossAds.initialize({
+      callbacks: {
+        onInitialized: () => {
+          _tossAdsReady = true;
+          console.log('[TossAds] 배너 초기화 완료');
+          // 초기화 완료 후 배너 자리 찾아서 부착
+          document.querySelectorAll('[data-ad-slot]').forEach(el => {
+            const type = el.dataset.adSlot;
+            const adId = type === 'native' ? NATIVE_AD_ID : BANNER_AD_ID;
+            window.TossAds.attachBanner(adId, el, {
+              theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+              callbacks: {
+                onNoFill: () => { el.style.display = 'none'; },
+                onAdFailedToRender: () => { el.style.display = 'none'; },
+              }
+            });
+          });
+        },
+        onInitializationFailed: (e) => console.warn('[TossAds] 초기화 실패:', e),
+      }
+    });
+  }
+
+  // 전면형/리워드 광고 미리 로드
+  if (typeof window.loadFullScreenAd !== 'undefined' && window.loadFullScreenAd.isSupported?.()) {
+    window.loadFullScreenAd({
+      options: { adGroupId: INTERSTITIAL_AD_ID },
+      onEvent: (e) => { if (e.type === 'loaded') window._interstitialReady = true; },
+      onError: () => {}
+    });
+    window.loadFullScreenAd({
+      options: { adGroupId: REWARDED_AD_ID },
+      onEvent: (e) => { if (e.type === 'loaded') window._rewardedReady = true; },
+      onError: () => {}
+    });
+  }
+}
+setTimeout(initTossAds, 1000);
+
+// 전면형 광고 표시
+function showInterstitialAd(onDismiss) {
+  if (typeof window.showFullScreenAd === 'undefined' || !window._interstitialReady) {
+    onDismiss?.(); return;
+  }
+  window.showFullScreenAd({
+    options: { adGroupId: INTERSTITIAL_AD_ID },
+    onEvent: (e) => {
+      if (e.type === 'dismissed' || e.type === 'failedToShow') {
+        window._interstitialReady = false;
+        // 다음 광고 미리 로드
+        window.loadFullScreenAd({ options: { adGroupId: INTERSTITIAL_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._interstitialReady=true; }, onError: ()=>{} });
+        onDismiss?.();
+      }
+    },
+    onError: () => { onDismiss?.(); }
   });
 }
-setTimeout(initTossAds, 800);
+
+// 리워드형 광고 표시
+function showRewardedAd(onRewarded, onDismiss) {
+  if (typeof window.showFullScreenAd === 'undefined' || !window._rewardedReady) {
+    onDismiss?.(); return;
+  }
+  window.showFullScreenAd({
+    options: { adGroupId: REWARDED_AD_ID },
+    onEvent: (e) => {
+      if (e.type === 'userEarnedReward') { onRewarded?.(e.data); }
+      if (e.type === 'dismissed' || e.type === 'failedToShow') {
+        window._rewardedReady = false;
+        window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} });
+        onDismiss?.();
+      }
+    },
+    onError: () => { onDismiss?.(); }
+  });
+}
 
 function makeAd(i) {
   const el = document.createElement('div');
   el.className = 'ad-card';
-  el.style.cssText = 'width:100%;height:96px;overflow:hidden;';
+  el.style.cssText = 'width:100%;min-height:96px;overflow:hidden;';
   el.id = 'toss-ad-slot-' + i;
+  el.dataset.adSlot = 'banner'; // TossAds가 초기화 완료 후 이 속성 찾아서 부착
 
-  if (typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner.isSupported()) {
-    // TossAds 배너 광고 (테스트 ID)
-    setTimeout(() => {
-      if (!_tossAdsReady) { el.innerHTML = ''; return; }
-      window.TossAds.attachBanner('ait-ad-test-banner-id', el, {
-        theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
-        callbacks: {
-          onNoFill: () => { el.style.display = 'none'; },
-          onAdFailedToRender: () => { el.style.display = 'none'; },
-        }
-      });
-    }, 1000);
-  } else {
-    // 플레이스홀더
-    el.innerHTML = `<div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-      <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-        <span style="font-size:12px;color:var(--text3);">광고 준비 중</span>
-      </div>`;
+  if (_tossAdsReady && typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner.isSupported?.()) {
+    // 이미 초기화된 경우 즉시 부착
+    window.TossAds.attachBanner(BANNER_AD_ID, el, {
+      theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+      callbacks: {
+        onNoFill: () => { el.style.display = 'none'; },
+        onAdFailedToRender: () => { el.style.display = 'none'; },
+      }
+    });
   }
   return el;
 }
@@ -3121,17 +3186,25 @@ function closeLottery() { document.getElementById('lot-pick').style.display='blo
 
 /* ad */
 function watchAd(cb) {
-  adCb=cb;
-  const em=['📺','🎬','🛍','🏖','🚗','🍕','👟','💄'];
-  document.getElementById('ad-emoji').textContent=em[Math.floor(Math.random()*em.length)];
-  document.getElementById('ad-bar').style.width='0%';
-  document.getElementById('ad-countdown').textContent='5초 후 완료...';
+  if (typeof window.showFullScreenAd !== 'undefined' && window._rewardedReady) {
+    showRewardedAd(
+      () => { closeOverlay('ov-ad'); if (cb) cb(); },
+      () => { showToast('광고를 끝까지 시청해야 보상을 받을 수 있어요'); }
+    );
+    return;
+  }
+  // 폴백: 5초 시뮬레이션
+  adCb = cb;
+  const em = ['📺','🎬','🛍','🏖','🚗','🍕','👟','💄'];
+  document.getElementById('ad-emoji').textContent = em[Math.floor(Math.random()*em.length)];
+  document.getElementById('ad-bar').style.width = '0%';
+  document.getElementById('ad-countdown').textContent = '5초 후 완료...';
   openOverlay('ov-ad');
-  let e=0; const iv=setInterval(()=>{
-    e+=100; document.getElementById('ad-bar').style.width=Math.min(100,(e/5000)*100)+'%';
-    const rem=Math.ceil((5000-e)/1000); document.getElementById('ad-countdown').textContent=rem>0?`${rem}초 후 완료...`:'완료!';
-    if(e>=5000){clearInterval(iv);setTimeout(()=>{closeOverlay('ov-ad');if(adCb){adCb();adCb=null;}},400);}
-  },100);
+  let e = 0; const iv = setInterval(() => {
+    e += 100; document.getElementById('ad-bar').style.width = Math.min(100,(e/5000)*100) + '%';
+    const rem = Math.ceil((5000-e)/1000); document.getElementById('ad-countdown').textContent = rem > 0 ? `${rem}초 후 완료...` : '완료!';
+    if (e >= 5000) { clearInterval(iv); setTimeout(() => { closeOverlay('ov-ad'); if (adCb) { adCb(); adCb = null; } }, 400); }
+  }, 100);
 }
 
 function openEditPostFromBtn(btn) {
@@ -3319,11 +3392,18 @@ function _drawCharCore(char, cx, groundY, S) {
   g += px(ox,     oy+15*S,3*S, 2*S, c.shoe);
   g += px(ox+5*S, oy+15*S,3*S, 2*S, c.shoe);
   g += px(ox,     oy+15*S,3*S, S,   adjustColor(c.shoe,20));
-  // 깡통
-  g += px(ox-2*S, oy+10*S,2*S, 3*S, '#c0a888');
-  g += px(ox-2*S, oy+10*S,2*S, S,   '#e0c8a0');
-  g += px(ox-2*S, oy+11*S,S,   S,   'rgba(255,255,255,0.6)');
-  g += px(ox-2*S, oy+12*S,2*S, S,   '#a09070');
+  // 깡통 (크게, 고화질)
+  const canX = ox-4*S, canY = oy+9*S, canW = 4*S, canH = 6*S;
+  g += px(canX,   canY,       canW, canH,   '#b8a080');       // 본체
+  g += px(canX,   canY,       canW, S,      '#d4bc96');       // 뚜껑 하이라이트
+  g += px(canX,   canY+canH-S,canW, S,      '#8a7060');       // 바닥
+  g += px(canX+S, canY+S,     S,   canH-2*S,'rgba(255,255,255,0.5)'); // 광택
+  g += px(canX,   canY+2*S,   canW, S,      '#c8a870');       // 라벨 상단
+  g += px(canX,   canY+3*S,   canW, 2*S,    '#e8c888');       // 라벨
+  g += px(canX,   canY+5*S-S, canW, S,      '#c8a870');       // 라벨 하단
+  // 라벨 글씨 (🥫 느낌)
+  g += px(canX+S, canY+3*S,   S,   S,      '#a07840');
+  g += px(canX+2*S,canY+3*S,  S,   S,      '#a07840');
 
   // 모자/액세서리
   if (cid==='paper_bag') {
@@ -4852,52 +4932,16 @@ async function loadWeeklyChallengesFromDB() {
 }
 
 
-// ── 미니 캐릭터 아바타 SVG 생성 ──────────────────────────
+// ── 피드/댓글 아바타: 실제 drawCharSmall 활용 ──────────
 function makeMiniCharSvg(charId, size=36) {
-  // 캐릭터별 색상/표정 정의
-  const chars = {
-    char_default:   { skin:'#f0c896', hair:'#4a3020', cloth:'#8a6a4a', acc:'' },
-    char_paper_bag: { skin:'#e8b870', hair:'#8B6914', cloth:'#c8a860', acc:'📦' },
-    char_crown:     { skin:'#f0c896', hair:'#2a1a10', cloth:'#8a2060', acc:'👑' },
-    char_santa:     { skin:'#f0c896', hair:'#ffffff', cloth:'#cc2020', acc:'🎅' },
-    char_ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', cloth:'#1a1a1a', acc:'🥷' },
-    char_vip:       { skin:'#f0c896', hair:'#1a1a1a', cloth:'#1a3060', acc:'💼' },
-    char_ghost:     { skin:'rgba(200,220,255,0.7)', hair:'#aabbdd', cloth:'#c0d0f0', acc:'👻' },
-    char_chef:      { skin:'#f0c896', hair:'#3a2a1a', cloth:'#ffffff', acc:'👨‍🍳' },
-    char_cowboy:    { skin:'#d4a070', hair:'#5a3a20', cloth:'#8a5a30', acc:'🤠' },
-  };
-  const c = chars[charId] || chars.char_default;
-  const s = size;
-  const cx = s/2, cy = s*0.42;
-  const hr = s*0.18; // head radius
-  return `<svg viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
-    <!-- 몸 -->
-    <ellipse cx="${cx}" cy="${s*0.78}" rx="${s*0.22}" ry="${s*0.24}" fill="${c.cloth}"/>
-    <!-- 목 -->
-    <rect x="${cx-s*0.06}" y="${cy+hr-1}" width="${s*0.12}" height="${s*0.1}" fill="${c.skin}"/>
-    <!-- 얼굴 -->
-    <circle cx="${cx}" cy="${cy}" r="${hr}" fill="${c.skin}"/>
-    <!-- 눈 -->
-    <circle cx="${cx-s*0.06}" cy="${cy-s*0.01}" r="${s*0.025}" fill="#333"/>
-    <circle cx="${cx+s*0.06}" cy="${cy-s*0.01}" r="${s*0.025}" fill="#333"/>
-    <!-- 입 -->
-    <path d="M${cx-s*0.05} ${cy+s*0.07} Q${cx} ${cy+s*0.12} ${cx+s*0.05} ${cy+s*0.07}" stroke="#a06050" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-    ${c.acc ? `<text x="${cx}" y="${s*0.25}" text-anchor="middle" font-size="${s*0.28}">${c.acc}</text>` : `<!-- 머리카락 --><ellipse cx="${cx}" cy="${cy-hr*0.6}" rx="${hr*0.9}" ry="${hr*0.55}" fill="${c.hair}"/>`}
-  </svg>`;
-}
-
-// 피드/댓글 아바타 DOM 업데이트
-function applyMiniCharAvatars() {
-  document.querySelectorAll('.avatar.profile-click, .comment-av.profile-click').forEach(el => {
-    const charId = el.dataset.char || 'char_default';
-    const bg = el.dataset.bg || '#3a1520';
-    const isSmall = el.classList.contains('comment-av');
-    const size = isSmall ? 28 : 36;
-    el.style.background = bg;
-    el.style.padding = '0';
-    el.style.overflow = 'hidden';
-    el.innerHTML = makeMiniCharSvg(charId, size);
-  });
+  const char = CHAR_ITEMS.find(c => c.id === charId) || CHAR_ITEMS[0];
+  // 작은 크기에 맞게 S=4 스케일로 그림 (머리+상체만 클로즈업)
+  const S = 4;
+  const cx = size / 2;
+  // drawCharSmall은 groundY 기준으로 그리므로, 얼굴이 보이게 위로 올림
+  const groundY = size * 1.4; // size보다 아래 → 상반신+얼굴만 보임
+  const charSvg = drawCharSmall(char, cx, groundY);
+  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges">${charSvg}</svg>`;
 }
 // ── 거지력 현질 이스터에그 ─────────────────────────────
 function openGeojilryeokShop(amount) {
