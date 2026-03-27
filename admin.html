@@ -355,6 +355,7 @@ async function renderUsers(m) {
         <td style="white-space:nowrap;">
           <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">수정</button>
           <button class="btn btn-gold btn-sm" style="margin-left:4px;" onclick="openAdjustScore('${u.id}','${esc(u.nick||'')}')">점수 조정</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="openScoreLog('${u.id}','${esc(u.nick||'')}')">📋 기록</button>
           <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delUser('${u.id}','${esc(u.nick||'')}')">삭제</button>
         </td>
       </tr>`).join('')}
@@ -388,6 +389,56 @@ window.openAdjustScore = (uid, nick) => {
     <div class="form-group"><label class="form-label">월 거지력 증감 (예: +10, -5)</label><input class="form-input" id="m-md" type="number" value="0"></div>
     <div class="form-group"><label class="form-label">누적 거지력 증감 (예: +50, -10)</label><input class="form-input" id="m-td" type="number" value="0"></div>
     <div style="font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,85,85,0.08);border-radius:8px;">⚠️ 이 작업은 되돌릴 수 없어요</div>`;
+};
+
+window.openScoreLog = async (uid, nick) => {
+  document.getElementById('modal-title').textContent = `${nick} · 거지력 기록`;
+  document.getElementById('modal-body').innerHTML = '<div class="loading">불러오는 중...</div>';
+  document.getElementById('edit-modal').classList.add('open');
+  modal = {type:'log', id:uid};
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'geojibang_score_logs'),
+      where('uid', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    ));
+    const logs = snap.docs.map(d=>d.data());
+    if (!logs.length) {
+      document.getElementById('modal-body').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:16px 0;">기록이 없어요.</div>';
+      return;
+    }
+    const typeLabel = {
+      feed: '📢 피드 게시물', comment: '💬 댓글', reaction: '🙇 반응',
+      challenge: '🔥 챌린지', shop: '🛍 상점 구매', admin: '⚙️ 관리자 조정',
+      coin: '🪙 동전 교환', subscribe: '💎 구독'
+    };
+    document.getElementById('modal-body').innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="border-bottom:1px solid var(--border);">
+          <th style="padding:6px;text-align:left;">일시</th>
+          <th style="padding:6px;text-align:left;">유형</th>
+          <th style="padding:6px;text-align:right;">월 거지력</th>
+          <th style="padding:6px;text-align:right;">누적 거지력</th>
+        </tr></thead>
+        <tbody>${logs.map(l=>{
+          const d = l.createdAt?.toDate?.() || new Date(l.createdAt||0);
+          const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+          const mSign = (l.monthDelta||0) > 0 ? '+' : '';
+          const tSign = (l.totalDelta||0) > 0 ? '+' : '';
+          const mColor = (l.monthDelta||0) > 0 ? 'var(--green)' : (l.monthDelta||0) < 0 ? 'var(--red)' : 'var(--text3)';
+          const tColor = (l.totalDelta||0) > 0 ? 'var(--gold)' : (l.totalDelta||0) < 0 ? 'var(--red)' : 'var(--text3)';
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px;color:var(--text3);">${dateStr}</td>
+            <td style="padding:6px;">${typeLabel[l.type]||l.type||'기타'}</td>
+            <td style="padding:6px;text-align:right;color:${mColor};font-weight:700;">${mSign}${(l.monthDelta||0)}점</td>
+            <td style="padding:6px;text-align:right;color:${tColor};font-weight:700;">${tSign}${(l.totalDelta||0)}점</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<div style="color:var(--red);">오류: ${e.message}</div>`;
+  }
   document.getElementById('edit-modal').classList.add('open');
 };
 
