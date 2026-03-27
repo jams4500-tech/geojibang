@@ -707,7 +707,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
           <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
           <div class="formula-row"><div class="formula-key">✏️ 피드에 글 쓰기</div><div class="formula-val">+1점</div></div>
-          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 영구 보존</div>
+          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 상점에서 사용 가능</div>
         </div>
         <div id="rank-list"></div>
         <div class="my-rank">
@@ -1643,6 +1643,7 @@ window.GJ.submitComment = async (postId, text) => {
     authorBg: window.myProfile.bg || '#3a1520',
     authorColor: window.myProfile.c || '#e8527a',
     authorMonthScore: window.myMonthScore || 0,
+    authorMonthSpend: window.getMonthSpend ? window.getMonthSpend() : 0,
     authorRoom: window.myItems?.equippedRoom || 'room_default',
     authorChar: window.myItems?.equippedChar || 'char_default',
     text
@@ -1660,6 +1661,7 @@ function timeAgo(date) {
 
 // 앱 로드 후 프로필 초기화
 setTimeout(() => window.GJ.initProfile(), 500);
+setTimeout(() => checkSubExpiry(), 300);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
 setTimeout(() => buildWeeklyChallenges(), 600);
@@ -1963,7 +1965,7 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
@@ -2027,8 +2029,10 @@ function castRxn(btn,id,idx) {
 
     // 게시물 작성자 UID 가져오기
     const postEl = document.getElementById('post-'+id);
-    const authorUid = postEl?.querySelector('.profile-click')?.dataset?.uid || '';
-    const isMyPost = authorUid && myProfile.uid && authorUid === myProfile.uid;
+    // 아바타(.avatar)에서 authorUid 읽기 (댓글 profile-click 제외)
+    const avatarEl = postEl?.querySelector('.avatar.profile-click');
+    const authorUid = avatarEl?.dataset?.uid || postEl?.querySelector('.profile-click')?.dataset?.uid || '';
+    const isMyPost = !!(authorUid && myProfile.uid && authorUid === myProfile.uid);
 
     if (isMyPost) {
       // 내 글에 반응 — 내 점수 변경
@@ -2869,7 +2873,12 @@ function sharePiggyLink() {
   const url = 'intoss://geojibang';
   const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
   if (navigator.share) {
-    navigator.share({ title: '거지 챌린지', text, url }).catch(()=>{});
+    navigator.share({ title: '거지 챌린지', text, url }).catch(() => {
+      // share 실패 시 클립보드로 폴백
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+      }
+    });
   } else if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
   } else {
@@ -2894,7 +2903,7 @@ async function submitCounseling() {
   document.getElementById('counseling-result-area').style.display = 'block';
   document.getElementById('counseling-answer').innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   try {
-    const r = await fetch('/api/roast', {
+    const r = await fetch('https://geojibang.vercel.app/api/roast', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ context: '[고민상담] ' + q })
     });
@@ -4395,14 +4404,35 @@ ${spendGoal ? '지출 목표: ' + spendGoal.toLocaleString() + '원 (남은 일�
 
 // ── 구독 취소 ──────────────────────────────────────────
 function cancelSubscribe() {
-  if (!confirm('구독을 취소할까요?\n다음 결제일까지는 계속 이용할 수 있어요.')) return;
-  isPremium = false;
-  document.getElementById('premium-panel').style.display = 'none';
-  document.getElementById('premium-card').style.display = 'block';
+  if (!confirm('구독을 취소할까요?\n이번 달 말까지는 계속 이용할 수 있어요.')) return;
+  // 실제 서비스 종료일 = 이번달 말일
+  const now = new Date();
+  const expiry = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59); // 이번달 말일
+  localStorage.setItem('gj_sub_expiry', expiry.getTime().toString());
+  // isPremium은 만료일까지 유지 (Firebase에만 취소 예약)
   if (window.GJ?.ready && myProfile.uid) {
     window.GJ.setSubscription(myProfile.uid, false).catch(()=>{});
   }
-  showToast('구독이 취소됐어요. 이용해주셔서 감사해요 🥫');
+  // UI에는 취소 예약됨 표시
+  const cancelBtn = document.getElementById('sub-cancel-area');
+  if (cancelBtn) cancelBtn.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:8px 0;">${now.getMonth()+1}월 ${expiry.getDate()}일까지 이용 가능 · 갱신 안 됨</div>`;
+  showToast('구독 취소 예약됐어요. 이번 달 말까지 이용 가능해요 🥫');
+}
+
+// 앱 시작 시 구독 만료 체크
+function checkSubExpiry() {
+  const expiry = localStorage.getItem('gj_sub_expiry');
+  if (!expiry) return;
+  if (Date.now() > parseInt(expiry)) {
+    // 만료됨 — 실제로 서비스 종료
+    isPremium = false;
+    localStorage.removeItem('gj_sub_expiry');
+    const pp = document.getElementById('premium-panel');
+    const pc = document.getElementById('premium-card');
+    if (pp) pp.style.display = 'none';
+    if (pc) pc.style.display = 'block';
+  }
+  // 만료 전이면 isPremium 유지 (아무것도 안 함)
 }
 
 // ── 카테고리 예산 직접 설정 ────────────────────────────
@@ -4591,6 +4621,7 @@ function renderGeojiTab() {
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
       <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
+      <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${myTotalScore}점</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
       <div id="geoji-room-wrap" onclick="tapGeojiChar()" style="cursor:pointer;width:100%;max-width:320px;border-radius:12px;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;">
