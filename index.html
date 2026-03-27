@@ -1484,6 +1484,8 @@ window.GJ.listenPosts(async (posts) => {
       feed.appendChild(el);
     }
     insertAfter = el;
+    // 미니 캐릭터 아바타 적용
+    setTimeout(() => { const av=el.querySelector('.avatar.profile-click'); if(av){const c=av.dataset.char||'char_default';const bg=av.dataset.bg||'#3a1520';av.style.background=bg;av.style.padding='0';av.style.overflow='hidden';av.innerHTML=makeMiniCharSvg(c,36);} }, 0);
 
     // 5개마다 광고 삽입
     const firebasePosts = feed.querySelectorAll('.post[data-firebase="1"]');
@@ -1920,6 +1922,7 @@ function buildFeed() {
 
 function makePost(p) {
   const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
+  setTimeout(()=>{ const av=el.querySelector('.avatar.profile-click'); if(av){av.style.background=p.abg;av.style.padding='0';av.style.overflow='hidden';av.innerHTML=makeMiniCharSvg(p.authorChar||'char_default',36);} },0);
   const savedRxn = getSavedRxn(p.id);
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
   const rxnBtns = [0,1,2].map(i => {
@@ -1981,18 +1984,52 @@ function makePost(p) {
   return el;
 }
 
+// TossAds 초기화 (앱 로드 시 1회)
+let _tossAdsReady = false;
+function initTossAds() {
+  if (typeof window.TossAds === 'undefined') return;
+  if (!window.TossAds.initialize.isSupported()) return;
+  window.TossAds.initialize({
+    callbacks: {
+      onInitialized: () => { _tossAdsReady = true; console.log('[TossAds] 초기화 완료'); },
+      onInitializationFailed: (e) => console.warn('[TossAds] 초기화 실패:', e),
+    }
+  });
+}
+setTimeout(initTossAds, 800);
+
 function makeAd(i) {
-  const el=document.createElement('div'); el.className='ad-card';
-  el.innerHTML=`<div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-    <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-      <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-    </div>`;
+  const el = document.createElement('div');
+  el.className = 'ad-card';
+  el.style.cssText = 'width:100%;height:96px;overflow:hidden;';
+  el.id = 'toss-ad-slot-' + i;
+
+  if (typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner.isSupported()) {
+    // TossAds 배너 광고 (테스트 ID)
+    setTimeout(() => {
+      if (!_tossAdsReady) { el.innerHTML = ''; return; }
+      window.TossAds.attachBanner('ait-ad-test-banner-id', el, {
+        theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+        callbacks: {
+          onNoFill: () => { el.style.display = 'none'; },
+          onAdFailedToRender: () => { el.style.display = 'none'; },
+        }
+      });
+    }, 1000);
+  } else {
+    // 플레이스홀더
+    el.innerHTML = `<div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
+      <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
+        <span style="font-size:12px;color:var(--text3);">광고 준비 중</span>
+      </div>`;
+  }
   return el;
 }
 
 function sharePost(btn) {
   const name = btn.dataset.name, item = btn.dataset.item, amount = btn.dataset.amount;
   const text = name + '님이 ' + item + ' ' + amount + ' 지출해서 거지방에서 혼나는 중 😂\n\n나도 거지방 입장하기 👉 intoss://geojibang';
+  addChallengeProgress('share'); buildWeeklyChallenges();
   if (navigator.share) {
     navigator.share({ title: '거지방', text }).catch(() => {});
   } else if (navigator.clipboard) {
@@ -2308,11 +2345,8 @@ function addToFeed(where,amount,memo) {
   const empty = document.getElementById('feed-empty');
   if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
-  // 글 쓰면 거지력 +1점
+  // 글 쓰면 거지력 +1점 (UI만 - Firebase는 publishPost에서 처리)
   myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
-  if(window.GJ?.ready && myProfile.uid) {
-    window.GJ.updateScore(myProfile.uid, 1, 1, 'feed').catch(()=>{});
-  }
   // 챌린지 진행
   addChallengeProgress('record');
   addChallengeProgress('feed');
@@ -2879,6 +2913,7 @@ window.claimRankReward = function() {
 function sharePiggyLink() {
   const url = 'intoss://geojibang';
   const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
+  addChallengeProgress('share'); buildWeeklyChallenges();
   if (navigator.share) {
     navigator.share({ title: '거지 챌린지', text, url }).catch(() => {
       // share 실패 시 클립보드로 폴백
@@ -4253,7 +4288,7 @@ async function generateReport() {
   const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
   const totalSpend = CAT_DATA.reduce((s,c) => s + c.amt, 0);
   try {
-    const res = await fetch('/api/report', {
+    const res = await fetch('https://geojibang.vercel.app/api/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4628,7 +4663,7 @@ function renderGeojiTab() {
   };
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
-      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
+      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🥫 ${coins}개</div>
       <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${myTotalScore}점</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
@@ -4816,6 +4851,54 @@ async function loadWeeklyChallengesFromDB() {
   } catch(e) { console.warn('[거지방] 챌린지 로드 실패:', e); }
 }
 
+
+// ── 미니 캐릭터 아바타 SVG 생성 ──────────────────────────
+function makeMiniCharSvg(charId, size=36) {
+  // 캐릭터별 색상/표정 정의
+  const chars = {
+    char_default:   { skin:'#f0c896', hair:'#4a3020', cloth:'#8a6a4a', acc:'' },
+    char_paper_bag: { skin:'#e8b870', hair:'#8B6914', cloth:'#c8a860', acc:'📦' },
+    char_crown:     { skin:'#f0c896', hair:'#2a1a10', cloth:'#8a2060', acc:'👑' },
+    char_santa:     { skin:'#f0c896', hair:'#ffffff', cloth:'#cc2020', acc:'🎅' },
+    char_ninja:     { skin:'#2a2a2a', hair:'#1a1a1a', cloth:'#1a1a1a', acc:'🥷' },
+    char_vip:       { skin:'#f0c896', hair:'#1a1a1a', cloth:'#1a3060', acc:'💼' },
+    char_ghost:     { skin:'rgba(200,220,255,0.7)', hair:'#aabbdd', cloth:'#c0d0f0', acc:'👻' },
+    char_chef:      { skin:'#f0c896', hair:'#3a2a1a', cloth:'#ffffff', acc:'👨‍🍳' },
+    char_cowboy:    { skin:'#d4a070', hair:'#5a3a20', cloth:'#8a5a30', acc:'🤠' },
+  };
+  const c = chars[charId] || chars.char_default;
+  const s = size;
+  const cx = s/2, cy = s*0.42;
+  const hr = s*0.18; // head radius
+  return `<svg viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">
+    <!-- 몸 -->
+    <ellipse cx="${cx}" cy="${s*0.78}" rx="${s*0.22}" ry="${s*0.24}" fill="${c.cloth}"/>
+    <!-- 목 -->
+    <rect x="${cx-s*0.06}" y="${cy+hr-1}" width="${s*0.12}" height="${s*0.1}" fill="${c.skin}"/>
+    <!-- 얼굴 -->
+    <circle cx="${cx}" cy="${cy}" r="${hr}" fill="${c.skin}"/>
+    <!-- 눈 -->
+    <circle cx="${cx-s*0.06}" cy="${cy-s*0.01}" r="${s*0.025}" fill="#333"/>
+    <circle cx="${cx+s*0.06}" cy="${cy-s*0.01}" r="${s*0.025}" fill="#333"/>
+    <!-- 입 -->
+    <path d="M${cx-s*0.05} ${cy+s*0.07} Q${cx} ${cy+s*0.12} ${cx+s*0.05} ${cy+s*0.07}" stroke="#a06050" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    ${c.acc ? `<text x="${cx}" y="${s*0.25}" text-anchor="middle" font-size="${s*0.28}">${c.acc}</text>` : `<!-- 머리카락 --><ellipse cx="${cx}" cy="${cy-hr*0.6}" rx="${hr*0.9}" ry="${hr*0.55}" fill="${c.hair}"/>`}
+  </svg>`;
+}
+
+// 피드/댓글 아바타 DOM 업데이트
+function applyMiniCharAvatars() {
+  document.querySelectorAll('.avatar.profile-click, .comment-av.profile-click').forEach(el => {
+    const charId = el.dataset.char || 'char_default';
+    const bg = el.dataset.bg || '#3a1520';
+    const isSmall = el.classList.contains('comment-av');
+    const size = isSmall ? 28 : 36;
+    el.style.background = bg;
+    el.style.padding = '0';
+    el.style.overflow = 'hidden';
+    el.innerHTML = makeMiniCharSvg(charId, size);
+  });
+}
 // ── 거지력 현질 이스터에그 ─────────────────────────────
 function openGeojilryeokShop(amount) {
   const existing = document.getElementById('ov-geoji-shop');

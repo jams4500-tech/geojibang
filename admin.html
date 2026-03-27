@@ -400,10 +400,9 @@ window.openScoreLog = async (uid, nick) => {
     const snap = await getDocs(query(
       collection(db, 'geojibang_score_logs'),
       where('uid', '==', uid),
-      orderBy('createdAt', 'desc'),
-      limit(50)
+      limit(100)
     ));
-    const logs = snap.docs.map(d=>d.data());
+    const logs = snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     if (!logs.length) {
       document.getElementById('modal-body').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:16px 0;">기록이 없어요.</div>';
       return;
