@@ -2012,17 +2012,19 @@ function initTossAds() {
   }
 
   // 전면형/리워드 광고 미리 로드
-  if (typeof window.loadFullScreenAd !== 'undefined' && window.loadFullScreenAd.isSupported?.()) {
-    window.loadFullScreenAd({
-      options: { adGroupId: INTERSTITIAL_AD_ID },
-      onEvent: (e) => { if (e.type === 'loaded') window._interstitialReady = true; },
-      onError: () => {}
-    });
-    window.loadFullScreenAd({
-      options: { adGroupId: REWARDED_AD_ID },
-      onEvent: (e) => { if (e.type === 'loaded') window._rewardedReady = true; },
-      onError: () => {}
-    });
+  if (typeof window.loadFullScreenAd !== 'undefined') {
+    try {
+      window.loadFullScreenAd({
+        options: { adGroupId: INTERSTITIAL_AD_ID },
+        onEvent: (e) => { if (e.type === 'loaded') window._interstitialReady = true; },
+        onError: () => {}
+      });
+      window.loadFullScreenAd({
+        options: { adGroupId: REWARDED_AD_ID },
+        onEvent: (e) => { if (e.type === 'loaded') window._rewardedReady = true; },
+        onError: () => {}
+      });
+    } catch(e) { /* 토스앱 전용 */ }
   }
 }
 setTimeout(initTossAds, 1000);
@@ -2038,7 +2040,7 @@ function showInterstitialAd(onDismiss) {
       if (e.type === 'dismissed' || e.type === 'failedToShow') {
         window._interstitialReady = false;
         // 다음 광고 미리 로드
-        window.loadFullScreenAd({ options: { adGroupId: INTERSTITIAL_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._interstitialReady=true; }, onError: ()=>{} });
+        try { window.loadFullScreenAd({ options: { adGroupId: INTERSTITIAL_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._interstitialReady=true; }, onError: ()=>{} }); } catch(e){}
         onDismiss?.();
       }
     },
@@ -2057,7 +2059,7 @@ function showRewardedAd(onRewarded, onDismiss) {
       if (e.type === 'userEarnedReward') { onRewarded?.(e.data); }
       if (e.type === 'dismissed' || e.type === 'failedToShow') {
         window._rewardedReady = false;
-        window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} });
+        try { window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} }); } catch(e){}
         onDismiss?.();
       }
     },
@@ -2950,38 +2952,53 @@ async function loadLastKing() {
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
 
-    const REWARDS_LIST = [100000,30000,10000,10000,10000];
-    const MEDALS = ['🥇','🥈','🥉','🥉','🥉'];
-    document.getElementById('last-king-list').innerHTML = data.map((w,i) =>
-      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+    const REWARDS_LIST = [5000,3000,1000,1000,1000,1000,1000,1000,1000,1000];
+    const MEDALS = ['🥇','🥈','🥉','4위','5위','6위','7위','8위','9위','10위'];
+    document.getElementById('last-king-list').innerHTML = data.map((w,i) => {
+      const reward = REWARDS_LIST[i] || 0;
+      const score = typeof w.score === 'number' ? w.score : (w.monthScore || 0);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span>${MEDALS[i]}</span>
-          <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
+          <span style="font-size:${i<3?'16':'13'}px;min-width:24px;">${MEDALS[i]}</span>
+          <div>
+            <div style="font-size:${i<3?'14':'13'}px;font-weight:${i===0?'700':'500'};color:var(--text);">${w.nick||'알 수 없음'}</div>
+            <div style="font-size:11px;color:var(--text3);">거지력 ${score.toLocaleString()}점</div>
+          </div>
         </div>
-        <span style="font-size:12px;color:var(--gold);font-weight:700;">토스포인트 ${REWARDS_LIST[i].toLocaleString()}P</span>
-      </div>`
-    ).join('');
+        <span style="font-size:12px;color:var(--gold);font-weight:700;">${reward.toLocaleString()}P</span>
+      </div>`;
+    }).join('');
 
     // 내가 순위 안에 있으면 보상 받기 버튼 표시
-    const myRank = data.findIndex(w => w.uid === myProfile.uid || w.nick === myProfile.nick);
-    if (myRank >= 0) {
+    const myUid = myProfile.uid || '';
+    const myNick = myProfile.nick || '';
+    const myRank = data.findIndex(w =>
+      (w.uid && myUid && w.uid === myUid) ||
+      (w.nick && myNick && w.nick === myNick && myNick !== '거지')
+    );
+    const claimArea = document.getElementById('my-reward-claim-area');
+    if (myRank >= 0 && claimArea) {
       const claimKey = 'gj_claimed_' + usedYm;
       const alreadyClaimed = localStorage.getItem(claimKey);
-      const claimArea = document.getElementById('my-reward-claim-area');
-      if (claimArea) {
-        claimArea.style.display = 'block';
-        document.getElementById('my-reward-claim-title').textContent =
-          '🎉 ' + (myRank+1) + '위 달성! 리워드 대상자예요';
-        document.getElementById('my-reward-claim-desc').textContent =
-          '토스포인트 ' + REWARDS_LIST[myRank].toLocaleString() + 'P 지급 대상';
-        const btn = document.getElementById('my-reward-claim-btn');
+      claimArea.style.display = 'block';
+      document.getElementById('my-reward-claim-title').textContent =
+        '🎉 ' + (myRank+1) + '위 달성! 리워드 대상자예요';
+      const rewardAmt = REWARDS_LIST[myRank] || 0;
+      document.getElementById('my-reward-claim-desc').textContent =
+        '토스포인트 ' + rewardAmt.toLocaleString() + 'P 지급 대상';
+      const btn = document.getElementById('my-reward-claim-btn');
+      if (btn) {
         if (alreadyClaimed) {
           btn.textContent = '✅ 신청 완료';
           btn.disabled = true;
           btn.style.opacity = '0.5';
+        } else {
+          btn.textContent = '🏆 보상 받기 신청';
+          btn.disabled = false;
+          btn.style.opacity = '1';
         }
         btn.dataset.ym = usedYm;
-        btn.dataset.reward = REWARDS_LIST[myRank];
+        btn.dataset.reward = rewardAmt;
       }
     }
   } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
