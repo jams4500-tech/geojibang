@@ -1877,7 +1877,9 @@ function showTab(n) {
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
   if (n === 'geoji') {
-    renderGeojiTab(); // renderRoom은 renderGeojiTab 내부에서 처리
+    const geojiSection = document.getElementById('tab-geoji');
+    if (geojiSection) geojiSection.style.display = 'block';
+    renderGeojiTab();
   }
 }
 
@@ -4602,7 +4604,7 @@ const _saved = localStorage.getItem('gj_profile');
 if (_saved) {
   try {
     const _p = JSON.parse(_saved);
-    if (_p && _p.nick && _p.nick !== '거지' && _p.uid && (_p.uid.startsWith('toss_') || _p.uid.startsWith('gj_'))) {
+    if (_p && _p.uid) { // uid 있으면 무조건 복원
       // uid 있는 유저만 자동 복원 (토스 로그인 완료 유저)
       myProfile = _p;
       if (!myProfile.uid) {
