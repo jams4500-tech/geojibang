@@ -563,8 +563,15 @@ window.announceKing = async () => {
   try {
     const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
     const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
+    const winnerData = winners.map((w,i)=>({
+      uid: w.uid || '',
+      nick: w.nick || '익명',
+      score: w.monthScore || 0,
+      reward: REWARDS[i] || 0,
+      rank: i+1
+    })).filter(w => w.uid);
     await setDoc(doc(db,'geojibang_ranking', ymStr),{
-      winners: winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
+      winners: winnerData,
       announcedAt: serverTimestamp()
     });
     toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.');
