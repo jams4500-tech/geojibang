@@ -393,7 +393,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 <div class="app">
 
   <!-- Onboarding backdrop -->
-  <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);"></div>
+  <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);display:none;"></div>
   <!-- Onboarding -->
   <div class="onboarding" id="onboarding">
     <!-- 로그인 화면 -->
@@ -1877,14 +1877,7 @@ function showTab(n) {
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
   if (n === 'geoji') {
-    renderGeojiTab();
-    setTimeout(() => {
-      const equippedRoom = (typeof myItems!=='undefined'&&myItems?.equippedRoom) || myProfile?.items?.equippedRoom || 'room_default';
-      const equippedChar = (typeof myItems!=='undefined'&&myItems?.equippedChar) || myProfile?.items?.equippedChar || 'char_default';
-      const svgEl = document.getElementById('geoji-room-svg');
-      if (svgEl) renderRoom('geoji-room-svg', equippedRoom, equippedChar);
-      else setTimeout(() => { if(document.getElementById('geoji-room-svg')) renderRoom('geoji-room-svg', equippedRoom, equippedChar); }, 200);
-    }, 150);
+    renderGeojiTab(); // renderRoom은 renderGeojiTab 내부에서 처리
   }
 }
 
@@ -4951,8 +4944,14 @@ function renderGeojiTab() {
     </div>
     <!-- 배너 광고 -->
     <div class="ad-card" data-ad-slot="banner" id="geoji-ad-slot" style="margin-bottom:16px;width:100%;min-height:96px;overflow:hidden;"></div>`;
-  // 광고 부착 (동적 생성이라 별도 호출 필요)
+  // 광고 부착
   setTimeout(() => { const el=document.getElementById('geoji-ad-slot'); if(el) attachBannerToEl(el); }, 100);
+  // renderRoom - innerHTML 설정 후 즉시 호출
+  setTimeout(() => {
+    const _r = (typeof myItems!=='undefined'&&myItems?.equippedRoom) || myProfile?.items?.equippedRoom || 'room_default';
+    const _c = (typeof myItems!=='undefined'&&myItems?.equippedChar) || myProfile?.items?.equippedChar || 'char_default';
+    if (document.getElementById('geoji-room-svg')) renderRoom('geoji-room-svg', _r, _c);
+  }, 50);
 }
 
 function tapGeojiChar() {
