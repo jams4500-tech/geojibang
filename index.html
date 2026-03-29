@@ -399,7 +399,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <!-- 로그인 화면 -->
     <div id="ob-login-view" style="display:flex;flex-direction:column;min-height:100vh;background:#ffffff;">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px 40px;">
-        <div id="ob-geoji-wrap" style="margin-bottom:20px;"></div>
+        <div style="font-size:96px;margin-bottom:20px;line-height:1;">🥫</div>
         <div style="font-size:30px;font-weight:900;color:#191919;letter-spacing:-1px;margin-bottom:10px;">거지 챌린지</div>
         <div style="font-size:16px;color:#888;text-align:center;line-height:1.8;">매일 매시 매초<br>본인이 거지임을 잊지마세요</div>
       </div>
@@ -539,7 +539,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
 
         <!-- 구독 업셀 카드 -->
-        <div style="background:linear-gradient(135deg,#fff0f4,#fde8ee);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card">
+        <div style="background:linear-gradient(135deg,#fff0f4,#fde8ee);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card" style="display:none;">
           <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:.08;pointer-events:none;">🤖</div>
           <div style="font-size:10px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">PREMIUM</div>
           <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">가계부 맞춤 관리받기</div>
@@ -561,7 +561,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         </div>
 
         <!-- 구독 중일 때 보이는 프리미엄 패널 (기본 숨김) -->
-        <div id="premium-panel" style="display:none;">
+        <div id="premium-panel">
           <!-- 구독 취소 -->
           <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
             <div>
@@ -665,7 +665,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
                   <div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
                 </div>
               </div>
-              <button class="refresh-btn" style="margin-top:10px;width:100%;padding:10px;" onclick="generateReport()">새 리포트 받기</button>
+              <button class="refresh-btn" style="margin-top:10px;width:100%;padding:10px;" onclick="(function(){const e=document.getElementById('ai-report-text');if(e)e.dataset.loaded='';generateReport();})();">새 리포트 받기</button>
             </div>
           </div>
         </div>
@@ -1902,7 +1902,7 @@ function submitWriteManual() {
 /* FAB show only on feed tab */
 function showTab(n) {
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji'][i]===n));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
@@ -4130,7 +4130,7 @@ async function loginWithToss() {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
       const feedEl = document.getElementById('tab-feed');
-      if (feedEl) { feedEl.classList.add('active'); feedEl.style.display = 'block'; }
+      if (feedEl) feedEl.classList.add('active');
       const fabEl = document.getElementById('fab-write');
       if (fabEl) fabEl.classList.remove('hidden');
 
@@ -4159,6 +4159,9 @@ async function loginWithToss() {
         }
       }
       _waitAndStartFeedLogin(30); // 최대 9초
+
+      // 챌린지 배너 빌드
+      setTimeout(() => { if(typeof buildWeeklyChallenges === 'function') buildWeeklyChallenges(); }, 800);
 
       showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
@@ -4267,7 +4270,7 @@ function saveProfile() {
 }
 
 /* ── Ledger ── */
-let isPremium = false;
+let isPremium = true; // 전체 무료
 let spendChart = null;
 
 const CAT_DATA = [
@@ -4402,6 +4405,8 @@ function setChartPeriod(period, btn) {
 }
 
 function openSubscribe() {
+  // 무료화 - 아무것도 안 함
+  return;
   if (typeof window.IAP?.createOneTimePurchaseOrder === 'function') {
     // 실제 인앱결제
     const cleanup = window.IAP.createOneTimePurchaseOrder({
@@ -4521,6 +4526,9 @@ function buildSpendCalendar() {
 
 async function generateReport() {
   const el = document.getElementById('ai-report-text');
+  if (!el) return;
+  // 이미 내용 있으면 스킵
+  if (el.dataset.loaded === '1') return;
   el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   const income = parseInt(document.getElementById('income-input')?.value) || 0;
   const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
@@ -4540,6 +4548,9 @@ async function generateReport() {
     });
     const data = await res.json();
     el.textContent = data?.text || '분석 중 오류가 발생했어요.';
+    if(el.id==='ai-report-text') el.dataset.loaded = '1';
+    el.dataset.loaded = '1';
+    el.dataset.loaded = '1';
   } catch {
     el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
   }
@@ -4547,18 +4558,7 @@ async function generateReport() {
 
 buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
 
-// 온보딩 거지 캐릭터 렌더링
-(function() {
-  const wrap = document.getElementById('ob-geoji-wrap');
-  if (!wrap || typeof CHAR_ITEMS === 'undefined') return;
-  const char = CHAR_ITEMS[0];
-  // S=4, 캐릭터 전체: ox=cx-5*S=20, oy=groundY-17*S, 높이=19*S=76px, 너비=10*S=40px
-  // 깡통 포함: ox-2*S=18, 총너비=12*S=48px
-  const cx = 44, groundY = 96;
-  const charSvg = drawChar(char, cx, groundY);
-  // viewBox: x=10, y=0, w=68, h=100 (여백 포함 전체 보이게)
-  wrap.innerHTML = '<svg viewBox="10 0 68 100" xmlns="http://www.w3.org/2000/svg" width="96" height="140" shape-rendering="crispEdges">' + charSvg + '</svg>';
-})();
+
 
 // 오늘 복권 사용 상태 UI 반영
 if (lotteryUsed) {
@@ -4662,7 +4662,7 @@ if (_saved) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
       const _feedEl = document.getElementById('tab-feed');
-      if (_feedEl) { _feedEl.classList.add('active'); _feedEl.style.display = 'block'; }
+      if (_feedEl) _feedEl.classList.add('active');
       const _fabEl = document.getElementById('fab-write');
       if (_fabEl) _fabEl.classList.remove('hidden');
       updateMyRankUI();
@@ -4686,7 +4686,8 @@ let _catAdviceTimer = null;
 async function generateCatAdvice() {
   const el = document.getElementById('cat-advice-text');
   if (!el) return;
-  // 디바운스 (탭 전환마다 호출 방지)
+  // 이미 내용이 있으면 스킵 (새로받기 버튼으로만 갱신)
+  if (el.dataset.loaded === '1') return;
   clearTimeout(_catAdviceTimer);
   _catAdviceTimer = setTimeout(async () => {
     el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
