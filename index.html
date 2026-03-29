@@ -1176,7 +1176,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       </div>
       <div style="font-size:11px;color:var(--pink-light);text-align:right;">커피 한 잔보다<br>싸요 ☕</div>
     </div>
-    <button class="btn-pink" onclick="confirmSubscribe()">990원으로 시작하기</button>
+    <button class="btn-pink" onclick="showToast('이미 무료로 이용 중이에요! 🎉')">990원으로 시작하기</button>
     <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;">첫 달 무료 · 이후 매월 자동 결제</div>
   </div>
 </div>
@@ -1663,7 +1663,7 @@ setTimeout(() => loadLastKing(), 2000);
 setTimeout(() => buildWeeklyChallenges(), 600);
 setTimeout(() => loadWeeklyChallengesFromDB(), 3000);
 // 토스 미니앱 환경이면 로그인 버튼 표시
-setTimeout(() => initTossLoginUI(), 100);
+// initTossLoginUI 제거됨
 
 // 내 유저 문서 실시간 감시 — 어드민에서 점수 수정 시 즉시 반영
 function startMyScoreListener(uid) {
@@ -1708,7 +1708,7 @@ document.addEventListener('visibilitychange', async () => {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
-let coins = parseInt(localStorage.getItem('gj_coins') || '0');
+var coins = parseInt(localStorage.getItem('gj_coins') || '0');
 let todayEarned = 0, adCb = null;
 const MAX_DAILY = 5;
 const MAX_GOLDEN_DAILY = 1; // 꽝없는 복권 하루 1회 제한
@@ -2696,8 +2696,8 @@ function tapPiggy() {
   }
 }
 
-let myMonthScore = 0;   // 월 거지력 — 랭킹용, 매달 초기화
-let myTotalScore = 0;   // 누적 거지력 — 영구 누적, 환전용
+var myMonthScore = 0;   // 월 거지력 — 랭킹용, 매달 초기화
+var myTotalScore = 0;   // 누적 거지력 — 영구 누적, 환전용
 
 // 누적 거지력 계급 테이블
 const TOTAL_GRADES = [
@@ -3347,7 +3347,7 @@ const CHAR_ITEMS = [
   { id:'char_cowboy',    name:'카우보이 거지',  desc:'서부 개척시대 낭만 거지',         emoji:'🤠', type:'char' },
 ];
 
-let myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
+var myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
 function saveMyItems() { localStorage.setItem('gj_items', JSON.stringify(myItems)); }
 
 // ── 싸이월드 감성 도트 아트 ─────────────────────────────
@@ -3977,7 +3977,7 @@ function closeOverlayOut(e,id){if(!e.target.closest('.sheet'))closeOverlay(id);}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 /* ── Profile & Onboarding ── */
-let myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
+var myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
 let selectedBg = '#3a1520', selectedC = '#e8527a';
 
 function obCheck() {
@@ -4068,7 +4068,7 @@ function saveProfile() {
 }
 
 /* ── Ledger ── */
-let isPremium = true;
+var isPremium = true;
 let spendChart = null;
 
 const CAT_DATA = [
@@ -4417,16 +4417,7 @@ window.saveProfile = async function() {
   }
 };
 
-// 구독 확정 — Firebase 동기화 추가
-const _origConfirmSubscribe = confirmSubscribe;
-window.confirmSubscribe = async function() {
-  _origConfirmSubscribe();
-  if (window.GJ?.ready && myProfile.uid) {
-    try {
-      await window.GJ.setSubscription(myProfile.uid, true);
-    } catch(e) { console.warn('[거지방] 구독 Firebase 저장 실패:', e); }
-  }
-};
+// 구독 비활성화 (무료)
 
 // 저장된 프로필 있으면 온보딩 스킵
 const _saved = localStorage.getItem('gj_profile');
@@ -4456,7 +4447,7 @@ if (_saved) {
 }
 
 // ── AI 카테고리 조언 ──────────────────────────────────
-let _catAdviceTimer = null;
+var _catAdviceTimer = null;
 async function generateCatAdvice() {
   const el = document.getElementById('cat-advice-text');
   if (!el) return;
@@ -4698,7 +4689,7 @@ const GEOJI_LINES = [
   '저 진짜 거지력 최고예요💪','동전 하나에 제 인생이 걸렸어요',
   '오늘 운세가 대박이래요! 같이 받으세요🎰','구걸도 실력이에요 (진심)',
 ];
-let geojiTapCount = 0;
+var geojiTapCount = 0;
 const GEOJI_TAP_PER_AD = 5;
 
 function renderGeojiTab() {
