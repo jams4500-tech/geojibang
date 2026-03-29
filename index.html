@@ -4513,26 +4513,108 @@ window.confirmSubscribe = async function() {
   }
 };
 
-// 저장된 프로필 있으면 온보딩 스킵
-const _saved = localStorage.getItem('gj_profile');
-if (_saved) {
+// 앱 시작 시 자동 토스 로그인
+(async function autoLogin() {
+  const ob = document.getElementById('onboarding');
+  const bd = document.getElementById('ob-backdrop');
+
+  // 1. localStorage에 프로필 있으면 바로 복원
+  const _saved = localStorage.getItem('gj_profile');
+  if (_saved) {
+    try {
+      myProfile = JSON.parse(_saved);
+      if (!myProfile.uid) {
+        myProfile.uid = 'gj_' + Date.now();
+        localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+      }
+      window.myProfile = myProfile;
+      applyProfile();
+      if (ob) ob.style.display = 'none';
+      if (bd) bd.style.display = 'none';
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
+      }, 600);
+      return;
+    } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
+  }
+
+  // 2. localStorage 없으면 자동 토스 로그인 시도
+  const loginBtn = document.getElementById('toss-login-btn');
+  const loginStatus = document.getElementById('toss-login-status');
+  if (loginBtn) { loginBtn.textContent = '로그인 중...'; loginBtn.disabled = true; }
+  if (loginStatus) loginStatus.textContent = '토스 계정을 확인하고 있어요...';
+
   try {
-    myProfile = JSON.parse(_saved);
-    if (!myProfile.uid) {
-      myProfile.uid = 'gj_' + Date.now();
-      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+    const _appLogin = window.appLogin || window.AppsInToss?.appLogin;
+    if (typeof _appLogin !== 'function') {
+      if (loginBtn) { loginBtn.textContent = '토스로 시작하기'; loginBtn.disabled = false; }
+      if (loginStatus) loginStatus.textContent = '';
+      return;
     }
-    applyProfile();
-    const ob = document.getElementById('onboarding');
-    ob.style.display = 'none';
-    const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
-    // 기존 프로필 로드 시 피드 리스너 바로 시작
-    setTimeout(() => {
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-    }, 600);
-  } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
-}
+
+    const result = await _appLogin();
+    const { authorizationCode, referrer } = result || {};
+    if (!authorizationCode) throw new Error('인가 코드 없음');
+
+    if (loginStatus) loginStatus.textContent = '계정 정보 확인 중...';
+
+    const res = await fetch('https://geojibang.vercel.app/api/toss-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorizationCode, referrer: referrer || 'DEFAULT' }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || '서버 오류');
+
+    const tossUid = 'toss_' + data.userKey;
+    let existingUser = null;
+    if (window.GJ?.ready) existingUser = await window.GJ.loadUser(tossUid);
+
+    if (existingUser) {
+      myProfile = {
+        uid: tossUid,
+        nick: existingUser.nick,
+        bio: existingUser.bio || '',
+        bg: existingUser.avatarBg || '#3a1520',
+        c: existingUser.avatarColor || '#e8527a',
+      };
+      myMonthScore = existingUser.monthScore || 0;
+      myTotalScore = existingUser.totalScore || 0;
+      window.myProfile = myProfile;
+      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+      applyProfile();
+      _updateRankUIOnly();
+      if (ob) ob.style.display = 'none';
+      if (bd) bd.style.display = 'none';
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
+      }, 300);
+      showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
+    } else {
+      window._pendingTossUid = tossUid;
+      if (data.nick) {
+        const nickInput = document.getElementById('ob-nick');
+        if (nickInput) {
+          nickInput.value = data.nick.slice(0,12);
+          const lenEl = document.getElementById('ob-nick-len');
+          if (lenEl) lenEl.textContent = nickInput.value.length;
+        }
+      }
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (loginStatus) loginStatus.textContent = '';
+      const nickArea = document.getElementById('ob-nick-area');
+      if (nickArea) nickArea.style.display = 'block';
+    }
+  } catch(e) {
+    console.warn('[자동 로그인 실패]', e.message);
+    if (loginBtn) { loginBtn.textContent = '토스로 시작하기'; loginBtn.disabled = false; }
+    if (loginStatus) loginStatus.textContent = '';
+  }
+})();
 
 // ── AI 카테고리 조언 ──────────────────────────────────
 let _catAdviceTimer = null;
