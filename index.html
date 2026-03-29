@@ -362,7 +362,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* Onboarding */
-.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
+.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; width: 100%; max-width: 100%; left: 0; transform: none; transition: opacity .3s; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
 body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hidden; }
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
@@ -1257,10 +1257,11 @@ window.GJ.loadPosts = async (limitN = 20) => {
 
 window.GJ.listenPosts = (callback) => {
   const q = query(COLS.posts(), orderBy('createdAt', 'desc'), limit(20));
-  return onSnapshot(q, snap => {
+  const unsub = onSnapshot(q, snap => {
     const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(posts);
   });
+  return unsub;
 };
 
 window.GJ.updateRxn = async (postId, rxnArr) => {
@@ -1375,8 +1376,10 @@ if (window.GJ?.ready) {
 }
 
 // 앱 시작 시 피드 리스너 시작
+let _feedUnsubscribe = null;
 window.GJ.startFeedListener = () => {
-window.GJ.listenPosts(async (posts) => {
+  if (_feedUnsubscribe) { try { _feedUnsubscribe(); } catch(e){} _feedUnsubscribe = null; }
+  _feedUnsubscribe = window.GJ.listenPosts(async (posts) => {
   const feed = document.getElementById('tab-feed');
   if (!feed) return;
 
@@ -1847,7 +1850,7 @@ function submitWriteManual() {
 /* FAB show only on feed tab */
 function showTab(n) {
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji'][i]===n));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
@@ -4416,9 +4419,9 @@ if (_saved) {
     window.myProfile = myProfile;
     applyProfile();
     const ob = document.getElementById('onboarding');
-    if (ob) ob.style.display = 'none';
+    if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
     const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
+    if (bd) { bd.style.display = 'none'; }
     document.body.style.overflow = '';
     setTimeout(() => {
       if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
@@ -4617,6 +4620,7 @@ function toggleChallengeBanner() {
   if (!list) return;
   const isOpen = list.style.display !== 'none';
   list.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) list.style.flexDirection = 'column';
   if (icon) {
     icon.style.transform = isOpen ? '' : 'rotate(90deg)';
   }
