@@ -538,38 +538,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <canvas id="spend-chart" height="140"></canvas>
         </div>
 
-        <!-- 구독 업셀 카드 -->
-        <div style="background:linear-gradient(135deg,#fff0f4,#fde8ee);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card" style="display:none;">
-          <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:.08;pointer-events:none;">🤖</div>
-          <div style="font-size:10px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">PREMIUM</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">가계부 맞춤 관리받기</div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:14px;">AI가 내 소비 패턴을 분석해<br>맞춤 절약 전략을 짜드려요</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="premium-features-list">
-            <div class="premium-feat">💰 월수입·저축 설정</div>
-            <div class="premium-feat">🎯 저축 달성률</div>
-            <div class="premium-feat">📋 카테고리 예산</div>
-            <div class="premium-feat">📅 지출 캘린더</div>
-            <div class="premium-feat">📊 AI 주간 리포트</div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <div style="font-size:20px;font-weight:700;color:var(--pink);">월 990원</div>
-              <div style="font-size:11px;color:var(--text3);">언제든 해지 가능</div>
-            </div>
-            <button class="btn-subscribe" onclick="openSubscribe()">구독 시작하기</button>
-          </div>
-        </div>
 
-        <!-- 구독 중일 때 보이는 프리미엄 패널 (기본 숨김) -->
         <div id="premium-panel">
-          <!-- 구독 취소 -->
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text);">🤖 AI 가계부 코치 구독 중</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;">월 990원 · 다음 결제일에 자동 갱신</div>
-            </div>
-
-          </div>
           <!-- 월 재정 설정 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">💰 월 재정 설정</div>
@@ -636,7 +606,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <div style="font-size:13px;font-weight:500;color:var(--text);">🤖 이번 달 지출 조언</div>
-              <button onclick="generateCatAdvice()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">새로 받기</button>
+              <button onclick="(function(){const e=document.getElementById('cat-advice-text');if(e)e.dataset.loaded='';generateCatAdvice();})()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">새로 받기</button>
             </div>
             <div id="cat-advice-text" style="font-size:13px;color:var(--text2);line-height:1.7;">
               <div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
@@ -1911,8 +1881,10 @@ function showTab(n) {
     setTimeout(() => {
       const equippedRoom = (typeof myItems!=='undefined'&&myItems?.equippedRoom) || myProfile?.items?.equippedRoom || 'room_default';
       const equippedChar = (typeof myItems!=='undefined'&&myItems?.equippedChar) || myProfile?.items?.equippedChar || 'char_default';
-      if (document.getElementById('geoji-room-svg')) renderRoom('geoji-room-svg', equippedRoom, equippedChar);
-    }, 100);
+      const svgEl = document.getElementById('geoji-room-svg');
+      if (svgEl) renderRoom('geoji-room-svg', equippedRoom, equippedChar);
+      else setTimeout(() => { if(document.getElementById('geoji-room-svg')) renderRoom('geoji-room-svg', equippedRoom, equippedChar); }, 200);
+    }, 150);
   }
 }
 
@@ -4548,8 +4520,6 @@ async function generateReport() {
     const data = await res.json();
     el.textContent = data?.text || '분석 중 오류가 발생했어요.';
     el.dataset.loaded = '1';
-    el.dataset.loaded = '1';
-    el.dataset.loaded = '1';
   } catch {
     el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
   }
@@ -4714,6 +4684,7 @@ ${spendGoal ? '지출 목표: ' + spendGoal.toLocaleString() + '원 (남은 일�
       });
       const d = await r.json();
       el.textContent = d?.text || '지출 데이터를 입력하면 AI 조언을 받을 수 있어요.';
+      el.dataset.loaded = '1';
     } catch {
       el.textContent = total > 0 ? '잠시 후 다시 시도해봐요.' : '지출을 기록하면 AI 조언을 받을 수 있어요 💡';
     }
