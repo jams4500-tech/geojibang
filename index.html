@@ -364,7 +364,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 /* Onboarding */
 .onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; width: 100%; max-width: 100%; left: 0; transform: none; transition: opacity .3s; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
-body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hidden; }
+/* overflow는 JS에서 제어 */
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
 .ob-sub { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
 .ob-can { font-size: 72px; margin-bottom: 24px; line-height: 1; }
@@ -396,6 +396,13 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         var s=document.createElement('style');
         s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
         document.head.appendChild(s);
+        document.addEventListener('DOMContentLoaded', function(){
+          var ob=document.getElementById('onboarding');
+          var bd=document.getElementById('ob-backdrop');
+          if(ob){ ob.style.display='none'; ob.classList.add('hidden'); }
+          if(bd){ bd.style.display='none'; }
+          document.body.style.overflow='';
+        });
       }
     })();
   </script>
