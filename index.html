@@ -362,7 +362,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* Onboarding */
-.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
+.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background: #ffffff; padding: 0; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
 body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hidden; }
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
@@ -396,27 +396,47 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
   <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);"></div>
   <!-- Onboarding -->
   <div class="onboarding" id="onboarding">
-    <div class="ob-can">🥫</div>
-    <div class="ob-logo">거지방</div>
-    <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
+    <!-- 히어로 영역 -->
+    <div style="width:100%;background:linear-gradient(160deg,#fff5f7 0%,#ffffff 60%);padding:60px 32px 40px;display:flex;flex-direction:column;align-items:center;">
+      <div style="font-size:72px;margin-bottom:20px;line-height:1;">🥫</div>
+      <div style="font-size:28px;font-weight:900;color:#e8527a;letter-spacing:-1px;margin-bottom:8px;">거지방</div>
+      <div style="font-size:15px;color:#666;text-align:center;line-height:1.6;">지출을 공개하고<br>AI 거지방장에게 혼나세요</div>
+    </div>
 
-    <!-- 토스 로그인 (유일한 로그인 방식) -->
-    <button class="ob-btn" id="toss-login-btn" onclick="loginWithToss()"
-      style="background:linear-gradient(135deg,#0064ff,#0040cc);font-size:16px;padding:16px;margin-bottom:16px;">
-      🔵 토스로 시작하기
-    </button>
-    <div id="toss-login-status" style="font-size:12px;color:var(--text3);text-align:center;min-height:18px;"></div>
+    <!-- 기능 소개 -->
+    <div style="width:100%;padding:28px 32px;flex:1;">
+      <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:32px;">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div style="width:40px;height:40px;background:#fff0f4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📢</div>
+          <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">지출 피드에 올리기</div><div style="font-size:13px;color:#888;line-height:1.5;">지출을 공개하면 AI가 핀잔을 줘요</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div style="width:40px;height:40px;background:#fff0f4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">⚡</div>
+          <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거지력 쌓기</div><div style="font-size:13px;color:#888;line-height:1.5;">절약할수록 거지력이 올라가요</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div style="width:40px;height:40px;background:#fff0f4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏆</div>
+          <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">이주의 거지왕 도전</div><div style="font-size:13px;color:#888;line-height:1.5;">1위하면 토스포인트를 드려요</div></div>
+        </div>
+      </div>
+
+      <!-- 토스 로그인 버튼 -->
+      <button id="toss-login-btn" onclick="loginWithToss()" style="width:100%;background:#0064ff;color:#fff;border:none;border-radius:14px;padding:18px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
+        토스로 시작하기
+      </button>
+      <div id="toss-login-status" style="font-size:12px;color:#999;text-align:center;min-height:18px;padding:0 8px;"></div>
+    </div>
 
     <!-- 신규 유저 닉네임 입력 (토스 로그인 성공 후에만 노출) -->
-    <div id="ob-nick-area" style="display:none;width:100%;margin-top:16px;">
-      <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:12px;">✅ 토스 계정 확인 완료 · 닉네임을 설정해주세요</div>
+    <div id="ob-nick-area" style="display:none;width:100%;padding:0 32px 40px;">
+      <div style="font-size:13px;color:#0064ff;font-weight:600;margin-bottom:20px;">✓ 토스 계정 확인 완료</div>
       <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
       <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()" oncompositionend="obCheck()" onkeyup="obCheck()">
       <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
       <div class="ob-label">한 줄 소개 <span style="color:var(--text3);">(선택)</span></div>
       <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()" oncompositionend="obBioCount()" onkeyup="obBioCount()">
       <div class="ob-char"><span id="ob-bio-len">0</span>/30</div>
-      <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled>거지방 입장하기 🚪</button>
+      <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled style="background:#0064ff;">거지방 입장하기</button>
     </div>
   </div>
 
@@ -1517,6 +1537,9 @@ window.GJ.listenPosts(async (posts) => {
 window.GJ.initProfile = async () => {
   const saved = localStorage.getItem('gj_profile');
   if (!saved) return; // 온보딩 표시
+  // 이미 복원돼서 앱이 실행 중이면 점수만 업데이트
+  const ob = document.getElementById('onboarding');
+  const alreadyLoggedIn = ob && (ob.style.display === 'none' || ob.classList.contains('hidden'));
 
   const profile = JSON.parse(saved);
   const uid = profile.uid || ('gj_' + Date.now());
@@ -4093,8 +4116,14 @@ async function loginWithToss() {
       applyProfile();
       _updateRankUIOnly();
       const ob = document.getElementById('onboarding');
-      if (ob) { ob.classList.add('hidden'); setTimeout(() => { ob.style.display = 'none'; }, 300); }
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+      if (ob) { ob.classList.add('hidden'); ob.style.display = 'none'; }
+      // 피드+점수 로드
+      setTimeout(() => {
+        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+        updateMyRankUI();
+        _updateRankUIOnly();
+        showTab('feed');
+      }, 200);
       showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
       // 신규 유저: 닉네임 입력창 노출
@@ -4563,8 +4592,8 @@ const _saved = localStorage.getItem('gj_profile');
 if (_saved) {
   try {
     const _p = JSON.parse(_saved);
-    if (_p && _p.nick && _p.nick !== '거지') {
-      // 토스 로그인 완료된 유저만 자동 복원
+    if (_p && _p.nick && _p.nick !== '거지' && _p.uid) {
+      // uid 있는 유저만 자동 복원 (토스 로그인 완료 유저)
       myProfile = _p;
       if (!myProfile.uid) {
         myProfile.uid = 'gj_' + Date.now();
