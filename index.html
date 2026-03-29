@@ -2210,18 +2210,39 @@ function addCmt(pid) {
   }
 }
 
+// 절약/가성비 키워드 - 칭찬 모드 트리거
+const PRAISE_KEYWORDS = ['가성비','절약','세일','할인','1+1','무료','공짜','쿠폰','적립','포인트','1000원','500원','990원','2000원','저렴','싸게','특가','대박','득템','꽁짜','반값','50%','70%','80%','90%','공구','공동구매','마트','편의점도시락','삼각김밥','컵라면','자취','직접만','자취요리','집밥'];
+const ROAST_KEYWORDS = ['스타벅스','배달','호텔','명품','샤넬','구찌','루이','에르메스','골프','클럽','바','술집','주점','유흥','백화점','면세점','해외','여행','항공','리조트','스파'];
+
 async function genRoast(pid, ctx) {
   const el = document.getElementById('rt-' + pid);
   if (!el) return;
   try {
+    const ctxLower = ctx.toLowerCase();
+    // 절약/가성비 키워드 감지
+    const hasPraise = PRAISE_KEYWORDS.some(k => ctxLower.includes(k.toLowerCase()));
+    const hasRoast = ROAST_KEYWORDS.some(k => ctxLower.includes(k.toLowerCase()));
+    // 절약 키워드 있고 사치 키워드 없으면 칭찬
+    const isPraise = hasPraise && !hasRoast;
+
+    if (isPraise) {
+      // 칭찬 이모지로 미리 표시
+      el.textContent = '✨ 분석 중...';
+      el.style.color = 'var(--green)';
+    }
+
     const r = await fetch('https://geojibang.vercel.app/api/roast', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ context: ctx })
+      body: JSON.stringify({ context: ctx, type: isPraise ? 'praise' : 'roast' })
     });
     const d = await r.json();
-    const text = d?.text || '말문이 막힙니다.';
-    el.textContent = text;
-    // Firebase에 핀잔 저장 — 다음엔 재호출 없이 바로 표시
+    const text = d?.text || (isPraise ? '오늘의 절약왕!' : '말문이 막힙니다.');
+    el.textContent = (isPraise ? '✨ ' : '') + text;
+    if (isPraise) {
+      el.style.color = 'var(--green)';
+    } else {
+      el.style.color = '';
+    }
     if (window.GJ?.ready) {
       window.GJ.saveRoast(pid, text).catch(() => {});
     }

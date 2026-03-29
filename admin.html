@@ -110,6 +110,7 @@ tbody tr:hover td{background:var(--surface2);}
       <div class="nav-item" onclick="showPage('ranking')" id="nav-ranking"><span class="nav-icon">🏆</span>랭킹 관리</div>
       <div class="nav-item" onclick="showPage('shop')" id="nav-shop"><span class="nav-icon">🏪</span>상점 가격 관리</div>
       <div class="nav-item" onclick="showPage('challenge')" id="nav-challenge"><span class="nav-icon">🔥</span>챌린지 관리</div>
+      <div class="nav-item" onclick="showPage('rewards')" id="nav-rewards"><span class="nav-icon">🏆</span>리워드 신청 관리</div>
     </nav>
     <div class="sidebar-footer">pw: gj2026admin · v2.2</div>
   </div>
@@ -202,6 +203,7 @@ window.showPage = async page => {
     else if (page==='ranking') await renderRanking(m);
     else if (page==='shop')    await renderShop(m);
     else if (page==='challenge') await renderChallenge(m);
+    else if (page==='rewards')   await renderRewards(m);
   } catch(e) { m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`; console.error(e); }
 };
 
@@ -894,6 +896,71 @@ window.saveChallenges = async function() {
     toast(`✅ 챌린지 ${challenges.length}개 저장됐어요! 앱에 즉시 반영돼요.`);
   } catch(e) { toast('⚠️ 저장 실패: '+e.message); }
 };
+
+// ── 리워드 신청 관리 ──────────────────────────────────
+async function renderRewards(m) {
+  // 모든 유저에서 rewardClaim 있는 사람 찾기
+  const snap = await getDocs(COLS.users());
+  const claims = [];
+  snap.docs.forEach(d => {
+    const data = d.data();
+    if (data.rewardClaim) {
+      claims.push({ uid: d.id, ...data.rewardClaim, nick: data.nick || data.rewardClaim.nick });
+    }
+  });
+
+  // 주차별 그룹핑
+  const grouped = {};
+  claims.forEach(c => {
+    const ym = c.ym || '기타';
+    if (!grouped[ym]) grouped[ym] = [];
+    grouped[ym].push(c);
+  });
+
+  const weeks = Object.keys(grouped).sort().reverse();
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🏆 리워드 신청 관리</div>
+    <div class="page-sub">총 ${claims.length}건의 신청</div>
+  </div>
+
+  ${weeks.length === 0 ? '<div class="empty">아직 신청자가 없어요</div>' : weeks.map(ym => `
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <div class="card-title">${ym}</div>
+      <div class="page-sub">${grouped[ym].length}명 신청</div>
+    </div>
+    <table>
+      <tr><th>닉네임</th><th>리워드</th><th>신청일시</th><th>상태</th><th>처리</th></tr>
+      ${grouped[ym].map(c => {
+        const claimedAt = c.claimedAt ? new Date(c.claimedAt).toLocaleString('ko-KR') : '-';
+        const isPaid = c.paid;
+        return `<tr>
+          <td><span class="badge badge-pink">${esc(c.nick||'알수없음')}</span><br><span style="font-size:10px;color:var(--text3);">${c.uid?.slice(0,12)||''}</span></td>
+          <td><span class="badge badge-gold">${(c.reward||0).toLocaleString()}P</span></td>
+          <td style="font-size:12px;">${claimedAt}</td>
+          <td>${isPaid ? '<span class="badge" style="background:rgba(68,204,136,.15);color:var(--green);">✅ 지급완료</span>' : '<span class="badge" style="background:rgba(255,150,0,.15);color:#c07000;">⏳ 대기중</span>'}</td>
+          <td>${isPaid ? '-' : `<button class="btn btn-ghost btn-sm" onclick="markRewardPaid('${c.uid}','${ym}')">지급 완료 처리</button>`}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+  </div>`).join('')}
+  `;
+}
+
+window.markRewardPaid = async (uid, ym) => {
+  if (!confirm(`${uid.slice(0,12)}... 의 ${ym} 리워드를 지급 완료 처리할까요?\n앱인토스 콘솔에서 실제 포인트 지급 후 눌러주세요.`)) return;
+  try {
+    const userRef = doc(db, 'geojibang_users', uid);
+    await updateDoc(userRef, { 'rewardClaim.paid': true, 'rewardClaim.paidAt': new Date().toISOString() });
+    toast('✅ 지급 완료 처리됐어요.');
+    showPage('rewards');
+  } catch(e) {
+    alert('오류: ' + e.message);
+  }
+};
+
 </script>
 </body>
 </html>
