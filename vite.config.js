@@ -2,11 +2,9 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    outDir: 'dist',
+    outDir: 'dist/web',
     rollupOptions: {
-      input: {
-        sdk: './sdk-entry.js',
-      },
+      input: { sdk: './sdk-entry.js' },
       output: {
         entryFileNames: 'sdk-bundle.js',
         format: 'iife',

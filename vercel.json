@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "node build.mjs",
-  "outputDirectory": "dist",
+  "outputDirectory": "dist/web",
   "functions": {
     "api/*.js": {
       "maxDuration": 30
