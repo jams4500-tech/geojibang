@@ -1,13 +1,13 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'fs';
 import { execSync } from 'child_process';
 
-// npx ait build가 dist/web에 결과물을 만들므로 동일하게 사용
-const OUT = 'dist/web';
+// npx ait build가 outdir: 'dist/web/web'을 보므로 거기에 출력
+const OUT = 'dist/web/web';
 mkdirSync(OUT, { recursive: true });
 
-// 1. Vite로 SDK 번들 빌드
+// 1. Vite로 SDK 번들 빌드 (dist/web/web에 출력)
 try {
-  execSync('npx vite build --outDir dist/web', { stdio: 'inherit' });
+  execSync(`npx vite build --outDir ${OUT}`, { stdio: 'inherit' });
   console.log('SDK 번들 빌드 완료');
 } catch(e) {
   console.warn('Vite 빌드 실패:', e.message);
@@ -31,7 +31,7 @@ writeFileSync(OUT + '/index.html', html);
 // 4. api/ 폴더 복사
 if (existsSync('api')) {
   mkdirSync(OUT + '/api', { recursive: true });
-  readdirSync('api').forEach(f => {
+  readdirSync('api').filter(f => !f.startsWith('.')).forEach(f => {
     copyFileSync('api/' + f, OUT + '/api/' + f);
     console.log('api/' + f + ' 복사');
   });
