@@ -4641,6 +4641,8 @@ if (_saved) {
         }
       }
       _waitAndStartFeed(30);
+      // 챌린지 빌드
+      setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 1000);
     }
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }

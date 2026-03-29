@@ -560,13 +560,19 @@ window.announceKing = async () => {
   } else {
     if (!confirm(`이주의 거지왕을 발표할까요? (${ymStr})\n앱 랭킹 탭에 즉시 표시돼요.`)) return;
   }
-  const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
-  const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
-  await setDoc(doc(db,'geojibang_ranking', ymStr),{
-    winners: winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
-    announcedAt: serverTimestamp()
-  });
-  toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.'); showPage('ranking');
+  try {
+    const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
+    const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
+    await setDoc(doc(db,'geojibang_ranking', ymStr),{
+      winners: winners.map((w,i)=>({uid:w.uid,nick:w.nick,score:w.monthScore,reward:REWARDS[i]||0,rank:i+1})),
+      announcedAt: serverTimestamp()
+    });
+    toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.');
+    showPage('ranking');
+  } catch(e) {
+    console.error('[거지왕 발표 오류]', e);
+    alert('발표 실패: ' + e.message);
+  }
 };
 
 // ── 상점 가격 관리 ──────────────────────────────
