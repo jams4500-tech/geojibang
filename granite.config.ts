@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   permissions: [],
-  outdir: 'dist/web',
+  outdir: 'dist/web/web',
   webViewProps: {
     type: 'partner',
   },
