@@ -4112,26 +4112,54 @@ async function loginWithToss() {
       localStorage.setItem('gj_profile', JSON.stringify(myProfile));
       applyProfile();
       _updateRankUIOnly();
-      // 온보딩 완전 제거
+      // 온보딩 + 백드롭 완전 제거
       const ob = document.getElementById('onboarding');
       if (ob) ob.remove();
+      const bd = document.getElementById('ob-backdrop');
+      if (bd) bd.remove();
+
+      // body 배경 정상화
+      document.body.style.overflow = '';
+      document.body.style.background = 'var(--bg)';
+
+      // main 강제 표시
+      const mainDiv = document.getElementById('main');
+      if (mainDiv) { mainDiv.style.display = ''; mainDiv.style.visibility = 'visible'; mainDiv.style.opacity = '1'; }
+
       // 모든 섹션 숨기고 피드만 강제 표시
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
       const feedEl = document.getElementById('tab-feed');
-      if (feedEl) feedEl.classList.add('active');
+      if (feedEl) { feedEl.classList.add('active'); feedEl.style.display = 'block'; }
       const fabEl = document.getElementById('fab-write');
       if (fabEl) fabEl.classList.remove('hidden');
+
       updateMyRankUI();
-      // Firebase 피드 리스너 시작
+
+      // 피드에 로딩 메시지 즉시 표시
+      if (feedEl && !feedEl.querySelector('.feed-loading-msg')) {
+        const loadMsg = document.createElement('div');
+        loadMsg.className = 'feed-loading-msg';
+        loadMsg.style.cssText = 'text-align:center;padding:48px 24px;color:var(--text3);font-size:14px;';
+        loadMsg.textContent = '피드 불러오는 중...';
+        feedEl.appendChild(loadMsg);
+      }
+
+      // Firebase 준비 기다렸다가 피드 시작
       function _waitAndStartFeedLogin(retry) {
         if (window.GJ?.ready && window.GJ?.startFeedListener) {
+          const loadMsg = document.querySelector('.feed-loading-msg');
+          if (loadMsg) loadMsg.remove();
           window.GJ.startFeedListener();
         } else if (retry > 0) {
-          setTimeout(() => _waitAndStartFeedLogin(retry - 1), 200);
+          setTimeout(() => _waitAndStartFeedLogin(retry - 1), 300);
+        } else {
+          const loadMsg = document.querySelector('.feed-loading-msg');
+          if (loadMsg) loadMsg.textContent = 'Firebase 연결 실패. 앱을 다시 시작해주세요.';
         }
       }
-      _waitAndStartFeedLogin(20);
+      _waitAndStartFeedLogin(30); // 최대 9초
+
       showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
       // 신규 유저: 닉네임 입력창 노출
@@ -4625,24 +4653,30 @@ if (_saved) {
       if (ob) ob.remove();
       const bd = document.getElementById('ob-backdrop');
       if (bd) bd.remove();
+      // body 정상화
+      document.body.style.overflow = '';
+      const mainDiv2 = document.getElementById('main');
+      if (mainDiv2) { mainDiv2.style.display = ''; mainDiv2.style.visibility = 'visible'; }
+
       // 모든 섹션 숨기고 피드만 강제 표시
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===0));
       const _feedEl = document.getElementById('tab-feed');
-      if (_feedEl) _feedEl.classList.add('active');
+      if (_feedEl) { _feedEl.classList.add('active'); _feedEl.style.display = 'block'; }
       const _fabEl = document.getElementById('fab-write');
       if (_fabEl) _fabEl.classList.remove('hidden');
       updateMyRankUI();
-      // Firebase 준비 기다렸다가 피드 시작
+
+      // Firebase 준비 대기
       function _waitAndStartFeed(retry) {
         if (window.GJ?.ready && window.GJ?.startFeedListener) {
           window.GJ.startFeedListener();
           window.GJ.initProfile?.();
         } else if (retry > 0) {
-          setTimeout(() => _waitAndStartFeed(retry - 1), 200);
+          setTimeout(() => _waitAndStartFeed(retry - 1), 300);
         }
       }
-      _waitAndStartFeed(20); // 최대 4초 대기
+      _waitAndStartFeed(30);
     }
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
