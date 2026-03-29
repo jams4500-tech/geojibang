@@ -1415,7 +1415,7 @@ window.GJ.startFeedListener = () => {
   }
   if (emptyEl) emptyEl.remove();
 
-  // 기존 Firebase 게시물 제거 후 최신순 재렌더링
+  // Firebase 게시물만 제거 (로컬 글 보존)
   feed.querySelectorAll('.post[data-firebase="1"]').forEach(el => el.remove());
 
   // createdAt 기준 최신순 (Firebase orderBy('createdAt','desc') 이미 최신순이지만 로컬 게시물과 합쳐서 정렬)
@@ -4704,6 +4704,9 @@ const GEOJI_TAP_PER_AD = 5;
 function renderGeojiTab() {
   const section = document.getElementById('tab-geoji');
   if (!section) return;
+  if (typeof CHAR_ITEMS === 'undefined' || typeof ROOM_ITEMS === 'undefined') {
+    setTimeout(renderGeojiTab, 300); return;
+  }
   const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
   const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
   const _coins = typeof coins !== 'undefined' ? coins : 0;
