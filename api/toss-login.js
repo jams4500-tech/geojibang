@@ -1,22 +1,40 @@
-// api/toss-login.js - 토스 로그인 서버 API (mTLS 적용)
+// api/toss-login.js - 토스 로그인 (mTLS 적용)
+// Vercel Node.js Runtime 사용 (edge 아님)
+
 import { createDecipheriv } from 'crypto';
-import https from 'https';
 
 const TOSS_API_BASE = 'https://apps-in-toss-api.toss.im';
 
-// mTLS 에이전트 생성
-function getMtlsAgent() {
-  const cert = process.env.TOSS_CLIENT_CERT;
-  const key = process.env.TOSS_CLIENT_KEY;
-  if (!cert || !key) {
-    console.warn('[mTLS] 인증서 환경변수 없음 - mTLS 없이 시도');
-    return null;
-  }
-  return new https.Agent({
-    cert: cert.replace(/\\n/g, '\n'),
-    key: key.replace(/\\n/g, '\n'),
-    rejectUnauthorized: true,
+// mTLS fetch: undici (Node 18 내장) 사용
+async function mtlsFetch(url, options = {}) {
+  const cert = process.env.TOSS_CLIENT_CERT?.replace(/\\n/g, '\n');
+  const key  = process.env.TOSS_CLIENT_KEY?.replace(/\\n/g, '\n');
+
+  // undici는 Node 18에서 글로벌 fetch로 노출되지만
+  // mTLS는 직접 dispatcher 설정 필요
+  const { Agent, fetch: undiciFetch } = await import('undici');
+
+  const dispatcher = (cert && key)
+    ? new Agent({ connect: { cert, key, rejectUnauthorized: true } })
+    : undefined;
+
+  const res = await undiciFetch(url, {
+    method: options.method || 'GET',
+    headers: options.headers || {},
+    body: options.body || undefined,
+    ...(dispatcher ? { dispatcher } : {}),
   });
+
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); } catch { json = null; }
+
+  return {
+    ok: res.status >= 200 && res.status < 300,
+    status: res.status,
+    json: () => json,
+    text: () => text,
+  };
 }
 
 // AES-256-GCM 복호화
@@ -43,39 +61,6 @@ function decryptField(encryptedText) {
   }
 }
 
-// mTLS fetch 래퍼 (Node.js https 모듈 사용)
-function mtlsFetch(url, options = {}) {
-  return new Promise((resolve, reject) => {
-    const agent = getMtlsAgent();
-    const urlObj = new URL(url);
-    const reqOptions = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      method: options.method || 'GET',
-      headers: options.headers || {},
-      ...(agent ? { agent } : {}),
-    };
-
-    const req = https.request(reqOptions, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        resolve({
-          ok: res.statusCode >= 200 && res.statusCode < 300,
-          status: res.statusCode,
-          json: () => Promise.resolve(JSON.parse(data)),
-          text: () => Promise.resolve(data),
-        });
-      });
-    });
-
-    req.on('error', reject);
-    if (options.body) req.write(options.body);
-    req.end();
-  });
-}
-
-// 1. authorizationCode + referrer → accessToken
 async function generateToken(authorizationCode, referrer) {
   const res = await mtlsFetch(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/generate-token`,
@@ -88,14 +73,13 @@ async function generateToken(authorizationCode, referrer) {
       body: JSON.stringify({ authorizationCode, referrer }),
     }
   );
-  const data = await res.json();
-  if (!res.ok || data.resultType === 'FAIL') {
-    throw new Error(`토큰 발급 실패: ${data?.error?.reason || JSON.stringify(data)}`);
+  const data = res.json();
+  if (!res.ok || data?.resultType === 'FAIL') {
+    throw new Error(`토큰 발급 실패: ${data?.error?.reason || res.text()}`);
   }
-  return data.success || data;
+  return data?.success || data;
 }
 
-// 2. accessToken → userKey
 async function getUserInfo(accessToken) {
   const res = await mtlsFetch(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
@@ -104,11 +88,11 @@ async function getUserInfo(accessToken) {
       headers: { 'Authorization': `Bearer ${accessToken}` },
     }
   );
-  const data = await res.json();
-  if (!res.ok || data.resultType === 'FAIL') {
-    throw new Error(`유저 정보 실패: ${data?.error?.reason || JSON.stringify(data)}`);
+  const data = res.json();
+  if (!res.ok || data?.resultType === 'FAIL') {
+    throw new Error(`유저 정보 실패: ${data?.error?.reason || res.text()}`);
   }
-  return data.success || data;
+  return data?.success || data;
 }
 
 export default async function handler(req, res) {
@@ -128,10 +112,10 @@ export default async function handler(req, res) {
     if (!accessToken) throw new Error('accessToken 없음');
 
     const userInfo = await getUserInfo(accessToken);
-    const userKey = userInfo.userKey;
+    const userKey = userInfo?.userKey;
     if (!userKey) throw new Error('userKey 없음');
 
-    const decryptedName = userInfo.name ? decryptField(userInfo.name) : null;
+    const decryptedName = userInfo?.name ? decryptField(userInfo.name) : null;
 
     return res.status(200).json({
       success: true,
