@@ -1,14 +1,25 @@
-// api/toss-login.js - 토스 로그인 서버 API
-// 환경변수:
-//   TOSS_API_KEY      - 앱인토스 API 키 (Bearer)
-//   TOSS_DECRYPT_KEY  - AES-256-GCM 복호화 키 (base64, 콘솔에서 발급)
-//   TOSS_DECRYPT_AAD  - AAD 값 (콘솔에서 발급, 없으면 "TOSS" 기본값)
-
+// api/toss-login.js - 토스 로그인 서버 API (mTLS 적용)
 import { createDecipheriv } from 'crypto';
+import https from 'https';
 
 const TOSS_API_BASE = 'https://apps-in-toss-api.toss.im';
 
-// AES-256-GCM 복호화 (토스 문서 기준)
+// mTLS 에이전트 생성
+function getMtlsAgent() {
+  const cert = process.env.TOSS_CLIENT_CERT;
+  const key = process.env.TOSS_CLIENT_KEY;
+  if (!cert || !key) {
+    console.warn('[mTLS] 인증서 환경변수 없음 - mTLS 없이 시도');
+    return null;
+  }
+  return new https.Agent({
+    cert: cert.replace(/\\n/g, '\n'),
+    key: key.replace(/\\n/g, '\n'),
+    rejectUnauthorized: true,
+  });
+}
+
+// AES-256-GCM 복호화
 function decryptField(encryptedText) {
   const key = process.env.TOSS_DECRYPT_KEY;
   if (!key || !encryptedText) return null;
@@ -32,9 +43,41 @@ function decryptField(encryptedText) {
   }
 }
 
+// mTLS fetch 래퍼 (Node.js https 모듈 사용)
+function mtlsFetch(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    const agent = getMtlsAgent();
+    const urlObj = new URL(url);
+    const reqOptions = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: options.method || 'GET',
+      headers: options.headers || {},
+      ...(agent ? { agent } : {}),
+    };
+
+    const req = https.request(reqOptions, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          json: () => Promise.resolve(JSON.parse(data)),
+          text: () => Promise.resolve(data),
+        });
+      });
+    });
+
+    req.on('error', reject);
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
+
 // 1. authorizationCode + referrer → accessToken
 async function generateToken(authorizationCode, referrer) {
-  const res = await fetch(
+  const res = await mtlsFetch(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/generate-token`,
     {
       method: 'POST',
@@ -52,9 +95,9 @@ async function generateToken(authorizationCode, referrer) {
   return data.success || data;
 }
 
-// 2. accessToken → userKey + 사용자 정보
+// 2. accessToken → userKey
 async function getUserInfo(accessToken) {
-  const res = await fetch(
+  const res = await mtlsFetch(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
     {
       method: 'GET',
@@ -80,23 +123,20 @@ export default async function handler(req, res) {
   if (!process.env.TOSS_API_KEY) return res.status(500).json({ error: 'TOSS_API_KEY 미설정' });
 
   try {
-    // 토큰 발급
     const tokenData = await generateToken(authorizationCode, referrer || 'DEFAULT');
     const { accessToken } = tokenData;
     if (!accessToken) throw new Error('accessToken 없음');
 
-    // 유저 정보
     const userInfo = await getUserInfo(accessToken);
     const userKey = userInfo.userKey;
     if (!userKey) throw new Error('userKey 없음');
 
-    // 이름 복호화 시도 (있으면)
     const decryptedName = userInfo.name ? decryptField(userInfo.name) : null;
 
     return res.status(200).json({
       success: true,
       userKey: String(userKey),
-      nick: decryptedName || null, // 복호화된 실명 (있으면 닉네임 자동 채움에 활용)
+      nick: decryptedName || null,
     });
 
   } catch (e) {
