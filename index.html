@@ -2076,7 +2076,7 @@ function makeAd(i) {
 }
 
 function attachBannerToEl(el) {
-  if (typeof window.TossAds !== 'undefined' && window.TossAds.attachBanner?.isSupported?.()) {
+  if (typeof window.TossAds !== 'undefined' && window.TossAds?.attachBanner?.isSupported?.()) {
     if (_tossAdsReady) {
       window.TossAds.attachBanner(BANNER_AD_ID, el, {
         theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
@@ -2920,6 +2920,11 @@ async function loadLastKing() {
 
     const section = document.getElementById('last-king-section');
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    // 데이터 유효성 검사
+    if (!rankingData.winners[0] || !rankingData.winners[0].nick) {
       if (section) section.style.display = 'none';
       return;
     }
@@ -4612,6 +4617,7 @@ function getChallengeProgress(actionTypeOrId) {
 }
 
 function addChallengeProgress(actionTypeOrId, add=1) {
+  if (typeof WEEKLY_CHALLENGES === 'undefined' || !WEEKLY_CHALLENGES) return;
   // actionType 또는 id로 챌린지 찾기 (둘 다 지원)
   const ch = WEEKLY_CHALLENGES.find(c=>c.actionType===actionTypeOrId || c.id===actionTypeOrId);
   if (!ch) return;
