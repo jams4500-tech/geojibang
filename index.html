@@ -400,21 +400,16 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="ob-logo">거지방</div>
     <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
 
-    <!-- 토스 로그인 (기본) -->
-    <div id="toss-login-area" style="width:100%;margin-bottom:16px;">
-      <button class="ob-btn" id="toss-login-btn" onclick="loginWithToss()"
-        style="background:linear-gradient(135deg,#0064ff,#0040cc);margin-bottom:10px;opacity:1;font-size:16px;padding:16px;">
-        🔵 토스 계정으로 1초 입장
-      </button>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-        <div style="flex:1;height:1px;background:var(--border2);"></div>
-        <span style="font-size:12px;color:var(--text3);">토스 앱이 없다면</span>
-        <div style="flex:1;height:1px;background:var(--border2);"></div>
-      </div>
-    </div>
+    <!-- 토스 로그인 (유일한 로그인 방식) -->
+    <button class="ob-btn" id="toss-login-btn" onclick="loginWithToss()"
+      style="background:linear-gradient(135deg,#0064ff,#0040cc);font-size:16px;padding:16px;margin-bottom:16px;">
+      🔵 토스로 시작하기
+    </button>
+    <div id="toss-login-status" style="font-size:12px;color:var(--text3);text-align:center;min-height:18px;"></div>
 
-    <!-- 닉네임 입력 (토스 로그인 안 될 때 대체) -->
-    <div id="ob-nick-area">
+    <!-- 신규 유저 닉네임 입력 (토스 로그인 성공 후에만 노출) -->
+    <div id="ob-nick-area" style="display:none;width:100%;margin-top:16px;">
+      <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:12px;">✅ 토스 계정 확인 완료 · 닉네임을 설정해주세요</div>
       <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
       <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()" oncompositionend="obCheck()" onkeyup="obCheck()">
       <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
@@ -4039,78 +4034,82 @@ function initTossLoginUI() {
 
 async function loginWithToss() {
   const btn = document.getElementById('toss-login-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '토스 연동 중...'; }
+  const status = document.getElementById('toss-login-status');
+  if (btn) { btn.disabled = true; btn.textContent = '연결 중...'; }
+  if (status) status.textContent = '토스 계정을 확인하고 있어요...';
 
   try {
-    // 1. 앱인토스 SDK로 authorizationCode 획득
-    let authorizationCode;
-    if (typeof window.AppsInToss?.appLogin === 'function') {
-      const result = await window.AppsInToss.appLogin();
-      authorizationCode = result?.authorizationCode;
-    } else {
-      throw new Error('토스 앱 환경이 아니에요. 닉네임으로 입장해주세요.');
+    // 1. AppsInToss SDK로 authorizationCode + referrer 획득
+    // sdk-bundle.js에서 window.appLogin / window.AppsInToss.appLogin 중 하나 사용
+    const _appLogin = window.appLogin || window.AppsInToss?.appLogin;
+    if (typeof _appLogin !== 'function') {
+      throw new Error('토스 앱에서만 로그인할 수 있어요.');
     }
-
+    const result = await _appLogin();
+    const { authorizationCode, referrer } = result || {};
     if (!authorizationCode) throw new Error('토스 인가 코드를 받지 못했어요.');
 
-    // 2. 서버에서 authorizationCode → userKey 교환
-    const res = await fetch('/api/toss-login', {
+    if (status) status.textContent = '계정 정보를 불러오는 중...';
+
+    // 2. 서버에서 authorizationCode + referrer → userKey 교환
+    const res = await fetch('https://geojibang.vercel.app/api/toss-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ authorizationCode }),
+      body: JSON.stringify({ authorizationCode, referrer: referrer || 'DEFAULT' }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || '서버 오류');
 
     const { userKey, nick: tossNick } = data;
-    const tossUid = 'toss_' + userKey; // 토스 userKey를 UID로 사용
+    const tossUid = 'toss_' + userKey;
 
     // 3. Firebase에서 기존 유저인지 확인
     let existingUser = null;
-    if (window.GJ?.ready) {
-      existingUser = await window.GJ.loadUser(tossUid);
-    }
+    if (window.GJ?.ready) existingUser = await window.GJ.loadUser(tossUid);
 
     if (existingUser) {
-      // 기존 유저: 바로 로그인
+      // 기존 유저: 바로 입장
       myProfile = {
-        uid:  tossUid,
+        uid: tossUid,
         nick: existingUser.nick,
-        bio:  existingUser.bio || '',
-        bg:   existingUser.avatarBg    || '#3a1520',
-        c:    existingUser.avatarColor || '#e8527a',
+        bio: existingUser.bio || '',
+        bg: existingUser.avatarBg || '#3a1520',
+        c: existingUser.avatarColor || '#e8527a',
       };
       myMonthScore = existingUser.monthScore || 0;
       myTotalScore = existingUser.totalScore || 0;
+      window.myProfile = myProfile;
+      window.myMonthScore = myMonthScore;
+      window.myTotalScore = myTotalScore;
       localStorage.setItem('gj_profile', JSON.stringify(myProfile));
       applyProfile();
       _updateRankUIOnly();
-      document.getElementById('onboarding').classList.add('hidden');
-      setTimeout(() => {
-        document.getElementById('onboarding').style.display = 'none';
-        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-      }, 300);
-      showToast('토스 계정으로 로그인됐어요! 반갑습니다 🥫');
+      const ob = document.getElementById('onboarding');
+      if (ob) { ob.classList.add('hidden'); setTimeout(() => { ob.style.display = 'none'; }, 300); }
+      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+      showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
-      // 신규 유저: 닉네임 입력으로 넘어감 (토스 닉네임 있으면 자동 채움)
-      if (tossNick) {
-        const nickInput = document.getElementById('ob-nick');
-        if (nickInput) {
-          nickInput.value = tossNick.slice(0, 12);
-          document.getElementById('ob-nick-len').textContent = nickInput.value.length;
-        }
-      }
-      // UID를 토스 userKey로 예약
+      // 신규 유저: 닉네임 입력창 노출
       window._pendingTossUid = tossUid;
-      showToast('토스 계정 확인됐어요! 닉네임을 설정해주세요 👆');
-      if (btn) { btn.disabled = false; btn.textContent = '✅ 토스 연동 완료 - 닉네임 설정 후 입장'; }
-      obCheck();
+      const nickArea = document.getElementById('ob-nick-area');
+      if (nickArea) nickArea.style.display = 'block';
+      if (btn) { btn.style.display = 'none'; }
+      if (status) status.textContent = '';
+      // 토스 닉네임 있으면 자동 채움
+      if (tossNick) {
+        const ni = document.getElementById('ob-nick');
+        if (ni) { ni.value = tossNick.slice(0, 12); obCheck(); }
+        document.getElementById('ob-nick-len').textContent = (tossNick.slice(0,12)).length;
+      }
     }
 
   } catch (e) {
     console.warn('[거지방] 토스 로그인 실패:', e);
-    showToast('토스 로그인 실패: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '🔵 토스 계정으로 1초 입장'; }
+    const msg = e.message?.includes('토스 앱')
+      ? '토스 앱에서만 로그인할 수 있어요.'
+      : ('로그인 실패: ' + e.message);
+    if (status) status.textContent = msg;
+    if (btn) { btn.disabled = false; btn.textContent = '🔵 토스로 시작하기'; }
   }
 }
 
@@ -4118,9 +4117,13 @@ function completeOnboarding() {
   const nick = document.getElementById('ob-nick').value.trim();
   const bio = document.getElementById('ob-bio').value.trim();
   if (!nick) return;
-  // 토스 로그인 완료됐으면 tossUid 사용, 아니면 임시 gj_ UID
-  const uid = window._pendingTossUid || ('gj_' + Date.now());
-  window._pendingTossUid = null; // 사용 후 초기화
+  // 반드시 토스 로그인 UID 필요
+  if (!window._pendingTossUid) {
+    showToast('토스 로그인을 먼저 완료해주세요');
+    return;
+  }
+  const uid = window._pendingTossUid;
+  window._pendingTossUid = null;
   myProfile = { nick, bio, bg: '#3a1520', c: '#e8527a', uid };
   myMonthScore = 0; myTotalScore = 0; // 신규 가입 초기화
   localStorage.setItem('gj_profile', JSON.stringify(myProfile));
@@ -4551,20 +4554,25 @@ window.confirmSubscribe = async function() {
 const _saved = localStorage.getItem('gj_profile');
 if (_saved) {
   try {
-    myProfile = JSON.parse(_saved);
-    if (!myProfile.uid) {
-      myProfile.uid = 'gj_' + Date.now();
-      localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+    const _p = JSON.parse(_saved);
+    if (_p && _p.nick && _p.nick !== '거지') {
+      // 토스 로그인 완료된 유저만 자동 복원
+      myProfile = _p;
+      if (!myProfile.uid) {
+        myProfile.uid = 'gj_' + Date.now();
+        localStorage.setItem('gj_profile', JSON.stringify(myProfile));
+      }
+      window.myProfile = myProfile;
+      applyProfile();
+      const ob = document.getElementById('onboarding');
+      if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
+      const bd = document.getElementById('ob-backdrop');
+      if (bd) bd.style.display = 'none';
+      setTimeout(() => {
+        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+        if (window.GJ?.initProfile) window.GJ.initProfile();
+      }, 600);
     }
-    applyProfile();
-    const ob = document.getElementById('onboarding');
-    if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
-    const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
-    // 기존 프로필 로드 시 피드 리스너 바로 시작
-    setTimeout(() => {
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-    }, 600);
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
 
@@ -4816,8 +4824,9 @@ function renderGeojiTab() {
   if (typeof CHAR_ITEMS === 'undefined' || typeof ROOM_ITEMS === 'undefined') {
     setTimeout(renderGeojiTab, 200); return;
   }
-  const equippedRoom = (myItems?.equippedRoom) || myProfile.items?.equippedRoom || 'room_default';
-  const equippedChar = (myItems?.equippedChar) || myProfile.items?.equippedChar || 'char_default';
+  const _items = typeof myItems !== 'undefined' ? myItems : {};
+  const equippedRoom = _items.equippedRoom || myProfile?.items?.equippedRoom || 'room_default';
+  const equippedChar = _items.equippedChar || myProfile?.items?.equippedChar || 'char_default';
   const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
   // roomBgs를 함수 내부에서 직접 정의
   const _roomBgs = {
