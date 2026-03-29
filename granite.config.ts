@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '거지 챌린지',
     primaryColor: '#e8527a',
-    icon: '',
+    icon: 'https://static.toss.im/appsintoss/30705/1e023176-068e-42b8-811c-91bb763ab1fd.png',
   },
   web: {
     host: 'localhost',
@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   permissions: [],
-  outdir: 'dist',
+  outdir: 'dist/web',
   webViewProps: {
     type: 'partner',
   },
