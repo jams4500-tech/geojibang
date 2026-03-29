@@ -1988,7 +1988,7 @@ const REWARDED_AD_ID = 'ait-ad-test-rewarded-id';        // 리워드형
 
 function initTossAds() {
   // TossAds 배너 SDK
-  if (typeof window.TossAds !== 'undefined' && window.TossAds.initialize?.isSupported?.()) {
+  if (typeof window.TossAds !== 'undefined' && window.TossAds.initialize) {
     window.TossAds.initialize({
       callbacks: {
         onInitialized: () => {
@@ -2076,7 +2076,7 @@ function makeAd(i) {
 }
 
 function attachBannerToEl(el) {
-  if (typeof window.TossAds !== 'undefined' && window.TossAds?.attachBanner?.isSupported?.()) {
+  if (typeof window.TossAds !== 'undefined' && typeof window.TossAds?.attachBanner === 'object') {
     if (_tossAdsReady) {
       window.TossAds.attachBanner(BANNER_AD_ID, el, {
         theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
@@ -2902,20 +2902,32 @@ async function loadLastKing() {
   if (!window.GJ?.ready) return;
   try {
     const now = new Date();
-    // 지난달 먼저 확인, 없으면 이번달 확인 (어드민에서 이번달로 발표한 경우)
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const ymPrev = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
-    const ymCurr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-    let rankingData = await window.GJ.loadRanking(ymPrev);
-    let usedYm = ymPrev;
-    let usedMonth = prevMonth;
+    // 주차 키 계산 (어드민과 동일한 방식)
+    function getWeekKey(d) {
+      const date = new Date(d || now);
+      date.setHours(0,0,0,0);
+      date.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+      const year = date.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const week = Math.ceil(((date - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+      return `${year}-W${String(week).padStart(2,'0')}`;
+    }
 
-    // 지난달 없으면 이번달 확인
+    // 이번주 → 지난주 순서로 확인
+    const ymCurr = getWeekKey(now);
+    const lastWeek = new Date(now); lastWeek.setDate(now.getDate() - 7);
+    const ymPrev = getWeekKey(lastWeek);
+
+    let rankingData = await window.GJ.loadRanking(ymCurr);
+    let usedYm = ymCurr;
+    let usedMonth = now;
+
+    // 이번주 없으면 지난주 확인
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
-      rankingData = await window.GJ.loadRanking(ymCurr);
-      usedYm = ymCurr;
-      usedMonth = now;
+      rankingData = await window.GJ.loadRanking(ymPrev);
+      usedYm = ymPrev;
+      usedMonth = lastWeek;
     }
 
     const section = document.getElementById('last-king-section');
@@ -2933,7 +2945,7 @@ async function loadLastKing() {
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = `${usedMonth.getFullYear()}년 ${usedMonth.getMonth()+1}월 거지왕`;
+    const monthLabel = `${usedYm} 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
