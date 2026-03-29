@@ -396,14 +396,6 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
         var s=document.createElement('style');
         s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
         document.head.appendChild(s);
-        // onboarding에 hidden 클래스 추가 (CSS :has() 셀렉터가 body overflow:hidden 걸지 않도록)
-        document.addEventListener('DOMContentLoaded', function(){
-          var ob=document.getElementById('onboarding');
-          if(ob) ob.classList.add('hidden');
-          var bd=document.getElementById('ob-backdrop');
-          if(bd) bd.style.display='none';
-          document.body.style.overflow='';
-        });
       }
     })();
   </script>
@@ -1416,10 +1408,8 @@ window.GJ.startFeedListener = () => {
   }
   if (emptyEl) emptyEl.remove();
 
-  // 기존 Firebase 게시물 + 광고 제거 후 최신순 재렌더링
-  feed.querySelectorAll('[data-firebase="1"]').forEach(el => el.remove());
-  // 로컬 즉시 추가된 게시물도 제거 (Firebase onSnapshot에서 다시 그리므로 중복 방지)
-  feed.querySelectorAll('.post:not([data-firebase])').forEach(el => el.remove());
+  // 기존 Firebase 게시물 제거 후 최신순 재렌더링
+  feed.querySelectorAll('.post[data-firebase="1"]').forEach(el => el.remove());
 
   // createdAt 기준 최신순 (Firebase orderBy('createdAt','desc') 이미 최신순이지만 로컬 게시물과 합쳐서 정렬)
   const banner = document.getElementById('feed-cb');
@@ -1656,12 +1646,9 @@ function timeAgo(date) {
 // 앱 로드 후 프로필 초기화
 setTimeout(async () => {
   await window.GJ.initProfile();
-  // 프로필 있고 리스너 아직 안 시작됐으면 시작 (중복 방지)
-  if (!_feedUnsubscribe && localStorage.getItem('gj_profile') && window.GJ?.startFeedListener) {
+  if (localStorage.getItem('gj_profile') && window.GJ?.startFeedListener) {
     window.GJ.startFeedListener();
   }
-  // 챌린지 빌드도 여기서 확실히
-  setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 300);
 }, 500);
 setTimeout(() => checkSubExpiry(), 300);
 setTimeout(() => loadItemPrices(), 1000);
@@ -4395,29 +4382,13 @@ window.buildRank = buildRank;
 // addToFeed — Firebase 연동 버전으로 교체
 const _origAddToFeed = addToFeed;
 window.addToFeed = async function(where, amount, memo) {
-  // Firebase가 준비됐으면 Firebase만 사용 (onSnapshot이 자동 렌더링)
+  // 로컬 즉시 표시
+  _origAddToFeed(where, amount, memo);
+  // Firebase 저장 (GJ 준비된 경우)
   if (window.GJ?.ready) {
     try {
-      // 챌린지 진행 & 점수 (로컬 즉시 반영)
-      myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
-      addChallengeProgress('record');
-      addChallengeProgress('feed');
-      buildWeeklyChallenges();
-      showToast('피드에 올렸어요 +1점! 혼나는 중...'); showTab('feed');
       await window.GJ.publishPost(where, amount, memo);
-    } catch(e) {
-      console.warn('[거지방] 게시물 Firebase 저장 실패, 로컬 폴백:', e);
-      // 실패 시 로컬 렌더링만 (점수/챌린지는 위에서 이미 처리됨)
-      const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
-      const nick = (myProfile.nick && myProfile.nick !== '거지') ? myProfile.nick : (JSON.parse(localStorage.getItem('gj_profile')||'{}').nick || myProfile.nick);
-      const p={id:pid,name:nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0],authorUid:myProfile.uid||'',authorRoom:myItems?.equippedRoom||'room_default',authorChar:myItems?.equippedChar||'char_default',authorMonthSpend:getMonthSpend()};
-      const empty = document.getElementById('feed-empty');
-      if (empty) empty.remove();
-      feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
-    }
-  } else {
-    // Firebase 미준비 — 원본 로컬 사용
-    _origAddToFeed(where, amount, memo);
+    } catch(e) { console.warn('[거지방] 게시물 Firebase 저장 실패:', e); }
   }
 };
 
@@ -4466,7 +4437,14 @@ if (_saved) {
     const bd = document.getElementById('ob-backdrop');
     if (bd) { bd.style.display = 'none'; }
     document.body.style.overflow = '';
-    // 피드 리스너는 module 쪽 initProfile 완료 후 한 번만 시작 (중복 호출 방지)
+    (function waitForGJ() {
+      if (window.GJ?.startFeedListener) {
+        window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
+      } else {
+        setTimeout(waitForGJ, 200);
+      }
+    })();
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
 
