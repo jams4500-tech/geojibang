@@ -1,40 +1,42 @@
 // api/toss-login.js - 토스 로그인 (mTLS 적용)
-// Vercel Node.js Runtime 사용 (edge 아님)
-
-import { createDecipheriv } from 'crypto';
+import { createDecipheriv, createSecureContext } from 'crypto';
+import https from 'https';
 
 const TOSS_API_BASE = 'https://apps-in-toss-api.toss.im';
 
-// mTLS fetch: undici (Node 18 내장) 사용
-async function mtlsFetch(url, options = {}) {
-  const cert = process.env.TOSS_CLIENT_CERT?.replace(/\\n/g, '\n');
-  const key  = process.env.TOSS_CLIENT_KEY?.replace(/\\n/g, '\n');
+// mTLS https.request 래퍼
+function mtlsRequest(url, options = {}, body = null) {
+  return new Promise((resolve, reject) => {
+    const cert = process.env.TOSS_CLIENT_CERT?.replace(/\\n/g, '\n');
+    const key  = process.env.TOSS_CLIENT_KEY?.replace(/\\n/g, '\n');
 
-  // undici는 Node 18에서 글로벌 fetch로 노출되지만
-  // mTLS는 직접 dispatcher 설정 필요
-  const { Agent, fetch: undiciFetch } = await import('undici');
+    const urlObj = new URL(url);
+    const reqOpts = {
+      hostname: urlObj.hostname,
+      port: 443,
+      path: urlObj.pathname,
+      method: options.method || 'GET',
+      headers: options.headers || {},
+      ...(cert && key ? { cert, key } : {}),
+    };
 
-  const dispatcher = (cert && key)
-    ? new Agent({ connect: { cert, key, rejectUnauthorized: true } })
-    : undefined;
+    const req = https.request(reqOpts, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        resolve({
+          status: res.statusCode,
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          data,
+          json() { return JSON.parse(this.data); }
+        });
+      });
+    });
 
-  const res = await undiciFetch(url, {
-    method: options.method || 'GET',
-    headers: options.headers || {},
-    body: options.body || undefined,
-    ...(dispatcher ? { dispatcher } : {}),
+    req.on('error', reject);
+    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
+    req.end();
   });
-
-  const text = await res.text();
-  let json;
-  try { json = JSON.parse(text); } catch { json = null; }
-
-  return {
-    ok: res.status >= 200 && res.status < 300,
-    status: res.status,
-    json: () => json,
-    text: () => text,
-  };
 }
 
 // AES-256-GCM 복호화
@@ -62,26 +64,28 @@ function decryptField(encryptedText) {
 }
 
 async function generateToken(authorizationCode, referrer) {
-  const res = await mtlsFetch(
+  const body = JSON.stringify({ authorizationCode, referrer });
+  const res = await mtlsRequest(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/generate-token`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
         'Authorization': `Bearer ${process.env.TOSS_API_KEY}`,
       },
-      body: JSON.stringify({ authorizationCode, referrer }),
-    }
+    },
+    body
   );
   const data = res.json();
   if (!res.ok || data?.resultType === 'FAIL') {
-    throw new Error(`토큰 발급 실패: ${data?.error?.reason || res.text()}`);
+    throw new Error(`토큰 발급 실패 (${res.status}): ${data?.error?.reason || res.data}`);
   }
   return data?.success || data;
 }
 
 async function getUserInfo(accessToken) {
-  const res = await mtlsFetch(
+  const res = await mtlsRequest(
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
     {
       method: 'GET',
@@ -90,7 +94,7 @@ async function getUserInfo(accessToken) {
   );
   const data = res.json();
   if (!res.ok || data?.resultType === 'FAIL') {
-    throw new Error(`유저 정보 실패: ${data?.error?.reason || res.text()}`);
+    throw new Error(`유저 정보 실패 (${res.status}): ${data?.error?.reason || res.data}`);
   }
   return data?.success || data;
 }
