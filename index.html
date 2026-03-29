@@ -4052,13 +4052,21 @@ async function loginWithToss() {
     if (status) status.textContent = '계정 정보를 불러오는 중...';
 
     // 2. 서버에서 authorizationCode + referrer → userKey 교환
-    const res = await fetch('https://geojibang.vercel.app/api/toss-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ authorizationCode, referrer: referrer || 'DEFAULT' }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || '서버 오류');
+    let res, data;
+    try {
+      res = await fetch('https://geojibang.vercel.app/api/toss-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorizationCode, referrer: referrer || 'DEFAULT' }),
+      });
+    } catch (fetchErr) {
+      throw new Error('네트워크 오류: ' + fetchErr.message);
+    }
+    try { data = await res.json(); } catch {
+      const txt = await res.text().catch(() => '');
+      throw new Error('서버 응답 오류 (' + res.status + '): ' + txt.slice(0, 80));
+    }
+    if (!data.success) throw new Error(data.error || '서버 오류 ' + res.status);
 
     const { userKey, nick: tossNick } = data;
     const tossUid = 'toss_' + userKey;
