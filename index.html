@@ -400,7 +400,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div id="ob-login-view" style="width:100%;height:100%;display:flex;flex-direction:column;min-height:100vh;">
       <!-- 상단 히어로 -->
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px 32px;background:#ffffff;">
-        <div style="font-size:80px;margin-bottom:16px;line-height:1;">🪙</div>
+        <div style="margin-bottom:16px;line-height:1;"><svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" width="80" height="100" shape-rendering="crispEdges"></svg></div>
         <div style="font-size:32px;font-weight:900;color:#e8527a;letter-spacing:-1.5px;margin-bottom:6px;">거지 챌린지</div>
         <div style="font-size:15px;color:#888;text-align:center;line-height:1.7;">지출을 공개하고<br>AI 거지방장에게 혼나세요</div>
       </div>
@@ -4132,20 +4132,13 @@ async function loginWithToss() {
       localStorage.setItem('gj_profile', JSON.stringify(myProfile));
       applyProfile();
       _updateRankUIOnly();
+      // 온보딩 완전 제거
       const ob = document.getElementById('onboarding');
-      if (ob) { ob.classList.add('hidden'); ob.style.display = 'none'; }
-      // main 영역 보이게
-      const mainEl = document.getElementById('main');
-      if (mainEl) mainEl.style.display = 'block';
-      // 피드+점수 로드
+      if (ob) ob.remove();
+      // 피드 시작
       showTab('feed');
       updateMyRankUI();
-      setTimeout(() => {
-        buildFeed();
-        buildRank();
-        if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-        renderGeojiTab();
-      }, 300);
+      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
       showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
       // 신규 유저: 닉네임 입력창 노출
@@ -4188,14 +4181,12 @@ function completeOnboarding() {
   myMonthScore = 0; myTotalScore = 0; // 신규 가입 초기화
   localStorage.setItem('gj_profile', JSON.stringify(myProfile));
   applyProfile();
-  document.getElementById('onboarding').classList.add('hidden');
-  setTimeout(() => {
-    document.getElementById('onboarding').style.display = 'none';
-    const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
-    // 온보딩 완료 후 피드 리스너 시작
-    if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-  }, 300);
+  const _ob = document.getElementById('onboarding');
+  if (_ob) _ob.remove();
+  const _bd = document.getElementById('ob-backdrop');
+  if (_bd) _bd.remove();
+  showTab('feed');
+  if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
   showToast('환영해요, ' + nick + '님! 거지방에 입장했어요 🥫');
   if (window.GJ?.ready) {
     window.GJ.saveUser(uid, {
@@ -4535,6 +4526,17 @@ async function generateReport() {
 
 buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
 
+// 온보딩 거지 캐릭터 렌더링
+(function() {
+  const wrap = document.getElementById('ob-geoji-wrap');
+  if (!wrap || typeof CHAR_ITEMS === 'undefined') return;
+  const char = CHAR_ITEMS[0]; // 기본 거지
+  const S = 4;
+  const cx = 40, groundY = 90;
+  const charSvg = drawChar(char, cx, groundY);
+  wrap.innerHTML = '<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" width="80" height="100" shape-rendering="crispEdges">' + charSvg + '</svg>';
+})();
+
 // 오늘 복권 사용 상태 UI 반영
 if (lotteryUsed) {
   document.getElementById('lc-normal')?.classList.add('used');
@@ -4625,13 +4627,14 @@ if (_saved) {
       window.myProfile = myProfile;
       applyProfile();
       const ob = document.getElementById('onboarding');
-      if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
+      if (ob) ob.remove();
       const bd = document.getElementById('ob-backdrop');
-      if (bd) bd.style.display = 'none';
+      if (bd) bd.remove();
+      showTab('feed');
       setTimeout(() => {
         if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
         if (window.GJ?.initProfile) window.GJ.initProfile();
-      }, 600);
+      }, 400);
     }
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
