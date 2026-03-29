@@ -4898,7 +4898,10 @@ function renderGeojiTab() {
   const _items = typeof myItems !== 'undefined' ? myItems : {};
   const equippedRoom = _items.equippedRoom || myProfile?.items?.equippedRoom || 'room_default';
   const equippedChar = _items.equippedChar || myProfile?.items?.equippedChar || 'char_default';
-  const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
+  const _coins = typeof coins !== 'undefined' ? coins : 0;
+  const _myTotalScore = typeof myTotalScore !== 'undefined' ? myTotalScore : 0;
+  const _geojiTapCount = typeof geojiTapCount !== 'undefined' ? geojiTapCount : 0;
+  const prog = Math.min(100, _geojiTapCount/GEOJI_TAP_PER_AD*100);
   // roomBgs를 함수 내부에서 직접 정의
   const _roomBgs = {
     room_default:'linear-gradient(180deg,#e8dfd0 0%,#d4c4a8 100%)',
@@ -4909,8 +4912,8 @@ function renderGeojiTab() {
   };
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
-      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🪙 ${coins}개</div>
-      <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${myTotalScore}점</div>
+      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🪙 ${_coins}개</div>
+      <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${_myTotalScore}점</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
       <div id="geoji-room-wrap" onclick="tapGeojiChar()" style="cursor:pointer;width:100%;max-width:320px;border-radius:12px;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;">
@@ -4919,7 +4922,7 @@ function renderGeojiTab() {
       <div style="margin-top:12px;width:200px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;">
           <span>구걸 중...</span>
-          <span id="geoji-tap-prog">${geojiTapCount}/${GEOJI_TAP_PER_AD}</span>
+          <span id="geoji-tap-prog">${_geojiTapCount}/${GEOJI_TAP_PER_AD}</span>
         </div>
         <div style="height:4px;background:var(--surface2);border-radius:2px;">
           <div id="geoji-tap-bar" style="height:100%;background:var(--pink);border-radius:2px;width:${prog}%;transition:width .2s;"></div>
