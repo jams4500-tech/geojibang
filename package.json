@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "vercel dev",
-    "build": "node -e \"const fs=require('fs');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');\""
+    "build": "node build.mjs"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
 }
