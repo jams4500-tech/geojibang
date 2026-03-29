@@ -390,6 +390,15 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 </style>
 </head>
 <body>
+  <script>
+    (function(){
+      if(localStorage.getItem('gj_profile')){
+        var s=document.createElement('style');
+        s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
 <div class="app">
 
   <!-- Onboarding backdrop -->
@@ -1635,7 +1644,12 @@ function timeAgo(date) {
 }
 
 // 앱 로드 후 프로필 초기화
-setTimeout(() => window.GJ.initProfile(), 500);
+setTimeout(async () => {
+  await window.GJ.initProfile();
+  if (localStorage.getItem('gj_profile') && window.GJ?.startFeedListener) {
+    window.GJ.startFeedListener();
+  }
+}, 500);
 setTimeout(() => checkSubExpiry(), 300);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
@@ -4423,10 +4437,14 @@ if (_saved) {
     const bd = document.getElementById('ob-backdrop');
     if (bd) { bd.style.display = 'none'; }
     document.body.style.overflow = '';
-    setTimeout(() => {
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-      setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
-    }, 600);
+    (function waitForGJ() {
+      if (window.GJ?.startFeedListener) {
+        window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
+      } else {
+        setTimeout(waitForGJ, 200);
+      }
+    })();
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
 
@@ -4618,6 +4636,9 @@ function toggleChallengeBanner() {
   const list = document.getElementById('challenge-list');
   const icon = document.getElementById('challenge-toggle-icon');
   if (!list) return;
+  if (!list.innerHTML.trim() && typeof buildWeeklyChallenges === 'function') {
+    buildWeeklyChallenges();
+  }
   const isOpen = list.style.display !== 'none';
   list.style.display = isOpen ? 'none' : 'flex';
   if (!isOpen) list.style.flexDirection = 'column';
@@ -4676,8 +4697,8 @@ const GEOJI_TAP_PER_AD = 5;
 function renderGeojiTab() {
   const section = document.getElementById('tab-geoji');
   if (!section) return;
-  const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
-  const equippedChar = myProfile.items?.equippedChar || 'char_default';
+  const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
+  const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
   const _coins = typeof coins !== 'undefined' ? coins : 0;
   const _myTotalScore = typeof myTotalScore !== 'undefined' ? myTotalScore : 0;
   const _geojiTapCount = typeof geojiTapCount !== 'undefined' ? geojiTapCount : 0;
