@@ -568,7 +568,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
               <div style="font-size:13px;font-weight:700;color:var(--text);">🤖 AI 가계부 코치 구독 중</div>
               <div style="font-size:11px;color:var(--text3);margin-top:2px;">월 990원 · 다음 결제일에 자동 갱신</div>
             </div>
-            <button onclick="cancelSubscribe()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;">구독 취소</button>
+
           </div>
           <!-- 월 재정 설정 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
@@ -1908,12 +1908,11 @@ function showTab(n) {
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
   if (n === 'geoji') {
     renderGeojiTab();
-    // 실제 프로필 방+캐릭터 렌더링
     setTimeout(() => {
-      const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
-      const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
-      renderRoom('geoji-room-svg', equippedRoom, equippedChar);
-    }, 50);
+      const equippedRoom = (typeof myItems!=='undefined'&&myItems?.equippedRoom) || myProfile?.items?.equippedRoom || 'room_default';
+      const equippedChar = (typeof myItems!=='undefined'&&myItems?.equippedChar) || myProfile?.items?.equippedChar || 'char_default';
+      if (document.getElementById('geoji-room-svg')) renderRoom('geoji-room-svg', equippedRoom, equippedChar);
+    }, 100);
   }
 }
 
@@ -4548,7 +4547,7 @@ async function generateReport() {
     });
     const data = await res.json();
     el.textContent = data?.text || '분석 중 오류가 발생했어요.';
-    if(el.id==='ai-report-text') el.dataset.loaded = '1';
+    el.dataset.loaded = '1';
     el.dataset.loaded = '1';
     el.dataset.loaded = '1';
   } catch {
@@ -4640,7 +4639,7 @@ const _saved = localStorage.getItem('gj_profile');
 if (_saved) {
   try {
     const _p = JSON.parse(_saved);
-    if (_p && _p.nick && _p.nick !== '거지' && _p.uid) {
+    if (_p && _p.nick && _p.nick !== '거지' && _p.uid && (_p.uid.startsWith('toss_') || _p.uid.startsWith('gj_'))) {
       // uid 있는 유저만 자동 복원 (토스 로그인 완료 유저)
       myProfile = _p;
       if (!myProfile.uid) {
