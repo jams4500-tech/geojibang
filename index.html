@@ -5120,6 +5120,7 @@ function openGeojilryeokShop(amount) {
 }
 
 // ── 거지맵 ────────────────────────────────────────────
+function escMap(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 const NAVER_CLIENT_ID = '1st8ia1c3x';
 const MAP_CATEGORIES = ['전체','한식','중식','일식','분식','카페','편의점','기타'];
 const MAP_CAT_EMOJI = {'전체':'🗺️','한식':'🍚','중식':'🥢','일식':'🍱','분식':'🥟','카페':'☕','편의점':'🏪','기타':'🥫'};
@@ -5282,9 +5283,8 @@ function renderMapMarkers() {
       position: new naver.maps.LatLng(place.lat, place.lng),
       map: _geojiMap,
       icon: {
-        content: `<div style="background:#fff;border:2px solid var(--pink,#e8527a);border-radius:12px;padding:4px 8px;font-size:11px;font-weight:700;color:#e8527a;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);cursor:pointer;">
-          ${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.name}<br>
-          <span style="font-size:10px;">🥫×${rating}</span>
+        content: `<div style="background:#fff;border:2px solid #e8527a;border-radius:12px;padding:5px 10px;font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;max-width:120px;overflow:hidden;text-overflow:ellipsis;">
+          ${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.name}
         </div>`,
         anchor: new naver.maps.Point(0, 0)
       }
@@ -5433,8 +5433,8 @@ async function openPlaceDetail(placeId) {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
         <div>
           <div style="font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px;">${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.category||'기타'}</div>
-          <div style="font-size:18px;font-weight:900;color:var(--text);">${esc(place.name)}</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${esc(place.address||'주소 없음')}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);">${escMap(place.name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${escMap(place.address||'주소 없음')}</div>
         </div>
         <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
           👍 ${place.likes||0}
@@ -5443,11 +5443,11 @@ async function openPlaceDetail(placeId) {
       <div style="font-size:14px;margin-bottom:4px;">${ratingStr}</div>
       <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
         <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">대표 메뉴</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);">💰 ${esc(place.menu||'')}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);">💰 ${escMap(place.menu||'')}</div>
       </div>
-      ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${esc(place.desc)}</div>` : ''}
+      ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${escMap(place.desc)}</div>` : ''}
       ${place.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${place.tags.map(t=>`<span style="background:rgba(232,82,122,0.08);color:var(--pink);border-radius:12px;padding:3px 8px;font-size:11px;">${t}</span>`).join('')}</div>` : ''}
-      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">✍️ ${esc(place.authorNick||'익명')}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">✍️ ${escMap(place.authorNick||'익명')}</div>
     </div>
     <!-- 댓글 -->
     <div style="border-top:1px solid var(--border);padding:14px 16px;">
