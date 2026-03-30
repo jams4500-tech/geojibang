@@ -8,12 +8,16 @@ function mtlsRequest(url, options = {}, body = null) {
     const cert = process.env.TOSS_CLIENT_CERT?.replace(/\\n/g, '\n');
     const key  = process.env.TOSS_CLIENT_KEY?.replace(/\\n/g, '\n');
     const urlObj = new URL(url);
+    const bodyStr = body ? (typeof body === 'string' ? body : JSON.stringify(body)) : null;
     const reqOpts = {
       hostname: urlObj.hostname,
       port: 443,
       path: urlObj.pathname + (urlObj.search || ''),
       method: options.method || 'POST',
-      headers: options.headers || {},
+      headers: {
+        ...(options.headers || {}),
+        ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {}),
+      },
       ...(cert && key ? { cert, key } : {}),
     };
     const req = https.request(reqOpts, (res) => {
@@ -29,7 +33,7 @@ function mtlsRequest(url, options = {}, body = null) {
       });
     });
     req.on('error', reject);
-    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
+    if (bodyStr) req.write(bodyStr);
     req.end();
   });
 }
@@ -49,49 +53,55 @@ export default async function handler(req, res) {
   const API_KEY = process.env.TOSS_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: 'API 키 미설정' });
 
+  const authHeader = `Bearer ${API_KEY}`;
+
   try {
     // 1단계: 지급 키 발급
+    const keyBody = JSON.stringify({ promotionCode });
     const keyRes = await mtlsRequest(
       `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/promotion/key`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
+          'Authorization': authHeader,
           'x-toss-user-key': userKey,
         }
       },
-      { promotionCode }
+      keyBody
     );
 
-    const keyText = keyRes.data;
-    console.log('[toss-reward] 키 발급 응답:', keyText);
+    console.log('[toss-reward] 키 발급 응답:', keyRes.data);
     let keyData;
-    try { keyData = JSON.parse(keyText); } catch(e) { return res.status(500).json({ error: '키 발급 파싱 실패', raw: keyText }); }
+    try { keyData = keyRes.json(); } catch(e) {
+      return res.status(500).json({ error: '키 파싱 실패', raw: keyRes.data });
+    }
 
-    const key = keyData?.success?.key || keyData?.key;
-    if (!key) {
-      return res.status(500).json({ error: '지급 키 발급 실패', detail: keyData });
+    const rewardKey = keyData?.success?.key || keyData?.key;
+    if (!rewardKey) {
+      return res.status(500).json({ error: '지급 키 없음', detail: keyData });
     }
 
     // 2단계: 포인트 지급
+    const execBody = JSON.stringify({ promotionCode, key: rewardKey, amount });
     const execRes = await mtlsRequest(
       `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/promotion/execute-promotion`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
+          'Authorization': authHeader,
           'x-toss-user-key': userKey,
         }
       },
-      { promotionCode, key, amount }
+      execBody
     );
 
-    const execText = execRes.data;
-    console.log('[toss-reward] 지급 결과:', execText);
+    console.log('[toss-reward] 지급 결과:', execRes.data);
     let execData;
-    try { execData = JSON.parse(execText); } catch(e) { return res.status(500).json({ error: '지급 파싱 실패', raw: execText }); }
+    try { execData = execRes.json(); } catch(e) {
+      return res.status(500).json({ error: '지급 파싱 실패', raw: execRes.data });
+    }
 
     if (execData?.resultType === 'SUCCESS') {
       return res.status(200).json({ success: true, result: execData });
