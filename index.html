@@ -5182,8 +5182,12 @@ function renderGeojiMap() {
             </div>
           </div>
           <div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">대표 메뉴 & 가격 *</div>
-            <input id="place-menu" placeholder="예) 김밥 2,000원 / 라면 3,500원" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">대표 메뉴 *</div>
+            <input id="place-menu" placeholder="예) 김밥, 라면, 순대국밥" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가격 *</div>
+            <input id="place-price" placeholder="예) 2,000원~4,000원 / 점심 특선 6,000원" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
           </div>
           <div>
             <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가성비 포인트</div>
@@ -5283,8 +5287,9 @@ function renderMapMarkers() {
       position: new naver.maps.LatLng(place.lat, place.lng),
       map: _geojiMap,
       icon: {
-        content: `<div style="background:#fff;border:2px solid #e8527a;border-radius:12px;padding:5px 10px;font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;max-width:120px;overflow:hidden;text-overflow:ellipsis;">
-          ${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.name}
+        content: `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:110px;">
+          <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.name}</div>
+          <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;">${place.price||place.menu||''}</div>
         </div>`,
         anchor: new naver.maps.Point(0, 0)
       }
@@ -5387,16 +5392,18 @@ async function submitPlace() {
   const name = document.getElementById('place-name')?.value?.trim();
   const addr = document.getElementById('place-addr')?.value?.trim();
   const menu = document.getElementById('place-menu')?.value?.trim();
+  const price = document.getElementById('place-price')?.value?.trim();
   const desc = document.getElementById('place-desc')?.value?.trim();
 
   if (!name) { showToast('식당 이름을 입력해주세요'); return; }
-  if (!menu) { showToast('대표 메뉴와 가격을 입력해주세요'); return; }
+  if (!menu) { showToast('대표 메뉴를 입력해주세요'); return; }
+  if (!price) { showToast('가격을 입력해주세요'); return; }
   if (!_addPlaceLat || !_addPlaceLng) { showToast('주소를 검색해서 위치를 확인해주세요'); return; }
   if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
 
   try {
     await window.GJ.addPlace({
-      name, address: addr, menu, desc: desc || '',
+      name, address: addr, menu, price: price || '', desc: desc || '',
       category: _addPlaceCat,
       tags: [..._addPlaceTags],
       rating: _addPlaceRating,
@@ -5442,8 +5449,16 @@ async function openPlaceDetail(placeId) {
       </div>
       <div style="font-size:14px;margin-bottom:4px;">${ratingStr}</div>
       <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">대표 메뉴</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);">💰 ${escMap(place.menu||'')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">대표 메뉴</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">🍽️ ${escMap(place.menu||'')}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">가격</div>
+            <div style="font-size:14px;font-weight:700;color:var(--pink);">💰 ${escMap(place.price||'')}</div>
+          </div>
+        </div>
       </div>
       ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${escMap(place.desc)}</div>` : ''}
       ${place.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${place.tags.map(t=>`<span style="background:rgba(232,82,122,0.08);color:var(--pink);border-radius:12px;padding:3px 8px;font-size:11px;">${t}</span>`).join('')}</div>` : ''}

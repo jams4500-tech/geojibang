@@ -111,6 +111,7 @@ tbody tr:hover td{background:var(--surface2);}
       <div class="nav-item" onclick="showPage('shop')" id="nav-shop"><span class="nav-icon">🏪</span>상점 가격 관리</div>
       <div class="nav-item" onclick="showPage('challenge')" id="nav-challenge"><span class="nav-icon">🔥</span>챌린지 관리</div>
       <div class="nav-item" onclick="showPage('rewards')" id="nav-rewards"><span class="nav-icon">🏆</span>리워드 신청 관리</div>
+      <div class="nav-item" onclick="showPage('geojimap')" id="nav-geojimap"><span class="nav-icon">🗺️</span>거지맵 관리</div>
     </nav>
     <div class="sidebar-footer">pw: gj2026admin · v2.2</div>
   </div>
@@ -204,6 +205,7 @@ window.showPage = async page => {
     else if (page==='shop')    await renderShop(m);
     else if (page==='challenge') await renderChallenge(m);
     else if (page==='rewards')   await renderRewards(m);
+    else if (page==='geojimap')  await renderGeojiMap(m);
   } catch(e) { m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`; console.error(e); }
 };
 
@@ -895,6 +897,100 @@ window.saveChallenges = async function() {
     });
     toast(`✅ 챌린지 ${challenges.length}개 저장됐어요! 앱에 즉시 반영돼요.`);
   } catch(e) { toast('⚠️ 저장 실패: '+e.message); }
+};
+
+// ── 거지맵 관리 ──────────────────────────────────
+async function renderGeojiMap(m) {
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc')));
+  const places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🗺️ 거지맵 관리</div>
+    <div class="page-sub">총 ${places.length}개 식당 등록</div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>식당명</th><th>카테고리</th><th>메뉴/가격</th><th>평점</th><th>등록자</th><th>좋아요</th><th>관리</th></tr>
+      ${places.map(p => `<tr>
+        <td>
+          <div style="font-weight:700;">${esc(p.name)}</div>
+          <div style="font-size:11px;color:var(--text3);">${esc(p.address||'')}</div>
+        </td>
+        <td><span class="badge">${p.category||'기타'}</span></td>
+        <td>
+          <div style="font-size:12px;">${esc(p.menu||'')}</div>
+          <div style="font-size:12px;color:var(--pink);font-weight:700;">${esc(p.price||'')}</div>
+        </td>
+        <td><span class="badge badge-gold">${'🥫'.repeat(Math.min(p.rating||1,5))}</span></td>
+        <td style="font-size:12px;">${esc(p.authorNick||'익명')}</td>
+        <td>👍 ${p.likes||0}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="editPlace('${p.id}')">수정</button>
+          <button class="btn btn-red btn-sm" onclick="deletePlace('${p.id}','${esc(p.name)}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+    </table>
+  </div>
+
+  <!-- 수정 폼 -->
+  <div id="edit-place-form" style="display:none;" class="card" style="margin-top:16px;">
+    <div class="card-header"><div class="card-title">✏️ 식당 수정</div></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <input type="hidden" id="edit-place-id">
+      <div><label style="font-size:12px;color:var(--text3);">식당명</label><input id="edit-place-name" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">주소</label><input id="edit-place-addr" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">대표 메뉴</label><input id="edit-place-menu" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">가격</label><input id="edit-place-price" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">가성비 포인트</label><textarea id="edit-place-desc" class="text-input" style="width:100%;margin-top:4px;height:60px;resize:none;"></textarea></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-pink" onclick="saveEditPlace()">저장</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('edit-place-form').style.display='none'">취소</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+window.editPlace = async (id) => {
+  const snap = await getDoc(doc(db,'geojimap_places',id));
+  if (!snap.exists()) return;
+  const p = snap.data();
+  document.getElementById('edit-place-id').value = id;
+  document.getElementById('edit-place-name').value = p.name || '';
+  document.getElementById('edit-place-addr').value = p.address || '';
+  document.getElementById('edit-place-menu').value = p.menu || '';
+  document.getElementById('edit-place-price').value = p.price || '';
+  document.getElementById('edit-place-desc').value = p.desc || '';
+  const form = document.getElementById('edit-place-form');
+  form.style.display = 'block';
+  form.scrollIntoView({ behavior: 'smooth' });
+};
+
+window.saveEditPlace = async () => {
+  const id = document.getElementById('edit-place-id').value;
+  if (!id) return;
+  try {
+    await updateDoc(doc(db,'geojimap_places',id), {
+      name: document.getElementById('edit-place-name').value.trim(),
+      address: document.getElementById('edit-place-addr').value.trim(),
+      menu: document.getElementById('edit-place-menu').value.trim(),
+      price: document.getElementById('edit-place-price').value.trim(),
+      desc: document.getElementById('edit-place-desc').value.trim(),
+    });
+    toast('✅ 수정 완료!');
+    document.getElementById('edit-place-form').style.display = 'none';
+    showPage('geojimap');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.deletePlace = async (id, name) => {
+  if (!confirm(`"${name}" 식당을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',id));
+    toast('🗑️ 삭제됐어요.');
+    showPage('geojimap');
+  } catch(e) { alert('오류: ' + e.message); }
 };
 
 // ── 리워드 신청 관리 ──────────────────────────────────
