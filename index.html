@@ -3408,8 +3408,18 @@ function submitEditPost() {
 // 아이템 가격 — Firebase geojibang_settings/item_prices 에서 로드
 // (어드민에서 변경 → 앱 재접속 시 자동 반영)
 const DEFAULT_ITEM_PRICES = {
-  room_default:0, room_cave:200, room_rooftop:300, room_gosiwon:150, room_park:500,
-  char_default:0, char_paper_bag:100, char_crown:400, char_santa:250, char_ninja:350, char_vip:500
+  // 방 배경
+  room_default:0,    room_cave:200,    room_rooftop:300,  room_gosiwon:150,
+  room_park:500,     room_subway:300,  room_jjimjil:350,  room_rooftop2:400,
+  room_library:250,  room_toilet:150,  room_church:200,   room_mart:350,
+  room_sauna:400,    room_cyber:450,   room_pojang:350,   room_semi:200,
+  room_airport:500,  room_camping:450,
+  // 캐릭터 스킨
+  char_default:0,    char_paper_bag:100, char_crown:400,  char_santa:250,
+  char_ninja:350,    char_vip:500,       char_ghost:200,  char_chef:250,
+  char_cowboy:300,   char_alien:350,     char_zombie:300, char_clown:250,
+  char_pirate:400,   char_mummy:300,     char_wizard:450, char_robot:500,
+  char_vampire:400,  char_snowman:200,   char_crab:350,
 };
 let _loadedItemPrices = null;
 async function loadItemPrices() {

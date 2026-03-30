@@ -162,8 +162,8 @@ const COLS = {
 const GRADES=[{min:2000,label:'거지신 👑',color:'#e8527a'},{min:1000,label:'전설의 거지 🔥',color:'#f0c040'},{min:600,label:'거지 고수 ⚡',color:'#7ab4f0'},{min:300,label:'프로 거지 🎯',color:'#44cc88'},{min:100,label:'동네 거지 🥫',color:'#c0a8b4'},{min:0,label:'거지 새싹 🌱',color:'#7a5f68'}];
 const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛'];
 const REWARDS=[5000,3000,1000,500,500,0,0,0,0,0];
-const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,room_subway:300,room_jjimjil:350,room_rooftop2:400,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500,char_ghost:200,char_chef:250,char_cowboy:300};
-const ITEM_NAMES={room_default:'기본 방',room_cave:'지하 동굴방',room_rooftop:'옥탑방',room_gosiwon:'고시원',room_park:'공원 벤치',room_subway:'지하철 역사',room_jjimjil:'찜질방',room_rooftop2:'옥상 별빛방',char_default:'기본 거지',char_paper_bag:'종이봉투 머리',char_crown:'거지왕 왕관',char_santa:'산타 거지',char_ninja:'닌자 거지',char_vip:'VIP 거지',char_ghost:'투명 거지',char_chef:'백수 셰프',char_cowboy:'카우보이 거지'};
+const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,room_subway:300,room_jjimjil:350,room_rooftop2:400,room_library:250,room_toilet:150,room_church:200,room_mart:350,room_sauna:400,room_cyber:450,room_pojang:350,room_semi:200,room_airport:500,room_camping:450,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500,char_ghost:200,char_chef:250,char_cowboy:300,char_alien:350,char_zombie:300,char_clown:250,char_pirate:400,char_mummy:300,char_wizard:450,char_robot:500,char_vampire:400,char_snowman:200,char_crab:350};
+const ITEM_NAMES={room_default:'기본 방',room_cave:'지하 동굴방',room_rooftop:'옥탑방',room_gosiwon:'고시원',room_park:'공원 벤치',room_subway:'지하철 역사',room_jjimjil:'찜질방',room_rooftop2:'옥상 별빛방',room_library:'도서관 자리',room_toilet:'화장실 피신',room_church:'교회 무료급식',room_mart:'대형마트 시식',room_sauna:'목욕탕 탈의실',room_cyber:'PC방',room_pojang:'포장마차',room_semi:'반지하',room_airport:'공항 대합실',room_camping:'공원 텐트',char_default:'기본 거지',char_paper_bag:'종이봉투 머리',char_crown:'거지왕 왕관',char_santa:'산타 거지',char_ninja:'닌자 거지',char_vip:'VIP 거지',char_ghost:'투명 거지',char_chef:'백수 셰프',char_cowboy:'카우보이 거지',char_alien:'외계인 거지',char_zombie:'좀비 거지',char_clown:'광대 거지',char_pirate:'해적 거지',char_mummy:'미라 거지',char_wizard:'마법사 거지',char_robot:'고장난 로봇',char_vampire:'흡혈귀 거지',char_snowman:'눈사람 거지',char_crab:'게 거지'};
 
 const gg = s => GRADES.find(g=>s>=g.min)||GRADES[5];
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
@@ -600,8 +600,8 @@ async function renderShop(m) {
   const uSnap = await getDocs(COLS.users());
   const users = uSnap.docs.map(d=>d.data());
 
-  const ROOMS = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2'];
-  const CHARS = ['char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy'];
+  const ROOMS = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2','room_library','room_toilet','room_church','room_mart','room_sauna','room_cyber','room_pojang','room_semi','room_airport','room_camping'];
+  const CHARS = ['char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy','char_alien','char_zombie','char_clown','char_pirate','char_mummy','char_wizard','char_robot','char_vampire','char_snowman','char_crab'];
 
   const priceRow = (id) => `<tr>
     <td>${ITEM_NAMES[id]}</td>
@@ -637,7 +637,7 @@ async function renderShop(m) {
 }
 
 window.savePrices = async () => {
-  const ids = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2','char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy'];
+  const ids = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2','room_library','room_toilet','room_church','room_mart','room_sauna','room_cyber','room_pojang','room_semi','room_airport','room_camping','char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy','char_alien','char_zombie','char_clown','char_pirate','char_mummy','char_wizard','char_robot','char_vampire','char_snowman','char_crab'];
   const prices = {};
   for (const id of ids) {
     const el = document.getElementById('price-'+id);
