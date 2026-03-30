@@ -2156,7 +2156,7 @@ function makeAd(i) {
 }
 
 function attachBannerToEl(el) {
-  if (typeof window.TossAds !== 'undefined' && typeof window.TossAds?.attachBanner === 'object') {
+  if (typeof window.TossAds !== 'undefined' && typeof window.TossAds?.attachBanner === 'function') {
     if (_tossAdsReady) {
       window.TossAds.attachBanner(BANNER_AD_ID, el, {
         theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
