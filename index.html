@@ -3088,21 +3088,42 @@ async function loadLastKing() {
   } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
 }
 
-window.claimRankReward = function() {
+window.claimRankReward = async function() {
   const btn = document.getElementById('my-reward-claim-btn');
   const ym = btn.dataset.ym;
-  const reward = btn.dataset.reward;
+  const reward = parseInt(btn.dataset.reward || 0);
   if (!ym || !reward) return;
-  // 신청 기록 저장
-  localStorage.setItem('gj_claimed_' + ym, '1');
-  btn.textContent = '✅ 신청 완료';
+  btn.textContent = '지급 중...';
   btn.disabled = true;
-  btn.style.opacity = '0.5';
-  showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
-  // Firebase에 신청 기록 저장 (어드민에서 확인용)
+
+  // 프로모션 코드 선택
+  let promoCode;
+  if (reward >= 5000) promoCode = PROMO_KING_1ST;
+  else if (reward >= 3000) promoCode = PROMO_KING_2ND;
+  else promoCode = PROMO_KING_3TO5;
+
+  // 토스포인트 실제 지급
+  const userKey = myProfile.uid?.replace('toss_', '');
+  let ok = false;
+  if (userKey && promoCode) {
+    ok = await giveTossPoints(userKey, promoCode, reward);
+  }
+
+  if (ok) {
+    localStorage.setItem('gj_claimed_' + ym, '1');
+    btn.textContent = '✅ 지급 완료';
+    btn.style.opacity = '0.5';
+    showToast('🏆 토스포인트 ' + reward.toLocaleString() + 'P 지급됐어요!');
+  } else {
+    btn.textContent = '✅ 신청 완료';
+    btn.style.opacity = '0.5';
+    showToast('신청이 접수됐어요. 영업일 3일 내 지급돼요.');
+  }
+
+  // Firebase에 신청 기록 저장
   if (window.GJ?.ready && myProfile.uid) {
     window.GJ.saveUser(myProfile.uid, {
-      rewardClaim: { ym, reward: parseInt(reward), nick: myProfile.nick, claimedAt: new Date().toISOString() }
+      rewardClaim: { ym, reward, nick: myProfile.nick, claimedAt: new Date().toISOString(), paid: ok }
     }).catch(()=>{});
   }
 };
@@ -3288,9 +3309,23 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
 }
 
 function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
-function doConvert() {
-  const sets=Math.floor(coins/5), pts=sets*5; coins=coins%5; updatePiggy(); closeOverlay('ov-convert');
-  showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
+async function doConvert() {
+  const sets = Math.floor(coins/5);
+  const pts = sets * 5;
+  if (pts <= 0) return;
+  coins = coins % 5;
+  updatePiggy();
+  closeOverlay('ov-convert');
+
+  // 토스포인트 실제 지급
+  const userKey = myProfile.uid?.replace('toss_', '');
+  if (userKey && typeof giveTossPoints === 'function') {
+    const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, pts);
+    showToast(ok ? '🎉 토스 포인트 ' + pts + 'P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
+  } else {
+    showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
+  }
+  localStorage.setItem('gj_coins', coins);
 }
 
 /* lottery */
@@ -5304,6 +5339,33 @@ function buildCatBudgetList() {
 }
 
 // ── 주간 챌린지 ────────────────────────────────────────
+// ── 토스 프로모션 코드 ──────────────────────────────────
+const PROMO_COIN_EXCHANGE  = 'TEST_01KMYJQ3EGJZ3PHCXZYZFBD8Z2'; // 동전5개→5P
+const PROMO_KING_1ST       = 'TEST_01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
+const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
+const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
+
+async function giveTossPoints(userKey, promotionCode, amount) {
+  try {
+    const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userKey, promotionCode, amount })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('[거지방] 토스포인트 지급 성공:', amount + 'P');
+      return true;
+    } else {
+      console.warn('[거지방] 토스포인트 지급 실패:', data);
+      return false;
+    }
+  } catch(e) {
+    console.error('[거지방] 토스포인트 지급 오류:', e);
+    return false;
+  }
+}
+
 var WEEKLY_CHALLENGES = [
   { id:'record3',  actionType:'record',  icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
   { id:'feed1',    actionType:'feed',    icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
@@ -6056,9 +6118,8 @@ var _mapAdShown = false;
 
 async function openPlaceDetail(placeId) {
   _mapPlaceViewCount++;
-  // 3번째 식당부터, 탭 내 광고 아직 안 봤으면 광고 안내 먼저
-  if (_mapPlaceViewCount >= 3 && !_mapAdShown) {
-    _mapAdShown = true;
+  // 광고 아직 안 봤고 3번째 식당이면 광고 안내
+  if (_mapPlaceViewCount === 3 && !_mapAdShown) {
     const sheet = document.getElementById('place-detail-sheet');
     if (sheet) {
       sheet.innerHTML = `
@@ -6074,12 +6135,13 @@ async function openPlaceDetail(placeId) {
     }
     return;
   }
-  // 광고 없이 바로 상세 열기
+  // 광고 봤거나 3번 미만이면 바로 상세 열기
   await _openPlaceDetailInner(placeId);
 }
 
 
 window.watchMapAd = function(placeId) {
+  _mapAdShown = true;
   closeOverlay('ov-place-detail');
   showInterstitialAd(() => {
     setTimeout(() => _openPlaceDetailInner(placeId), 400);
