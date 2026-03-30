@@ -111,15 +111,19 @@ export default async function handler(req, res) {
   if (!process.env.TOSS_API_KEY) return res.status(500).json({ error: 'TOSS_API_KEY 미설정' });
 
   try {
+    console.log('[toss-login] 시작 - authCode:', authorizationCode?.slice(0,10)+'...');
     const tokenData = await generateToken(authorizationCode, referrer || 'DEFAULT');
     const { accessToken } = tokenData;
     if (!accessToken) throw new Error('accessToken 없음');
+    console.log('[toss-login] accessToken 발급 성공');
 
     const userInfo = await getUserInfo(accessToken);
+    console.log('[toss-login] userInfo 응답:', JSON.stringify({ userKey: userInfo?.userKey, hasName: !!userInfo?.name }));
     const userKey = userInfo?.userKey;
-    if (!userKey) throw new Error('userKey 없음');
+    if (!userKey) throw new Error('userKey 없음 - userInfo: ' + JSON.stringify(userInfo));
 
     const decryptedName = userInfo?.name ? decryptField(userInfo.name) : null;
+    console.log('[toss-login] 성공 - userKey:', userKey);
 
     return res.status(200).json({
       success: true,
@@ -128,7 +132,7 @@ export default async function handler(req, res) {
     });
 
   } catch (e) {
-    console.error('[toss-login]', e.message);
+    console.error('[toss-login] 실패:', e.message);
     return res.status(500).json({ success: false, error: e.message });
   }
 }

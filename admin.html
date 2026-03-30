@@ -345,13 +345,14 @@ async function renderUsers(m) {
       <button class="btn btn-ghost" onclick="showPage('users')">새로고침</button>
     </div>
     <div class="table-wrap"><table>
-      <thead><tr><th>회원</th><th>월 거지력</th><th>누적 거지력</th><th>계급</th><th>구독</th><th>관리</th></tr></thead>
+      <thead><tr><th>회원</th><th>UID</th><th>월 거지력</th><th>누적 거지력</th><th>계급</th><th>구독</th><th>관리</th></tr></thead>
       <tbody id="users-tb">
       ${users.map(u=>`<tr data-nick="${esc(u.nick||'')}">
         <td><div style="display:flex;align-items:center;gap:8px;">
           <div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>
           <div><div style="font-weight:600;">${esc(u.nick||'?')}</div><div style="font-size:10px;color:var(--text3);">${esc(u.bio||'')}</div></div>
         </div></td>
+        <td><div style="font-size:10px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.id.startsWith('toss_')?'<span style="color:var(--green);font-weight:700;">🔵토스</span>':'<span style="color:var(--text3);">닉네임</span>'}<br>${esc(u.id)}</div></td>
         <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
         <td><span class="badge badge-gold">${(u.totalScore||0).toLocaleString()}점</span></td>
         <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td>
