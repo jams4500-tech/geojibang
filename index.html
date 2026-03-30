@@ -473,11 +473,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       </div>
       <div class="header-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
     </div>
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('feed')">피드</div>
-      <div class="tab" onclick="showTab('mine')">내 지출</div>
-      <div class="tab" onclick="showTab('rank')">거지 랭킹</div>
-      <div class="tab" onclick="showTab('geoji')">내 거지</div>
+    <div class="tabs" style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
+      <div class="tab active" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
+      <div class="tab" onclick="showTab('mine')" style="flex-shrink:0;">내 지출</div>
+      <div class="tab" onclick="showTab('rank')" style="flex-shrink:0;">거지 랭킹</div>
+      <div class="tab" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
+      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거지맵</div>
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
@@ -763,6 +764,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
     </div>
       <!-- 내 거지 탭 -->
       <div id="tab-geoji" class="section"></div>
+      <div id="tab-map" class="section" style="padding:0;"></div>
   </div>
 
   <!-- Begging can page -->
@@ -1899,19 +1901,21 @@ function submitWriteManual() {
 
 /* FAB show only on feed tab */
 function showTab(n) {
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji'][i]===n));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji','map'][i]===n));
   document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
   if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
   if (n === 'geoji') {
     renderGeojiTab();
-    // 실제 프로필 방+캐릭터 렌더링
     setTimeout(() => {
       const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
       const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
       renderRoom('geoji-room-svg', equippedRoom, equippedChar);
     }, 50);
+  }
+  if (n === 'map') {
+    renderGeojiMap();
   }
 }
 
@@ -5095,6 +5099,410 @@ function openGeojilryeokShop(amount) {
   </div>`;
   document.body.appendChild(ov);
 }
+
+// ── 거지맵 ────────────────────────────────────────────
+const NAVER_CLIENT_ID = '1st8ia1c3x';
+const MAP_CATEGORIES = ['전체','한식','중식','일식','분식','카페','편의점','기타'];
+const MAP_CAT_EMOJI = {'전체':'🗺️','한식':'🍚','중식':'🥢','일식':'🍱','분식':'🥟','카페':'☕','편의점':'🏪','기타':'🥫'};
+var _naverMapInited = false;
+var _geojiMap = null;
+var _mapMarkers = [];
+var _mapPlaces = [];
+var _mapCatFilter = '전체';
+var _mapScriptLoading = false;
+
+function renderGeojiMap() {
+  const section = document.getElementById('tab-map');
+  if (!section) return;
+
+  section.innerHTML = `
+    <div style="position:relative;height:calc(100vh - 120px);display:flex;flex-direction:column;">
+      <!-- 검색/필터 바 -->
+      <div style="background:#fff;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input id="map-search-input" placeholder="🔍 식당 이름 또는 주소 검색..." style="flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')searchMapPlace()">
+          <button onclick="searchMapPlace()" style="background:var(--pink);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">검색</button>
+        </div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;">
+          ${MAP_CATEGORIES.map(c=>`<button onclick="filterMapCat('${c}')" id="mapcat-${c}" style="flex-shrink:0;background:${c==='전체'?'var(--pink)':'var(--surface2)'};color:${c==='전체'?'#fff':'var(--text2)'};border:none;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;">${MAP_CAT_EMOJI[c]} ${c}</button>`).join('')}
+        </div>
+      </div>
+      <!-- 지도 -->
+      <div id="geoji-map-container" style="flex:1;position:relative;">
+        <div id="geoji-naver-map" style="width:100%;height:100%;"></div>
+        <!-- 내 위치 버튼 -->
+        <button onclick="moveToMyLocation()" style="position:absolute;bottom:80px;right:14px;z-index:10;background:#fff;border:1px solid var(--border);border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">📍</button>
+        <!-- 식당 추가 버튼 -->
+        <button onclick="openAddPlace()" style="position:absolute;bottom:24px;right:14px;z-index:10;background:var(--pink);color:#fff;border:none;border-radius:24px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(232,82,122,0.4);">+ 식당 추가</button>
+      </div>
+    </div>
+
+    <!-- 식당 추가 오버레이 -->
+    <div id="ov-add-place" class="overlay" onclick="closeOverlayOut(event,'ov-add-place')">
+      <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">🗺️ 가성비 식당 추가</div>
+        <div style="padding:0 16px 24px;display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">식당 이름 *</div>
+            <input id="place-name" placeholder="예) 김밥나라 강남점" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">주소 *</div>
+            <div style="display:flex;gap:8px;">
+              <input id="place-addr" placeholder="주소 입력 후 검색" style="flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;">
+              <button onclick="geocodeAddress()" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;">📍 검색</button>
+            </div>
+            <div id="place-addr-result" style="font-size:12px;color:var(--pink);margin-top:4px;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">카테고리</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${MAP_CATEGORIES.filter(c=>c!=='전체').map(c=>`<button onclick="selectPlaceCat('${c}',this)" class="place-cat-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;">${MAP_CAT_EMOJI[c]} ${c}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">대표 메뉴 & 가격 *</div>
+            <input id="place-menu" placeholder="예) 김밥 2,000원 / 라면 3,500원" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가성비 포인트</div>
+            <textarea id="place-desc" placeholder="예) 김밥 양이 어마어마함. 2000원에 이 퀄리티 실화?" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:none;height:80px;"></textarea>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">태그 (해당되는 것 선택)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${['#혼밥가능','#양많음','#런치특선','#포장가능','#현금할인','#학생할인','#24시간','#배달가능','#주차가능'].map(t=>`<button onclick="togglePlaceTag('${t}',this)" class="place-tag-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;">${t}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">거지력 평점 *</div>
+            <div style="display:flex;gap:8px;">
+              ${[1,2,3,4,5].map(i=>`<button onclick="selectPlaceRating(${i})" id="place-rating-${i}" style="font-size:24px;background:none;border:none;cursor:pointer;opacity:0.3;">🥫</button>`).join('')}
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">1🥫 = 그냥 저렴 / 5🥫 = 진짜 거지신</div>
+          </div>
+          <button onclick="submitPlace()" style="width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🗺️ 거지맵에 등록하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 식당 상세 오버레이 -->
+    <div id="ov-place-detail" class="overlay" onclick="closeOverlayOut(event,'ov-place-detail')">
+      <div class="sheet" style="max-height:90vh;overflow-y:auto;" id="place-detail-sheet"></div>
+    </div>
+  `;
+
+  // 네이버 지도 스크립트 로드
+  if (!window.naver?.maps) {
+    if (_mapScriptLoading) return;
+    _mapScriptLoading = true;
+    const script = document.createElement('script');
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_CLIENT_ID}`;
+    script.onload = () => { _mapScriptLoading = false; initNaverMap(); };
+    document.head.appendChild(script);
+  } else {
+    initNaverMap();
+  }
+}
+
+function initNaverMap() {
+  const container = document.getElementById('geoji-naver-map');
+  if (!container || !window.naver?.maps) return;
+
+  _geojiMap = new naver.maps.Map(container, {
+    center: new naver.maps.LatLng(37.5665, 126.9780), // 서울 기본
+    zoom: 14,
+    mapTypeControl: false,
+    scaleControl: false,
+    logoControl: false,
+    mapDataControl: false,
+  });
+
+  // 내 위치로 이동
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const loc = new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+      _geojiMap.setCenter(loc);
+      // 내 위치 마커
+      new naver.maps.Marker({
+        position: loc,
+        map: _geojiMap,
+        icon: {
+          content: '<div style="background:#0064ff;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(0,100,255,0.3);"></div>',
+          anchor: new naver.maps.Point(7, 7)
+        }
+      });
+    }, () => {});
+  }
+
+  loadMapPlaces();
+}
+
+async function loadMapPlaces() {
+  if (!window.GJ?.ready) return;
+  try {
+    const q = query(COLS.places(), orderBy('createdAt','desc'), limit(100));
+    const snap = await getDocs(q);
+    _mapPlaces = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderMapMarkers();
+  } catch(e) { console.warn('[거지맵]', e); }
+}
+
+function renderMapMarkers() {
+  if (!_geojiMap) return;
+  // 기존 마커 제거
+  _mapMarkers.forEach(m => m.setMap(null));
+  _mapMarkers = [];
+
+  const filtered = _mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter);
+
+  filtered.forEach(place => {
+    if (!place.lat || !place.lng) return;
+    const rating = place.rating || 1;
+    const emoji = '🥫'.repeat(Math.min(rating, 3));
+    const marker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(place.lat, place.lng),
+      map: _geojiMap,
+      icon: {
+        content: `<div style="background:#fff;border:2px solid var(--pink,#e8527a);border-radius:12px;padding:4px 8px;font-size:11px;font-weight:700;color:#e8527a;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.15);cursor:pointer;">
+          ${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.name}<br>
+          <span style="font-size:10px;">🥫×${rating}</span>
+        </div>`,
+        anchor: new naver.maps.Point(0, 0)
+      }
+    });
+    naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
+    _mapMarkers.push(marker);
+  });
+}
+
+function filterMapCat(cat) {
+  _mapCatFilter = cat;
+  MAP_CATEGORIES.forEach(c => {
+    const btn = document.getElementById('mapcat-' + c);
+    if (!btn) return;
+    btn.style.background = c === cat ? 'var(--pink)' : 'var(--surface2)';
+    btn.style.color = c === cat ? '#fff' : 'var(--text2)';
+  });
+  renderMapMarkers();
+}
+
+function moveToMyLocation() {
+  if (!navigator.geolocation || !_geojiMap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    _geojiMap.setCenter(new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+    _geojiMap.setZoom(15);
+  });
+}
+
+async function searchMapPlace() {
+  const q = document.getElementById('map-search-input')?.value?.trim();
+  if (!q) return;
+  // 이름 검색
+  const found = _mapPlaces.filter(p => p.name.includes(q) || p.address?.includes(q));
+  if (found.length > 0 && _geojiMap) {
+    _geojiMap.setCenter(new naver.maps.LatLng(found[0].lat, found[0].lng));
+    _geojiMap.setZoom(16);
+    openPlaceDetail(found[0].id);
+  } else {
+    showToast('검색 결과가 없어요 🥫');
+  }
+}
+
+// ── 식당 추가 ──
+let _addPlaceLat = null, _addPlaceLng = null, _addPlaceCat = '한식', _addPlaceRating = 3;
+const _addPlaceTags = new Set();
+
+function openAddPlace() {
+  _addPlaceLat = null; _addPlaceLng = null; _addPlaceCat = '한식'; _addPlaceRating = 3;
+  _addPlaceTags.clear();
+  openOverlay('ov-add-place');
+}
+
+function selectPlaceCat(cat, btn) {
+  _addPlaceCat = cat;
+  document.querySelectorAll('.place-cat-btn').forEach(b => {
+    b.style.background = 'var(--surface2)'; b.style.borderColor = 'var(--border)'; b.style.color = 'var(--text2)';
+  });
+  btn.style.background = 'var(--pink)'; btn.style.borderColor = 'var(--pink)'; btn.style.color = '#fff';
+}
+
+function selectPlaceRating(r) {
+  _addPlaceRating = r;
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.getElementById('place-rating-' + i);
+    if (btn) btn.style.opacity = i <= r ? '1' : '0.3';
+  }
+}
+
+function togglePlaceTag(tag, btn) {
+  if (_addPlaceTags.has(tag)) {
+    _addPlaceTags.delete(tag);
+    btn.style.background = 'var(--surface2)'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text2)';
+  } else {
+    _addPlaceTags.add(tag);
+    btn.style.background = 'rgba(232,82,122,0.1)'; btn.style.borderColor = 'var(--pink)'; btn.style.color = 'var(--pink)';
+  }
+}
+
+async function geocodeAddress() {
+  const addr = document.getElementById('place-addr')?.value?.trim();
+  if (!addr) return;
+  const resultEl = document.getElementById('place-addr-result');
+  if (resultEl) resultEl.textContent = '검색 중...';
+  try {
+    const res = await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
+    const data = await res.json();
+    if (data.lat && data.lng) {
+      _addPlaceLat = data.lat; _addPlaceLng = data.lng;
+      if (resultEl) resultEl.textContent = '📍 ' + (data.roadAddress || data.jibunAddress || addr);
+      if (_geojiMap) _geojiMap.setCenter(new naver.maps.LatLng(data.lat, data.lng));
+    } else {
+      if (resultEl) resultEl.textContent = '주소를 찾을 수 없어요';
+    }
+  } catch(e) {
+    if (resultEl) resultEl.textContent = '검색 실패: ' + e.message;
+  }
+}
+
+async function submitPlace() {
+  const name = document.getElementById('place-name')?.value?.trim();
+  const addr = document.getElementById('place-addr')?.value?.trim();
+  const menu = document.getElementById('place-menu')?.value?.trim();
+  const desc = document.getElementById('place-desc')?.value?.trim();
+
+  if (!name) { showToast('식당 이름을 입력해주세요'); return; }
+  if (!menu) { showToast('대표 메뉴와 가격을 입력해주세요'); return; }
+  if (!_addPlaceLat || !_addPlaceLng) { showToast('주소를 검색해서 위치를 확인해주세요'); return; }
+  if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
+
+  try {
+    await addDoc(COLS.places(), {
+      name, address: addr, menu, desc: desc || '',
+      category: _addPlaceCat,
+      tags: [..._addPlaceTags],
+      rating: _addPlaceRating,
+      lat: _addPlaceLat, lng: _addPlaceLng,
+      authorUid: myProfile.uid || '',
+      authorNick: myProfile.nick || '익명',
+      likes: 0, likedBy: [],
+      createdAt: serverTimestamp(),
+    });
+    closeOverlay('ov-add-place');
+    showToast('🗺️ 거지맵에 등록됐어요!');
+    await loadMapPlaces();
+    // 방금 추가한 곳으로 이동
+    if (_geojiMap) { _geojiMap.setCenter(new naver.maps.LatLng(_addPlaceLat, _addPlaceLng)); _geojiMap.setZoom(16); }
+  } catch(e) {
+    showToast('등록 실패: ' + e.message);
+  }
+}
+
+// ── 식당 상세 ──
+async function openPlaceDetail(placeId) {
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+
+  const sheet = document.getElementById('place-detail-sheet');
+  if (!sheet) return;
+
+  const rating = place.rating || 1;
+  const ratingStr = '🥫'.repeat(rating) + '🫙'.repeat(5 - rating);
+  const myLiked = place.likedBy?.includes(myProfile.uid);
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div style="padding:16px 16px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px;">${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.category||'기타'}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);">${esc(place.name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${esc(place.address||'주소 없음')}</div>
+        </div>
+        <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
+          👍 ${place.likes||0}
+        </button>
+      </div>
+      <div style="font-size:14px;margin-bottom:4px;">${ratingStr}</div>
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">대표 메뉴</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);">💰 ${esc(place.menu||'')}</div>
+      </div>
+      ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${esc(place.desc)}</div>` : ''}
+      ${place.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${place.tags.map(t=>`<span style="background:rgba(232,82,122,0.08);color:var(--pink);border-radius:12px;padding:3px 8px;font-size:11px;">${t}</span>`).join('')}</div>` : ''}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">✍️ ${esc(place.authorNick||'익명')}</div>
+    </div>
+    <!-- 댓글 -->
+    <div style="border-top:1px solid var(--border);padding:14px 16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 댓글</div>
+      <div id="place-comments-${placeId}" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="place-comment-input-${placeId}" placeholder="거지력 넘치는 댓글 남기기..." style="flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')submitPlaceComment('${placeId}')">
+        <button onclick="submitPlaceComment('${placeId}')" style="background:var(--pink);color:#fff;border:none;border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;">등록</button>
+      </div>
+    </div>
+  `;
+
+  openOverlay('ov-place-detail');
+  loadPlaceComments(placeId);
+}
+
+async function loadPlaceComments(placeId) {
+  const el = document.getElementById('place-comments-' + placeId);
+  if (!el || !window.GJ?.ready) return;
+  try {
+    const q = query(COLS.placeComments(placeId), orderBy('createdAt','asc'), limit(50));
+    const snap = await getDocs(q);
+    if (snap.empty) { el.innerHTML = '<div style="font-size:13px;color:var(--text3);text-align:center;padding:8px;">첫 댓글을 남겨보세요 🥫</div>'; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="font-size:12px;font-weight:700;color:var(--text);">${esc(c.authorNick||'익명')}</span>
+          <span style="font-size:11px;color:var(--text3);">${c.createdAt?.toDate?timeAgo(c.createdAt.toDate()):'방금 전'}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);">${esc(c.text)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.warn('[거지맵 댓글]', e); }
+}
+
+async function submitPlaceComment(placeId) {
+  const input = document.getElementById('place-comment-input-' + placeId);
+  const text = input?.value?.trim();
+  if (!text) return;
+  if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
+  try {
+    await addDoc(COLS.placeComments(placeId), {
+      text, authorNick: myProfile.nick || '익명', authorUid: myProfile.uid || '',
+      createdAt: serverTimestamp(),
+    });
+    input.value = '';
+    loadPlaceComments(placeId);
+  } catch(e) { showToast('댓글 등록 실패'); }
+}
+
+async function likePlace(placeId) {
+  if (!window.GJ?.ready || !myProfile.uid) return;
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const likedBy = place.likedBy || [];
+  const myLiked = likedBy.includes(myProfile.uid);
+  const newLikedBy = myLiked ? likedBy.filter(u => u !== myProfile.uid) : [...likedBy, myProfile.uid];
+  try {
+    await updateDoc(doc(db, 'geojimap_places', placeId), { likes: newLikedBy.length, likedBy: newLikedBy });
+    place.likes = newLikedBy.length; place.likedBy = newLikedBy;
+    const btn = document.getElementById('like-btn-' + placeId);
+    if (btn) {
+      btn.textContent = '👍 ' + newLikedBy.length;
+      btn.style.background = myLiked ? 'var(--surface2)' : 'rgba(232,82,122,0.1)';
+      btn.style.borderColor = myLiked ? 'var(--border)' : 'var(--pink)';
+      btn.style.color = myLiked ? 'var(--text3)' : 'var(--pink)';
+    }
+  } catch(e) { showToast('좋아요 실패'); }
+}
+
 </script>
 </body>
 </html>
