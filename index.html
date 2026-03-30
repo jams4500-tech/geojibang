@@ -3436,7 +3436,17 @@ const ROOM_ITEMS = [
   { id:'room_park',   name:'공원 벤치',   desc:'임대료 0원 노숙 스팟',          emoji:'🌳', type:'room', bg:'#b8e4a8', wall:'#8ac888', floor:'#6aaa60' },
   { id:'room_subway', name:'지하철 역사', desc:'막차 끊긴 후 잠드는 곳',        emoji:'🚇', type:'room', bg:'#2a2a3a', wall:'#383848', floor:'#4a4a5a' },
   { id:'room_jjimjil',name:'찜질방',      desc:'24시간 500원짜리 안식처',       emoji:'🧖', type:'room', bg:'#4a2020', wall:'#5a2828', floor:'#3a1818' },
-  { id:'room_rooftop2',name:'옥상 별빛방',desc:'별이 보이는 고급(?) 야외 숙소', emoji:'✨', type:'room', bg:'#0a0820', wall:'#100c30', floor:'#6a5030' },
+  { id:'room_rooftop2',name:'옥상 별빛방',  desc:'별이 보이는 고급(?) 야외 숙소',      emoji:'✨', type:'room', bg:'#0a0820', wall:'#100c30', floor:'#6a5030' },
+  { id:'room_library', name:'도서관 자리',  desc:'무료 냉난방 + 와이파이의 성지',      emoji:'📚', type:'room', bg:'#f0ebe0', wall:'#d8cdb0', floor:'#b89870' },
+  { id:'room_toilet',  name:'화장실 피신',  desc:'회사 화장실에서 퇴근까지 버팀',      emoji:'🚽', type:'room', bg:'#e8f4f8', wall:'#c8e4f0', floor:'#a0c8d8' },
+  { id:'room_church',  name:'교회 무료급식',desc:'영혼이 아닌 배를 채우러 온 거지',    emoji:'⛪', type:'room', bg:'#f8f0e8', wall:'#e8d8c0', floor:'#c8a870' },
+  { id:'room_mart',    name:'대형마트 시식',desc:'시식 코너만 돌면 점심 해결',         emoji:'🛒', type:'room', bg:'#ffffff', wall:'#e8e8e8', floor:'#d0d0d0' },
+  { id:'room_sauna',   name:'목욕탕 탈의실',desc:'5000원으로 하루 종일 있는 곳',       emoji:'🛁', type:'room', bg:'#e8f0f8', wall:'#c0d8e8', floor:'#90b8cc' },
+  { id:'room_cyber',   name:'PC방',         desc:'알바비 탕진하는 또 다른 집',         emoji:'🖥️', type:'room', bg:'#0d0d1a', wall:'#151528', floor:'#1a1a2e' },
+  { id:'room_pojang',  name:'포장마차',      desc:'소주 한 병에 안주 무한 리필',        emoji:'🏮', type:'room', bg:'#2a1505', wall:'#3d2008', floor:'#1a0d02' },
+  { id:'room_semi',    name:'반지하',        desc:'습기와 함께하는 아늑한 공간',        emoji:'🌊', type:'room', bg:'#1a2a1a', wall:'#223322', floor:'#2a3a2a' },
+  { id:'room_airport', name:'공항 대합실',   desc:'출국 없이 새우잠 자는 성지',        emoji:'✈️', type:'room', bg:'#f0f0f8', wall:'#d8d8e8', floor:'#b0b8c8' },
+  { id:'room_camping', name:'공원 텐트',     desc:'캠핑 감성 노숙. 자연인이 될 뻔',    emoji:'⛺', type:'room', bg:'#1a3a0a', wall:'#223a12', floor:'#4a8a30' },
 ];
 
 const CHAR_ITEMS = [
@@ -3449,6 +3459,16 @@ const CHAR_ITEMS = [
   { id:'char_ghost',     name:'투명 거지',     desc:'존재 자체가 미스터리한 거지',      emoji:'👻', type:'char' },
   { id:'char_chef',      name:'백수 셰프',     desc:'요리는 못하지만 복장은 셰프',      emoji:'👨‍🍳', type:'char' },
   { id:'char_cowboy',    name:'카우보이 거지',  desc:'서부 개척시대 낭만 거지',         emoji:'🤠', type:'char' },
+  { id:'char_alien',     name:'외계인 거지',    desc:'우주에서 온 가난한 존재',           emoji:'👽', type:'char' },
+  { id:'char_zombie',    name:'좀비 거지',      desc:'뇌보다 돈이 더 필요한',             emoji:'🧟', type:'char' },
+  { id:'char_clown',     name:'광대 거지',      desc:'웃어야 하는데 사실 울고 싶은',      emoji:'🤡', type:'char' },
+  { id:'char_pirate',    name:'해적 거지',      desc:'빈 보물 지도를 든 해적',            emoji:'🏴‍☠️', type:'char' },
+  { id:'char_mummy',     name:'미라 거지',      desc:'붕대로 온몸을 감싼 절약왕',         emoji:'🧟', type:'char' },
+  { id:'char_wizard',    name:'마법사 거지',    desc:'돈 버는 마법은 실패한 마법사',       emoji:'🧙', type:'char' },
+  { id:'char_robot',     name:'고장난 로봇',    desc:'AI보다 가난한 로봇 거지',           emoji:'🤖', type:'char' },
+  { id:'char_vampire',   name:'흡혈귀 거지',    desc:'피 대신 잔돈을 노리는',             emoji:'🧛', type:'char' },
+  { id:'char_snowman',   name:'눈사람 거지',    desc:'녹기 전에 구걸해야 하는',           emoji:'⛄', type:'char' },
+  { id:'char_crab',      name:'게 거지',        desc:'옆걸음으로 도망치는 거지',          emoji:'🦀', type:'char' },
 ];
 
 var myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
