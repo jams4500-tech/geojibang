@@ -161,7 +161,7 @@ const COLS = {
 
 const GRADES=[{min:2000,label:'거지신 👑',color:'#e8527a'},{min:1000,label:'전설의 거지 🔥',color:'#f0c040'},{min:600,label:'거지 고수 ⚡',color:'#7ab4f0'},{min:300,label:'프로 거지 🎯',color:'#44cc88'},{min:100,label:'동네 거지 🥫',color:'#c0a8b4'},{min:0,label:'거지 새싹 🌱',color:'#7a5f68'}];
 const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛'];
-const REWARDS=[5000,3000,1000,1000,1000,1000,1000,1000,1000,1000];
+const REWARDS=[5000,3000,1000,500,500,0,0,0,0,0];
 const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,room_subway:300,room_jjimjil:350,room_rooftop2:400,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500,char_ghost:200,char_chef:250,char_cowboy:300};
 const ITEM_NAMES={room_default:'기본 방',room_cave:'지하 동굴방',room_rooftop:'옥탑방',room_gosiwon:'고시원',room_park:'공원 벤치',room_subway:'지하철 역사',room_jjimjil:'찜질방',room_rooftop2:'옥상 별빛방',char_default:'기본 거지',char_paper_bag:'종이봉투 머리',char_crown:'거지왕 왕관',char_santa:'산타 거지',char_ninja:'닌자 거지',char_vip:'VIP 거지',char_ghost:'투명 거지',char_chef:'백수 셰프',char_cowboy:'카우보이 거지'};
 
@@ -509,7 +509,7 @@ async function renderRanking(m) {
         <td><div style="font-weight:700;color:${i===0?'var(--gold)':i===1?'var(--text2)':'var(--text3)'};">${u.rank}위</div><div style="font-size:10px;color:var(--text3);">${RANK_TITLES[i]}</div></td>
         <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${esc(u.nick||'?')}</div></td>
         <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
-        <td><span class="badge badge-gold">${REWARDS[i].toLocaleString()}P</span></td>
+        <td>${REWARDS[i] > 0 ? `<span class="badge badge-gold">${REWARDS[i].toLocaleString()}P</span>` : '<span style="color:var(--text3);font-size:12px;">-</span>'}</td>
       </tr>`).join('')}
       </table>
     </div>
