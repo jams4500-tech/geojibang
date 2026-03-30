@@ -392,17 +392,29 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 <body>
   <script>
     (function(){
-      if(localStorage.getItem('gj_profile')){
-        var s=document.createElement('style');
-        s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
-        document.head.appendChild(s);
-        document.addEventListener('DOMContentLoaded', function(){
-          var ob=document.getElementById('onboarding');
-          var bd=document.getElementById('ob-backdrop');
-          if(ob){ ob.style.display='none'; ob.classList.add('hidden'); }
-          if(bd){ bd.style.display='none'; }
-          document.body.style.overflow='';
-        });
+      var raw = localStorage.getItem('gj_profile');
+      if(raw){
+        try {
+          var p = JSON.parse(raw);
+          // toss_ uid가 있으면 정상 로그인 → 온보딩 스킵
+          if(p && p.uid && p.uid.indexOf('toss_') === 0 && p.nick && p.nick !== '거지'){
+            var s=document.createElement('style');
+            s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
+            document.head.appendChild(s);
+            document.addEventListener('DOMContentLoaded', function(){
+              var ob=document.getElementById('onboarding');
+              var bd=document.getElementById('ob-backdrop');
+              if(ob){ ob.style.display='none'; ob.classList.add('hidden'); }
+              if(bd){ bd.style.display='none'; }
+              document.body.style.overflow='';
+            });
+          } else {
+            // toss_ uid 아니면 프로필 지우고 온보딩 표시
+            localStorage.removeItem('gj_profile');
+          }
+        } catch(e) {
+          localStorage.removeItem('gj_profile');
+        }
       }
     })();
   </script>
