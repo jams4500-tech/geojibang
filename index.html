@@ -4756,6 +4756,7 @@ var WEEKLY_CHALLENGES = [
   { id:'feed1',    actionType:'feed',    icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
   { id:'comment1', actionType:'comment', icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
   { id:'share1',   actionType:'share',   icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
+  { id:'map1',     actionType:'map',     icon:'🗺️', title:'거지맵에 식당 추가',   target:1, reward:30, unit:'회' },
 ];
 
 function getChallengeKey(actionTypeOrId) {
@@ -5291,9 +5292,9 @@ function renderMapMarkers() {
       position: new naver.maps.LatLng(place.lat, place.lng),
       map: _geojiMap,
       icon: {
-        content: `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:110px;">
-          <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.name}</div>
-          <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;">${place.price||place.menu||''}</div>
+        content: `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:120px;">
+          <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.name}</div>
+          <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price||place.menu||''}</div>
         </div>`,
         anchor: new naver.maps.Point(0, 0)
       }
@@ -5420,6 +5421,8 @@ async function submitPlace() {
     // 거지력 +1점
     myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
     if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 1, 1, 'map').catch(()=>{});
+    addChallengeProgress('map');
+    buildWeeklyChallenges();
     showToast('🗺️ 거지맵에 등록됐어요! +1점 획득!');
     await loadMapPlaces();
     // 방금 추가한 곳으로 이동

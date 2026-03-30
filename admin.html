@@ -758,7 +758,24 @@ const CHALLENGE_TEMPLATES = [
   { id:'reaction', actionType:'reaction',icon:'🙇', title:'반응 받기',        target:5,  reward:30,  unit:'개' },
   { id:'login3',   actionType:'login',   icon:'📅', title:'앱 접속하기',      target:3,  reward:20,  unit:'일' },
   { id:'login7',   actionType:'login7',  icon:'📅', title:'7일 연속 접속',    target:7,  reward:100, unit:'일' },
+  { id:'map',      actionType:'map',     icon:'🗺️', title:'거지맵 식당 추가',  target:1,  reward:30,  unit:'회' },
 ];
+
+window.resetWeeklyChallenges = async () => {
+  if (!confirm('이번주 모든 유저의 챌린지 진행도를 초기화할까요?\n(Firebase의 챌린지 진행 데이터가 삭제돼요)')) return;
+  try {
+    // geojibang_users 전체에서 challengeProgress 필드 초기화
+    const snap = await getDocs(COLS.users());
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => {
+      batch.update(doc(db,'geojibang_users',d.id), { challengeProgress: {} });
+    });
+    await batch.commit();
+    toast('✅ 챌린지 진행도 초기화 완료! (' + snap.docs.length + '명)');
+  } catch(e) {
+    alert('오류: ' + e.message);
+  }
+};
 
 async function renderChallenge(m) {
   // 현재 설정 로드
@@ -768,7 +785,10 @@ async function renderChallenge(m) {
     : DEFAULT_CHALLENGES;
 
   m.innerHTML = `
-  <div class="page-header"><div class="page-title">🔥 챌린지 관리</div></div>
+  <div class="page-header">
+    <div class="page-title">🔥 챌린지 관리</div>
+    <button class="btn btn-red btn-sm" onclick="resetWeeklyChallenges()" style="margin-left:auto;">🔄 이번주 챌린지 진행도 초기화</button>
+  </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
