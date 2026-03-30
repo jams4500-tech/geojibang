@@ -1649,12 +1649,17 @@ window.GJ.initProfile = async () => {
 // ── addToFeed Firebase 연동 버전 ─────────────────────
 window.GJ.publishPost = async (where, amount, memo) => {
   const uid = window.myProfile.uid || ('gj_' + Date.now());
-  // 닉네임이 기본값이면 localStorage에서 다시 읽기
   const savedProfile = JSON.parse(localStorage.getItem('gj_profile') || '{}');
   const actualNick = (window.myProfile.nick && window.myProfile.nick !== '거지')
     ? window.myProfile.nick
     : (savedProfile.nick || window.myProfile.nick);
-  const postId = await window.GJ.addPost({
+  if (!window.GJ?.ready) {
+    console.warn('[거지방] Firebase 미연결 상태에서 글 쓰기 시도');
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  let postId;
+  try {
+    postId = await window.GJ.addPost({
     authorUid: uid,
     authorName: actualNick,
     authorMonthScore: window.myMonthScore,
@@ -5430,7 +5435,7 @@ function renderGeojiTab() {
     <!-- 배너 광고 -->
     <div class="ad-card" data-ad-slot="banner" id="geoji-ad-slot" style="margin-bottom:16px;width:100%;min-height:96px;overflow:hidden;"></div>`;
   // 광고 부착 (동적 생성이라 별도 호출 필요)
-  setTimeout(() => { const el=document.getElementById('geoji-ad-slot'); if(el) attachBannerToEl(el); }, 500);
+  setTimeout(() => { const el=document.getElementById('geoji-ad-slot'); if(el && typeof attachBannerToEl==='function') attachBannerToEl(el); }, 1500);
 }
 
 function tapGeojiChar() {
@@ -5653,6 +5658,8 @@ var _mapCatFilter = '전체';
 var _mapScriptLoading = false;
 
 function renderGeojiMap() {
+  _mapPlaceViewCount = 0;
+  _mapAdShown = false;
   const section = document.getElementById('tab-map');
   if (!section) return;
 
@@ -5918,7 +5925,7 @@ async function geocodeAddress() {
   const resultEl = document.getElementById('place-addr-result');
   if (resultEl) resultEl.textContent = '검색 중...';
   try {
-    const res = await fetch(`/api/geocode?query=${encodeURIComponent(addr)}`);
+    const res = await fetch(`https://geojibang.vercel.app/api/geocode?query=${encodeURIComponent(addr)}`);
     const data = await res.json();
     if (data.lat && data.lng) {
       _addPlaceLat = data.lat; _addPlaceLng = data.lng;
@@ -5972,95 +5979,33 @@ async function submitPlace() {
 }
 
 // ── 식당 상세 ──
+var _mapPlaceViewCount = 0;
+var _mapAdShown = false;
+
 async function openPlaceDetail(placeId) {
-  const place = _mapPlaces.find(p => p.id === placeId);
-  if (!place) return;
-
-  const sheet = document.getElementById('place-detail-sheet');
-  if (!sheet) return;
-
-  const rating = place.rating || 1;
-  const ratingStr = '🥫'.repeat(rating) + '🫙'.repeat(5 - rating);
-  const myLiked = place.likedBy?.includes(myProfile.uid);
-
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div style="padding:16px 16px 0;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
-        <div>
-          <div style="font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px;">${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.category||'기타'}</div>
-          <div style="font-size:18px;font-weight:900;color:var(--text);">${escMap(place.name)}</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${escMap(place.address||'주소 없음')}</div>
-        </div>
-        <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
-          👍 ${place.likes||0}
-        </button>
-      </div>
-      <div style="font-size:14px;margin-bottom:4px;">${ratingStr}</div>
-      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-          <div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">대표 메뉴</div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);">🍽️ ${escMap(place.menu||'')}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">가격</div>
-            <div style="font-size:14px;font-weight:700;color:var(--pink);">💰 ${escMap(place.price||'')}</div>
-          </div>
-        </div>
-      </div>
-      ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${escMap(place.desc)}</div>` : ''}
-      ${place.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${place.tags.map(t=>`<span style="background:rgba(232,82,122,0.08);color:var(--pink);border-radius:12px;padding:3px 8px;font-size:11px;">${t}</span>`).join('')}</div>` : ''}
-      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">✍️ ${escMap(place.authorNick||'익명')}</div>
-    </div>
-    <!-- 댓글 -->
-    <div style="border-top:1px solid var(--border);padding:14px 16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 댓글</div>
-      <div id="place-comments-${placeId}" style="margin-bottom:12px;"></div>
-      <div style="display:flex;gap:8px;">
-        <input id="place-comment-input-${placeId}" placeholder="거지력 넘치는 댓글 남기기..." style="flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')submitPlaceComment('${placeId}')">
-        <button onclick="submitPlaceComment('${placeId}')" style="background:var(--pink);color:#fff;border:none;border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;">등록</button>
-      </div>
-    </div>
-  `;
-
-  openOverlay('ov-place-detail');
-  loadPlaceComments(placeId);
+  _mapPlaceViewCount++;
+  // 3번째 식당부터, 탭 내 광고 아직 안 봤으면 광고 안내 먼저
+  if (_mapPlaceViewCount >= 3 && !_mapAdShown) {
+    _mapAdShown = true;
+    const sheet = document.getElementById('place-detail-sheet');
+    if (sheet) {
+      sheet.innerHTML = `
+        <div class="sheet-handle"></div>
+        <div style="padding:32px 20px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
+          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:8px;">가성비 식당 더 알아보기</div>
+          <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:24px;">짧은 광고를 보고<br>계속 거지맵을 탐험해보세요!</div>
+          <button onclick="watchMapAd('${placeId}')" style="width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">📺 광고 보고 계속 보기</button>
+          <button onclick="closeOverlay('ov-place-detail')" style="width:100%;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:inherit;">닫기</button>
+        </div>`;
+      openOverlay('ov-place-detail');
+    }
+    return;
+  }
+  // 광고 없이 바로 상세 열기
+  await _openPlaceDetailInner(placeId);
 }
 
-async function loadPlaceComments(placeId) {
-  const el = document.getElementById('place-comments-' + placeId);
-  if (!el || !window.GJ?.ready) return;
-  try {
-    const comments = await window.GJ.loadPlaceComments(placeId);
-    const snap = { docs: comments, empty: comments.length === 0 };
-    if (snap.empty) { el.innerHTML = '<div style="font-size:13px;color:var(--text3);text-align:center;padding:8px;">첫 댓글을 남겨보세요 🥫</div>'; return; }
-    el.innerHTML = snap.docs.map(d => {
-      const c = d.data();
-      return `<div style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-          <span style="font-size:12px;font-weight:700;color:var(--text);">${esc(c.authorNick||'익명')}</span>
-          <span style="font-size:11px;color:var(--text3);">${c.createdAt?.toDate?timeAgo(c.createdAt.toDate()):'방금 전'}</span>
-        </div>
-        <div style="font-size:13px;color:var(--text2);">${esc(c.text)}</div>
-      </div>`;
-    }).join('');
-  } catch(e) { console.warn('[거지맵 댓글]', e); }
-}
-
-async function submitPlaceComment(placeId) {
-  const input = document.getElementById('place-comment-input-' + placeId);
-  const text = input?.value?.trim();
-  if (!text) return;
-  if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
-  try {
-    await window.GJ.addPlaceComment(placeId, {
-      text, authorNick: myProfile.nick || '익명', authorUid: myProfile.uid || '',
-    });
-    input.value = '';
-    loadPlaceComments(placeId);
-  } catch(e) { showToast('댓글 등록 실패'); }
-}
 
 async function likePlace(placeId) {
   if (!window.GJ?.ready || !myProfile.uid) return;
