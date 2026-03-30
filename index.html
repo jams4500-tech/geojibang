@@ -1399,6 +1399,25 @@ window.GJ.listenRanking = (callback) => {
 window.GJ.ready = true;
 console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 
+// ── 거지맵 Firebase 메서드 ──
+window.GJ.loadPlaces = async () => {
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc'), limit(100)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+window.GJ.addPlace = async (data) => {
+  return await addDoc(collection(db,'geojimap_places'), { ...data, createdAt: serverTimestamp() });
+};
+window.GJ.addPlaceComment = async (placeId, data) => {
+  return await addDoc(collection(db,'geojimap_places',placeId,'comments'), { ...data, createdAt: serverTimestamp() });
+};
+window.GJ.loadPlaceComments = async (placeId) => {
+  const snap = await getDocs(query(collection(db,'geojimap_places',placeId,'comments'), orderBy('createdAt','asc'), limit(50)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+window.GJ.updatePlaceLike = async (placeId, likedBy) => {
+  await updateDoc(doc(db,'geojimap_places',placeId), { likes: likedBy.length, likedBy });
+};
+
 // 앱 시작 시 랭킹 실시간 리스너 바로 시작 (온보딩 여부 무관)
 if (window.GJ?.ready) {
   window.GJ.listenRanking((rankers) => {
@@ -5240,11 +5259,9 @@ function initNaverMap() {
 }
 
 async function loadMapPlaces() {
-  if (!window.GJ?.ready) return;
+  if (!window.GJ?.loadPlaces) return;
   try {
-    const q = query(COLS.places(), orderBy('createdAt','desc'), limit(100));
-    const snap = await getDocs(q);
-    _mapPlaces = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _mapPlaces = await window.GJ.loadPlaces();
     renderMapMarkers();
   } catch(e) { console.warn('[거지맵]', e); }
 }
@@ -5378,7 +5395,7 @@ async function submitPlace() {
   if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
 
   try {
-    await addDoc(COLS.places(), {
+    await window.GJ.addPlace({
       name, address: addr, menu, desc: desc || '',
       category: _addPlaceCat,
       tags: [..._addPlaceTags],
@@ -5387,7 +5404,6 @@ async function submitPlace() {
       authorUid: myProfile.uid || '',
       authorNick: myProfile.nick || '익명',
       likes: 0, likedBy: [],
-      createdAt: serverTimestamp(),
     });
     closeOverlay('ov-add-place');
     showToast('🗺️ 거지맵에 등록됐어요!');
@@ -5452,8 +5468,8 @@ async function loadPlaceComments(placeId) {
   const el = document.getElementById('place-comments-' + placeId);
   if (!el || !window.GJ?.ready) return;
   try {
-    const q = query(COLS.placeComments(placeId), orderBy('createdAt','asc'), limit(50));
-    const snap = await getDocs(q);
+    const comments = await window.GJ.loadPlaceComments(placeId);
+    const snap = { docs: comments, empty: comments.length === 0 };
     if (snap.empty) { el.innerHTML = '<div style="font-size:13px;color:var(--text3);text-align:center;padding:8px;">첫 댓글을 남겨보세요 🥫</div>'; return; }
     el.innerHTML = snap.docs.map(d => {
       const c = d.data();
@@ -5474,9 +5490,8 @@ async function submitPlaceComment(placeId) {
   if (!text) return;
   if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
   try {
-    await addDoc(COLS.placeComments(placeId), {
+    await window.GJ.addPlaceComment(placeId, {
       text, authorNick: myProfile.nick || '익명', authorUid: myProfile.uid || '',
-      createdAt: serverTimestamp(),
     });
     input.value = '';
     loadPlaceComments(placeId);
@@ -5491,7 +5506,7 @@ async function likePlace(placeId) {
   const myLiked = likedBy.includes(myProfile.uid);
   const newLikedBy = myLiked ? likedBy.filter(u => u !== myProfile.uid) : [...likedBy, myProfile.uid];
   try {
-    await updateDoc(doc(db, 'geojimap_places', placeId), { likes: newLikedBy.length, likedBy: newLikedBy });
+    await window.GJ.updatePlaceLike(placeId, newLikedBy);
     place.likes = newLikedBy.length; place.likedBy = newLikedBy;
     const btn = document.getElementById('like-btn-' + placeId);
     if (btn) {
