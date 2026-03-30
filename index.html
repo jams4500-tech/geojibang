@@ -699,14 +699,37 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
           <div style="font-size:28px;">⏳</div>
         </div>
 
-        <!-- 이달 거지력 랭킹 -->
-        <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <!-- 이주의 거지력 현재 랭킹 -->
+        <div class="rank-header">
+          <div class="rank-title">이주의 거지력 현재 랭킹</div>
+          <div class="rank-sub">매주 월요일 거지왕 발표 🏆</div>
+        </div>
+        <!-- 거지왕 토스포인트 안내 -->
+        <div style="background:linear-gradient(135deg,#fffbee,#fff5cc);border:1px solid rgba(154,104,0,.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;color:#9a6800;margin-bottom:8px;">🏆 이주의 거지왕 토스포인트 지급</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥇 1위 거지왕</span><span style="font-weight:700;color:#9a6800;">5,000P</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥈 2위 거지대장</span><span style="font-weight:700;color:#9a6800;">3,000P</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥉 3위 거지반장</span><span style="font-weight:700;color:#9a6800;">1,000P</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>4~5위</span><span style="font-weight:700;color:#9a6800;">500P</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#9a6800;margin-top:8px;opacity:0.8;">매주 월요일 자정 기준 · 리워드는 발표 후 영업일 3일 내 지급</div>
+        </div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
           <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
           <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
           <div class="formula-row"><div class="formula-key">✏️ 피드에 글 쓰기</div><div class="formula-val">+1점</div></div>
+          <div class="formula-row"><div class="formula-key">🗺️ 거지맵 식당 등록</div><div class="formula-val">+1점</div></div>
           <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 상점에서 사용 가능</div>
         </div>
         <div id="rank-list"></div>
@@ -3009,7 +3032,9 @@ async function loadLastKing() {
 
     const REWARDS_LIST = [5000,3000,1000,500,500,0,0,0,0,0];
     const MEDALS = ['🥇','🥈','🥉','4위','5위','6위','7위','8위','9위','10위'];
-    document.getElementById('last-king-list').innerHTML = data.map((w,i) => {
+    // 리워드 있는 순위만 표시 (6~10위 제외)
+    const displayData = data.filter((w,i) => (REWARDS_LIST[i] || 0) > 0);
+    document.getElementById('last-king-list').innerHTML = displayData.map((w,i) => {
       const reward = REWARDS_LIST[i] || 0;
       const score = typeof w.score === 'number' ? w.score : (w.monthScore || 0);
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
