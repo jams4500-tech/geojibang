@@ -540,7 +540,7 @@ window.resetMonthScores = async () => {
 window.cancelKing = async (ym) => {
   if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 이번주 거지왕 섹션이 사라져요.`)) return;
   try {
-    await deleteDoc(doc(db,'geojibang_ranking', ym));
+    await updateDoc(doc(db,'geojibang_ranking', ym), { announced: false, announcedAt: null });
     toast('✅ 거지왕 발표 취소됐어요. 앱에서 더 이상 표시되지 않아요.');
     showPage('ranking');
   } catch(e) { toast('⚠️ 실패: ' + e.message); }
@@ -576,7 +576,8 @@ window.announceKing = async () => {
     })).filter(w => w.uid);
     await setDoc(doc(db,'geojibang_ranking', ymStr),{
       winners: winnerData,
-      announcedAt: serverTimestamp()
+      announcedAt: serverTimestamp(),
+      announced: true
     });
     toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.');
     showPage('ranking');
