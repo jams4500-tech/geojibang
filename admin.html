@@ -145,7 +145,7 @@ tbody tr:hover td{background:var(--surface2);}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,query,orderBy,limit,where,serverTimestamp,writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,query,orderBy,limit,where,serverTimestamp,writeBatch,deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const ADMIN_PW = 'gj2026admin';
 const FB = {apiKey:"AIzaSyAXv86i3jRToWBr2T9nv9o-BCpYWfHew9k",authDomain:"geojibang-5254c.firebaseapp.com",projectId:"geojibang-5254c",storageBucket:"geojibang-5254c.firebasestorage.app",messagingSenderId:"856762520566",appId:"1:856762520566:web:4c8289a4ad8f559a426dd7"};
@@ -540,7 +540,7 @@ window.resetMonthScores = async () => {
 window.cancelKing = async (ym) => {
   if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 이번주 거지왕 섹션이 사라져요.`)) return;
   try {
-    await updateDoc(doc(db,'geojibang_ranking', ym), { announced: false, announcedAt: null });
+    await updateDoc(doc(db,'geojibang_ranking', ym), { announced: false, announcedAt: deleteField() });
     toast('✅ 거지왕 발표 취소됐어요. 앱에서 더 이상 표시되지 않아요.');
     showPage('ranking');
   } catch(e) { toast('⚠️ 실패: ' + e.message); }
