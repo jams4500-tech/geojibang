@@ -436,6 +436,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
             <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">🏆</div>
             <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">이주의 거지왕 도전</div><div style="font-size:12px;color:#888;">1위하면 토스포인트를 드려요</div></div>
           </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">🗺️</div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거지맵</div><div style="font-size:12px;color:#888;">가성비 식당 공유하고 거지력 쌓아요</div></div>
+          </div>
         </div>
         <!-- 토스 로그인 버튼 -->
         <button id="toss-login-btn" onclick="loginWithToss()" style="width:100%;background:#0064ff;color:#fff;border:none;border-radius:14px;padding:18px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box;margin-bottom:12px;">토스로 시작하기</button>
@@ -5413,7 +5417,10 @@ async function submitPlace() {
       likes: 0, likedBy: [],
     });
     closeOverlay('ov-add-place');
-    showToast('🗺️ 거지맵에 등록됐어요!');
+    // 거지력 +1점
+    myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
+    if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 1, 1, 'map').catch(()=>{});
+    showToast('🗺️ 거지맵에 등록됐어요! +1점 획득!');
     await loadMapPlaces();
     // 방금 추가한 곳으로 이동
     if (_geojiMap) { _geojiMap.setCenter(new naver.maps.LatLng(_addPlaceLat, _addPlaceLng)); _geojiMap.setZoom(16); }
