@@ -45,10 +45,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST만 허용' });
 
-  const { userKey, promotionCode, amount } = req.body;
-  if (!userKey || !promotionCode || !amount) {
+  const { userKey: rawKey, promotionCode, amount } = req.body;
+  if (!rawKey || !promotionCode || !amount) {
     return res.status(400).json({ error: 'userKey, promotionCode, amount 필요' });
   }
+  // 숫자만 허용 (헤더 오류 방지)
+  const userKey = String(rawKey).replace(/[^0-9]/g, '');
+  if (!userKey) return res.status(400).json({ error: '유효하지 않은 userKey' });
+  console.log('[toss-reward] userKey:', userKey, '| promo:', promotionCode, '| amount:', amount);
 
   const API_KEY = process.env.TOSS_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: 'API 키 미설정' });

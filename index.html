@@ -2106,6 +2106,13 @@ function initTossAds() {
   }
 }
 setTimeout(initTossAds, 1000);
+setTimeout(() => {
+  // 리워드 광고 로드 재시도
+  if (!window._rewardedReady && typeof window.loadFullScreenAd !== 'undefined') {
+    try {
+      window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} }); } catch(e){}
+  }
+}, 3000);
 
 // 전면형 광고 표시
 function showInterstitialAd(onDismiss) {
@@ -3103,7 +3110,7 @@ window.claimRankReward = async function() {
   else promoCode = PROMO_KING_3TO5;
 
   // 토스포인트 실제 지급
-  const userKey = myProfile.uid?.replace('toss_', '');
+  const userKey = myProfile.uid; // giveTossPoints에서 정제
   let ok = false;
   if (userKey && promoCode) {
     ok = await giveTossPoints(userKey, promoCode, reward);
@@ -3313,19 +3320,22 @@ async function doConvert() {
   const sets = Math.floor(coins/5);
   const pts = sets * 5;
   if (pts <= 0) return;
+  const btn = document.getElementById('cv-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
   coins = coins % 5;
   updatePiggy();
   closeOverlay('ov-convert');
+  localStorage.setItem('gj_coins', coins);
 
-  // 토스포인트 실제 지급
-  const userKey = myProfile.uid?.replace('toss_', '');
-  if (userKey && typeof giveTossPoints === 'function') {
+  // 토스포인트 실제 지급 (uid 전체 전달, giveTossPoints에서 정제)
+  const userKey = myProfile.uid;
+  if (userKey && userKey.startsWith('toss_') && typeof giveTossPoints === 'function') {
     const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, pts);
     showToast(ok ? '🎉 토스 포인트 ' + pts + 'P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
   } else {
     showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
   }
-  localStorage.setItem('gj_coins', coins);
+  if (btn) { btn.disabled = false; btn.textContent = '토스 포인트로 받기'; }
 }
 
 /* lottery */
@@ -5346,11 +5356,17 @@ const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2�
 const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
 
 async function giveTossPoints(userKey, promotionCode, amount) {
+  // userKey에서 숫자만 추출 (toss_443731104 → 443731104)
+  const cleanKey = String(userKey).replace(/[^0-9]/g, '');
+  if (!cleanKey) {
+    console.warn('[거지방] 유효하지 않은 userKey:', userKey);
+    return false;
+  }
   try {
     const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userKey, promotionCode, amount })
+      body: JSON.stringify({ userKey: cleanKey, promotionCode, amount })
     });
     const data = await res.json();
     if (data.success) {
