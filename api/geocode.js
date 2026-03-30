@@ -14,16 +14,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(
-      `https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          'x-ncp-apigw-api-key-id': CLIENT_ID,
-          'x-ncp-apigw-api-key': CLIENT_SECRET,
-        }
+    const url = `https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(query)}`;
+    const r = await fetch(url, {
+      headers: {
+        'x-ncp-apigw-api-key-id': CLIENT_ID,
+        'x-ncp-apigw-api-key': CLIENT_SECRET,
       }
-    );
-    const data = await r.json();
+    });
+
+    const text = await r.text();
+    if (!text) return res.status(500).json({ error: 'API 응답 없음 - Geocoding 서비스를 신청했는지 확인해주세요' });
+
+    let data;
+    try { data = JSON.parse(text); } 
+    catch(e) { return res.status(500).json({ error: 'API 응답 파싱 실패: ' + text.slice(0,100) }); }
+
+    if (data.status === 'INVALID_REQUEST' || r.status !== 200) {
+      return res.status(500).json({ error: 'API 오류: ' + JSON.stringify(data) });
+    }
+
     const addr = data?.addresses?.[0];
     if (!addr) return res.status(200).json({ error: '주소를 찾을 수 없어요' });
 
