@@ -3328,6 +3328,33 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
 }
 
 function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
+async function giveTossPoints(userKey, promotionCode, amount) {
+  // userKey에서 숫자만 추출 (toss_443731104 → 443731104)
+  const cleanKey = String(userKey).replace(/[^0-9]/g, '');
+  if (!cleanKey) {
+    console.warn('[거지방] 유효하지 않은 userKey:', userKey);
+    return false;
+  }
+  try {
+    const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userKey: cleanKey, promotionCode, amount })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('[거지방] 토스포인트 지급 성공:', amount + 'P');
+      return true;
+    } else {
+      console.warn('[거지방] 토스포인트 지급 실패:', data);
+      return false;
+    }
+  } catch(e) {
+    console.error('[거지방] 토스포인트 지급 오류:', e);
+    return false;
+  }
+}
+
 async function doConvert() {
   const sets = Math.floor(coins/5);
   const pts = sets * 5;
@@ -5367,32 +5394,6 @@ const PROMO_KING_1ST       = 'TEST_01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1�
 const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
 const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
 
-async function giveTossPoints(userKey, promotionCode, amount) {
-  // userKey에서 숫자만 추출 (toss_443731104 → 443731104)
-  const cleanKey = String(userKey).replace(/[^0-9]/g, '');
-  if (!cleanKey) {
-    console.warn('[거지방] 유효하지 않은 userKey:', userKey);
-    return false;
-  }
-  try {
-    const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userKey: cleanKey, promotionCode, amount })
-    });
-    const data = await res.json();
-    if (data.success) {
-      console.log('[거지방] 토스포인트 지급 성공:', amount + 'P');
-      return true;
-    } else {
-      console.warn('[거지방] 토스포인트 지급 실패:', data);
-      return false;
-    }
-  } catch(e) {
-    console.error('[거지방] 토스포인트 지급 오류:', e);
-    return false;
-  }
-}
 
 var WEEKLY_CHALLENGES = [
   { id:'record3',  actionType:'record',  icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
