@@ -3373,7 +3373,8 @@ async function doConvert() {
   localStorage.setItem('gj_coins', coins);
 
   // 토스포인트 실제 지급
-  const userKey = myProfile.uid;
+  const userKey = (myProfile.uid || window.myProfile?.uid);
+  console.log('[동전교환] uid:', userKey, '| pts:', pts, '| PROMO:', PROMO_COIN_EXCHANGE, '| giveFn:', typeof giveTossPoints);
   if (userKey && typeof giveTossPoints === 'function') {
     const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, pts);
     showToast(ok ? '🎉 토스 포인트 ' + pts + 'P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
@@ -3431,18 +3432,16 @@ function closeLottery() { document.getElementById('lot-pick').style.display='blo
 /* ad */
 function watchAd(cb) {
   if (typeof window.showFullScreenAd !== 'undefined' && window._rewardedReady) {
+    let rewarded = false;
     showRewardedAd(
-      () => { closeOverlay('ov-ad'); if (cb) cb(); },
       () => {
-        // 광고 스킵/실패 시 폴백
-        adCb = cb;
-        openOverlay('ov-ad');
-        let e = 0;
-        const iv = setInterval(() => {
-          e += 100;
-          document.getElementById('ad-bar').style.width = Math.min(100,(e/3000)*100) + '%';
-          if (e >= 3000) { clearInterval(iv); setTimeout(() => { closeOverlay('ov-ad'); if (adCb) { adCb(); adCb = null; } }, 300); }
-        }, 100);
+        rewarded = true;
+        if (cb) cb(); // 보상 완료 즉시 콜백
+      },
+      () => {
+        if (rewarded) return; // 보상 받았으면 dismissed 무시
+        // 실제 스킵/실패 시만 폴백 없이 토스트만
+        showToast('광고를 끝까지 시청해야 보상을 받을 수 있어요');
       }
     );
     return;
