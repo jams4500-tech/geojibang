@@ -955,6 +955,7 @@ async function renderGeojiMap(m) {
         <td><span style='color:var(--pink)'>👍 ${p.likes||0}</span> / <span style='color:var(--text3)'>👎 ${p.dislikes||0}</span></td>
         <td style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="editPlace('${p.id}')">수정</button>
+          <button class="btn btn-ghost btn-sm" onclick="manageComments('${p.id}','${esc(p.name)}')">💬 댓글</button>
           <button class="btn btn-red btn-sm" onclick="deletePlace('${p.id}','${esc(p.name)}')">삭제</button>
         </td>
       </tr>`).join('')}
@@ -993,6 +994,39 @@ window.editPlace = async (id) => {
   const form = document.getElementById('edit-place-form');
   form.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth' });
+};
+
+window.manageComments = async (placeId, placeName) => {
+  const snap = await getDocs(query(
+    collection(db,'geojimap_places',placeId,'comments'),
+    orderBy('createdAt','asc')
+  ));
+  const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const modal = document.getElementById('edit-modal');
+  document.getElementById('modal-title').textContent = `💬 "${placeName}" 댓글 관리`;
+  document.getElementById('modal-body').innerHTML = comments.length === 0
+    ? '<div style="text-align:center;padding:24px;color:var(--text3);">댓글이 없어요</div>'
+    : comments.map(c => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:700;color:var(--text);">${esc(c.authorNick||'익명')}</span>
+            <span style="font-size:11px;color:var(--text3);">${c.createdAt?.toDate ? new Date(c.createdAt.toDate()).toLocaleString('ko-KR') : '-'}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);">${esc(c.text||'')}</div>
+        </div>
+        <button class="btn btn-red btn-sm" style="margin-left:8px;flex-shrink:0;" onclick="deletePlaceComment('${placeId}','${c.id}',this)">삭제</button>
+      </div>`).join('');
+  modal.classList.add('open');
+};
+
+window.deletePlaceComment = async (placeId, commentId, btn) => {
+  if (!confirm('댓글을 삭제할까요?')) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId,'comments',commentId));
+    btn.closest('div[style*="border-bottom"]').remove();
+    toast('✅ 댓글 삭제됐어요.');
+  } catch(e) { alert('오류: ' + e.message); }
 };
 
 window.saveEditPlace = async () => {
