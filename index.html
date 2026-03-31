@@ -5223,6 +5223,26 @@ async function generateReport() {
 
 buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
 
+// 딥링크 처리 - intoss://geojibang/geoschleng
+(function() {
+  try {
+    const path = window.location.pathname || '';
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const full = path + hash + search;
+    if (full.includes('geoschleng') || document.referrer.includes('geoschleng')) {
+      setTimeout(() => showTab('map'), 800);
+    }
+  } catch(e) {}
+  // 토스 앱 SDK referrer로도 처리
+  if (typeof window.AppsInToss !== 'undefined') {
+    try {
+      const ref = window.AppsInToss?.getReferrer?.() || '';
+      if (ref.includes('geoschleng')) setTimeout(() => showTab('map'), 800);
+    } catch(e) {}
+  }
+})();
+
 // 오늘 복권 사용 상태 UI 반영
 if (lotteryUsed) {
   document.getElementById('lc-normal')?.classList.add('used');
