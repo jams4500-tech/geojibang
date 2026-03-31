@@ -2038,7 +2038,6 @@ function makePost(p) {
   const isMyPost = p.authorUid && myProfile.uid && p.authorUid === myProfile.uid;
   const myPostBtns = isMyPost
     ? `<div style="display:flex;gap:6px;">
-        <button class="post-edit-btn" data-pid="${p.id}" onclick="openEditPostFromBtn(this)">수정</button>
         <button class="post-del-btn" onclick="deleteMyPost('${p.id}')">삭제</button>
        </div>`
     : '';
@@ -3535,18 +3534,39 @@ function openEditPostFromBtn(btn) {
   openEditPost(pid, desc, item, amountRaw);
 }
 function deleteMyPost(pid) {
-  if (!confirm('이 게시물을 삭제할까요?')) return;
+  // 이 글로 얻은 거지력 계산
+  const rxn = document.querySelectorAll(`#rxn-${pid} .rxn-btn`);
+  let lostScore = 0;
+  if (rxn.length >= 3) {
+    const counts = Array.from(rxn).map(b => parseInt(b.textContent.match(/\d+/)?.[0]) || 0);
+    lostScore = counts[0]*3 + counts[1]*0.5 - counts[2]*1 + 1; // 반응 + 글쓰기 +1
+    lostScore = Math.max(0, lostScore);
+  } else {
+    lostScore = 1; // 최소 글쓰기 +1점
+  }
+  const msg = `이 게시물을 삭제할까요?\n\n⚠️ 이 글로 얻은 거지력 약 ${lostScore.toFixed(1)}점이 차감돼요.\n(반응으로 받은 거지력 포함)`;
+  if (!confirm(msg)) return;
+  // 거지력 차감
+  if (lostScore > 0) {
+    myMonthScore = Math.max(0, myMonthScore - lostScore);
+    myTotalScore = Math.max(0, myTotalScore - lostScore);
+    window.myMonthScore = myMonthScore;
+    window.myTotalScore = myTotalScore;
+    updateMyRankUI();
+    if (window.GJ?.ready && myProfile.uid) {
+      window.GJ.updateScore(myProfile.uid, -lostScore, -lostScore, 'delete').catch(()=>{});
+    }
+  }
   // 로컬에서 즉시 제거
   document.getElementById('post-' + pid)?.remove();
   // Firebase에서 삭제
   if (window.GJ?.ready) {
     window.GJ.deletePost(pid)
-      .then(() => showToast('게시물이 삭제됐어요'))
+      .then(() => showToast('게시물이 삭제됐어요. 거지력 ' + lostScore.toFixed(1) + '점 차감됐어요.'))
       .catch(() => showToast('삭제 중 오류가 발생했어요'));
   } else {
     showToast('게시물이 삭제됐어요');
   }
-  // 반응 기록 삭제
   localStorage.removeItem(getRxnKey(pid));
 }
 
@@ -6401,7 +6421,7 @@ async function _openPlaceDetailInner(placeId) {
       </div>
     </div>`;
   openOverlay('ov-place-detail');
-  loadPlaceComments(placeId);
+  setTimeout(() => loadPlaceComments(placeId), 150);
 }
 
 async function dislikePlace(placeId) {
