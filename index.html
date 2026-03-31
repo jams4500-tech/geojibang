@@ -2895,7 +2895,7 @@ function updateMyRankUI() {
   }, 1500);
 }
 
-function doExchange(type,cost) {
+async function doExchange(type,cost) {
   if(coins<cost){showToast('동전이 ' + cost + '개 필요해요');return;}
   tapCount = 0; // 깡통 탭 카운트 리셋
   coins-=cost; updatePiggy();
@@ -2911,12 +2911,15 @@ function doExchange(type,cost) {
     }
     showToast('🙇 거지력 +10점! 월 랭킹 & 누적 반영됨');
   } else if(type==='point5'){
-    // 토스포인트 5P (프로모션 API 연동 후 실제 지급)
-    showToast('💚 토스포인트 5P 지급 신청됐어요! 영업일 내 지급');
-    // 프로모션 코드 등록 후 아래 코드 활성화
-    // if(typeof grantPromotionReward !== 'undefined') {
-    //   grantPromotionReward({ params: { promotionCode: 'GEOJI_COIN5', amount: 5 } });
-    // }
+    // 토스포인트 5P 실제 지급
+    const userKey = myProfile.uid || window.myProfile?.uid;
+    if (userKey && typeof giveTossPoints === 'function') {
+      showToast('💚 토스포인트 5P 지급 중...');
+      const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, 5);
+      showToast(ok ? '🎉 토스포인트 5P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
+    } else {
+      showToast('💚 토스포인트 5P 지급 신청됐어요! 영업일 내 지급');
+    }
   } else if(type==='lotto'){
     const beggingLevels=['상','중','하','최하','바닥'];
     const emoji=['🌟','✨','😐','😢','💀'];
@@ -3335,28 +3338,29 @@ const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2�
 const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
 
 async function giveTossPoints(userKey, promotionCode, amount) {
-  // userKey에서 숫자만 추출 (toss_443731104 → 443731104)
   const cleanKey = String(userKey).replace(/[^0-9]/g, '');
+  console.log('[giveTossPoints] cleanKey:', cleanKey, 'promo:', promotionCode, 'amount:', amount);
   if (!cleanKey) {
-    console.warn('[거지방] 유효하지 않은 userKey:', userKey);
+    console.warn('[giveTossPoints] 유효하지 않은 userKey:', userKey);
     return false;
   }
   try {
+    console.log('[giveTossPoints] fetch 시작');
     const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userKey: cleanKey, promotionCode, amount })
     });
+    console.log('[giveTossPoints] fetch 완료, status:', res.status);
     const data = await res.json();
+    console.log('[giveTossPoints] 응답:', JSON.stringify(data));
     if (data.success) {
-      console.log('[거지방] 토스포인트 지급 성공:', amount + 'P');
       return true;
     } else {
-      console.warn('[거지방] 토스포인트 지급 실패:', data);
       return false;
     }
   } catch(e) {
-    console.error('[거지방] 토스포인트 지급 오류:', e);
+    console.error('[giveTossPoints] fetch 오류:', e.message);
     return false;
   }
 }
