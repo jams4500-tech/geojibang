@@ -112,6 +112,7 @@ tbody tr:hover td{background:var(--surface2);}
       <div class="nav-item" onclick="showPage('challenge')" id="nav-challenge"><span class="nav-icon">🔥</span>챌린지 관리</div>
       <div class="nav-item" onclick="showPage('rewards')" id="nav-rewards"><span class="nav-icon">🏆</span>리워드 신청 관리</div>
       <div class="nav-item" onclick="showPage('geojimap')" id="nav-geojimap"><span class="nav-icon">🗺️</span>거지맵 관리</div>
+      <div class="nav-item" onclick="showPage('mapreports')" id="nav-mapreports"><span class="nav-icon">🚨</span>거지맵 신고 관리</div>
     </nav>
     <div class="sidebar-footer">pw: gj2026admin · v2.2</div>
   </div>
@@ -206,6 +207,7 @@ window.showPage = async page => {
     else if (page==='challenge') await renderChallenge(m);
     else if (page==='rewards')   await renderRewards(m);
     else if (page==='geojimap')  await renderGeojiMap(m);
+    else if (page==='mapreports') await renderMapReports(m);
   } catch(e) { m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`; console.error(e); }
 };
 
@@ -929,11 +931,15 @@ async function renderGeojiMap(m) {
   m.innerHTML = `
   <div class="page-header">
     <div class="page-title">🗺️ 거지맵 관리</div>
-    <div class="page-sub">총 ${places.length}개 식당 등록</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="page-sub">총 ${places.length}개</div>
+      <button class="btn btn-ghost btn-sm" onclick="renderGeojiMapSorted('likes')">👍 추천순</button>
+      <button class="btn btn-ghost btn-sm" onclick="renderGeojiMapSorted('dislikes')">👎 비추천순</button>
+    </div>
   </div>
   <div class="card">
     <table>
-      <tr><th>식당명</th><th>카테고리</th><th>메뉴/가격</th><th>평점</th><th>등록자</th><th>좋아요</th><th>관리</th></tr>
+      <tr><th>식당명</th><th>카테고리</th><th>메뉴/가격</th><th>평점</th><th>등록자</th><th>👍/👎</th><th>관리</th></tr>
       ${places.map(p => `<tr>
         <td>
           <div style="font-weight:700;">${esc(p.name)}</div>
@@ -946,7 +952,7 @@ async function renderGeojiMap(m) {
         </td>
         <td><span class="badge badge-gold">${'🥫'.repeat(Math.min(p.rating||1,5))}</span></td>
         <td style="font-size:12px;">${esc(p.authorNick||'익명')}</td>
-        <td>👍 ${p.likes||0}</td>
+        <td><span style='color:var(--pink)'>👍 ${p.likes||0}</span> / <span style='color:var(--text3)'>👎 ${p.dislikes||0}</span></td>
         <td style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="editPlace('${p.id}')">수정</button>
           <button class="btn btn-red btn-sm" onclick="deletePlace('${p.id}','${esc(p.name)}')">삭제</button>
@@ -1013,6 +1019,71 @@ window.deletePlace = async (id, name) => {
     toast('🗑️ 삭제됐어요.');
     showPage('geojimap');
   } catch(e) { alert('오류: ' + e.message); }
+};
+
+// ── 거지맵 신고 관리 ──────────────────────────────────
+async function renderMapReports(m) {
+  m.innerHTML = '<div class="loading">🚨 신고 내역 불러오는 중...</div>';
+  // 전체 장소 가져와서 각각 reports 서브컬렉션 확인
+  const placesSnap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc')));
+  const reports = [];
+  for (const placeDoc of placesSnap.docs) {
+    const rSnap = await getDocs(collection(db,'geojimap_places',placeDoc.id,'reports'));
+    rSnap.docs.forEach(r => {
+      reports.push({ placeId: placeDoc.id, placeName: placeDoc.data().name, ...r.data(), reportId: r.id });
+    });
+  }
+  reports.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🚨 거지맵 신고 관리</div>
+    <div class="page-sub">총 ${reports.length}건</div>
+  </div>
+  <div class="card">
+    ${reports.length === 0 ? '<div class="empty">신고 내역이 없어요</div>' : `
+    <table>
+      <tr><th>식당명</th><th>신고 사유</th><th>신고자</th><th>신고일시</th><th>관리</th></tr>
+      ${reports.map(r => `<tr>
+        <td><span class="badge badge-pink">${esc(r.placeName||'')}</span></td>
+        <td>${esc(r.reason||'')}</td>
+        <td style="font-size:12px;">${esc(r.reporterNick||'익명')}</td>
+        <td style="font-size:11px;color:var(--text3);">${r.createdAt?.toDate ? new Date(r.createdAt.toDate()).toLocaleString('ko-KR') : '-'}</td>
+        <td style="display:flex;gap:4px;">
+          <button class="btn btn-red btn-sm" onclick="deletePlaceFromReport('${r.placeId}','${esc(r.placeName||'')}')">식당 삭제</button>
+          <button class="btn btn-ghost btn-sm" onclick="dismissReport('${r.placeId}','${r.reportId}')">무시</button>
+        </td>
+      </tr>`).join('')}
+    </table>`}
+  </div>`;
+}
+
+window.deletePlaceFromReport = async (placeId, name) => {
+  if (!confirm(`"${name}" 식당을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId));
+    toast('🗑️ 식당 삭제됐어요.');
+    showPage('mapreports');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.dismissReport = async (placeId, reportId) => {
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId,'reports',reportId));
+    toast('✅ 신고 무시됐어요.');
+    showPage('mapreports');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.renderGeojiMapSorted = async (sortBy) => {
+  const m = document.getElementById('main-content');
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy(sortBy,'desc')));
+  const places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // 기존 renderGeojiMap 재사용하되 정렬된 데이터로
+  const table = document.querySelector('#main-content table tbody');
+  if (!table) { await renderGeojiMap(m); return; }
+  // 간단히 페이지 다시 로드
+  await renderGeojiMap(m);
 };
 
 // ── 리워드 신청 관리 ──────────────────────────────────

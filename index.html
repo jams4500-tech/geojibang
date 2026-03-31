@@ -1446,6 +1446,10 @@ window.GJ.loadPlaceComments = async (placeId) => {
 window.GJ.updatePlaceLike = async (placeId, likedBy) => {
   await updateDoc(doc(db,'geojimap_places',placeId), { likes: likedBy.length, likedBy });
 };
+window.GJ.updatePlaceDislike = async (placeId, dislikedBy) => {
+  await updateDoc(doc(db,'geojimap_places',placeId), { dislikes: dislikedBy.length, dislikedBy });
+};
+window.GJ._placeReportsCol = (placeId) => collection(db,'geojimap_places',placeId,'reports');
 
 // 앱 시작 시 랭킹 실시간 리스너 바로 시작 (온보딩 여부 무관)
 if (window.GJ?.ready) {
@@ -1798,7 +1802,7 @@ document.addEventListener('visibilitychange', async () => {
 const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
 var coins = parseInt(localStorage.getItem('gj_coins') || '0');
 let todayEarned = 0, adCb = null;
-const MAX_DAILY = 5;
+const MAX_DAILY = 20;
 const MAX_GOLDEN_DAILY = 1; // 꽝없는 복권 하루 1회 제한
 
 // 오늘 날짜 키 (자정마다 초기화)
@@ -2720,7 +2724,7 @@ function updatePiggy() {
   if (hintIcon && hintText) {
     if(todayEarned>=MAX_DAILY) {
       hintIcon.textContent='😴';
-      hintText.textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요';
+      hintText.textContent='오늘은 더이상 구걸이 어려워요 (하루 20개 제한) 🥲';
       if(pigLimit) pigLimit.textContent='';
     } else {
       hintIcon.textContent='🙏';
@@ -2774,7 +2778,7 @@ function showBegBubble(text) {
 }
 
 function tapPiggy() {
-  if(todayEarned>=MAX_DAILY){showToast('오늘 구걸 한도를 다 채웠어요!');return;}
+  if(todayEarned>=MAX_DAILY){showToast('오늘은 더이상 구걸이 어려워요 (하루 20개 제한) 🥲');return;}
   tapCount++;
   // shake can
   const w=document.getElementById('piggy-svg-wrap');
@@ -6220,9 +6224,9 @@ async function openPlaceDetail(placeId) {
         <div style="padding:32px 20px;text-align:center;">
           <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
           <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:8px;">가성비 식당 더 알아보기</div>
-          <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:24px;">짧은 광고를 보고<br>계속 거지맵을 탐험해보세요!</div>
+          <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:24px;">짧은 광고를 보고<br>계속 거지맵을 탐험해보세요!<br><span style="font-size:12px;color:var(--text3);opacity:0.7;">광고 1회 시청 후 탭을 나가기 전까지 광고가 뜨지 않아요</span></div>
           <button onclick="watchMapAd('${placeId}')" style="width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">📺 광고 보고 계속 보기</button>
-          <button onclick="closeOverlay('ov-place-detail')" style="width:100%;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:inherit;">닫기</button>
+          <button onclick="_closeMapAdSheet()" style="width:100%;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:inherit;">닫기 (광고 없이 나가기)</button>
         </div>`;
       openOverlay('ov-place-detail');
     }
@@ -6232,6 +6236,12 @@ async function openPlaceDetail(placeId) {
   await _openPlaceDetailInner(placeId);
 }
 
+
+window._closeMapAdSheet = function() {
+  // 닫기 누르면 카운트 2로 리셋 → 다음 식당 클릭 시 광고 안내 다시 뜸
+  _mapPlaceViewCount = 2;
+  closeOverlay('ov-place-detail');
+};
 
 window.watchMapAd = function(placeId) {
   _mapAdShown = true;
@@ -6258,9 +6268,17 @@ async function _openPlaceDetailInner(placeId) {
           <div style="font-size:18px;font-weight:900;color:var(--text);">${escMap(place.name)}</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${escMap(place.address||'주소 없음')}</div>
         </div>
-        <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
-          👍 ${place.likes||0}
-        </button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
+            👍 ${place.likes||0}
+          </button>
+          <button onclick="dislikePlace('${placeId}')" style="background:${(place.dislikedBy||[]).includes(myProfile.uid)?'rgba(100,100,100,0.15)':'var(--surface2)'};border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text3);" id="dislike-btn-${placeId}">
+            👎 ${place.dislikes||0}
+          </button>
+          <button onclick="reportPlace('${placeId}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text3);">
+            🚨 신고
+          </button>
+        </div>
       </div>
       <div style="font-size:14px;margin-bottom:8px;">${ratingStr}</div>
       <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
@@ -6289,6 +6307,44 @@ async function _openPlaceDetailInner(placeId) {
     </div>`;
   openOverlay('ov-place-detail');
   loadPlaceComments(placeId);
+}
+
+async function dislikePlace(placeId) {
+  if (!window.GJ?.ready || !myProfile.uid) return;
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const dislikedBy = place.dislikedBy || [];
+  const myDisliked = dislikedBy.includes(myProfile.uid);
+  const newDislikedBy = myDisliked ? dislikedBy.filter(u => u !== myProfile.uid) : [...dislikedBy, myProfile.uid];
+  try {
+    await window.GJ.updatePlaceDislike(placeId, newDislikedBy);
+    place.dislikes = newDislikedBy.length; place.dislikedBy = newDislikedBy;
+    const btn = document.getElementById('dislike-btn-' + placeId);
+    if (btn) {
+      btn.textContent = '👎 ' + newDislikedBy.length;
+      btn.style.background = myDisliked ? 'var(--surface2)' : 'rgba(100,100,100,0.15)';
+    }
+  } catch(e) { showToast('오류가 발생했어요'); }
+}
+
+async function reportPlace(placeId) {
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const reasons = ['홍보성 광고 의심', '가짜 정보', '실제 가성비 아님', '폐업/이전', '기타'];
+  const reason = prompt('신고 사유를 선택해주세요:\n' + reasons.map((r,i)=>`${i+1}. ${r}`).join('\n') + '\n\n번호를 입력하세요 (1-5):');
+  if (!reason) return;
+  const idx = parseInt(reason) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= reasons.length) { showToast('올바른 번호를 입력해주세요'); return; }
+  try {
+    await addDoc(window.GJ._placeReportsCol(placeId), {
+      reason: reasons[idx],
+      reporterUid: myProfile.uid || '',
+      reporterNick: myProfile.nick || '익명',
+      placeName: place.name,
+      createdAt: serverTimestamp(),
+    });
+    showToast('🚨 신고가 접수됐어요. 검토 후 처리돼요.');
+  } catch(e) { showToast('신고 실패: ' + e.message); }
 }
 
 async function likePlace(placeId) {
