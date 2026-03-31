@@ -480,7 +480,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="header-badge">247명 참여중</div>
-          <button onclick="shareApp()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">🔗 공유</button>
+
           <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
             <span class="profile-name" id="header-profile-name">거지</span>
@@ -494,7 +494,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       <div class="tab" onclick="showTab('mine')" style="flex-shrink:0;">내 지출</div>
       <div class="tab" onclick="showTab('rank')" style="flex-shrink:0;">거지 랭킹</div>
       <div class="tab" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
-      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거지맵</div>
+      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
@@ -1753,7 +1753,16 @@ setTimeout(async () => {
 setTimeout(() => checkSubExpiry(), 300);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
-setTimeout(() => buildWeeklyChallenges(), 600);
+// 챌린지는 Firebase 설정 로드 후에만 표시 (깜빡임 방지)
+window._challengeReady = false;
+function buildWeeklyChallengesWhenReady() {
+  if (window._challengeReady) {
+    buildWeeklyChallenges();
+  } else {
+    setTimeout(buildWeeklyChallengesWhenReady, 200);
+  }
+}
+setTimeout(buildWeeklyChallengesWhenReady, 300);
 setTimeout(() => loadWeeklyChallengesFromDB(), 3000);
 // 토스 미니앱 환경이면 로그인 버튼 표시
 // initTossLoginUI 제거됨
@@ -5462,8 +5471,7 @@ var WEEKLY_CHALLENGES = [
   { id:'record3',  actionType:'record',  icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
   { id:'feed1',    actionType:'feed',    icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
   { id:'comment1', actionType:'comment', icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
-  { id:'share1',   actionType:'share',   icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
-  { id:'map1',     actionType:'map',     icon:'🗺️', title:'거지맵에 식당 추가',   target:1, reward:30, unit:'회' },
+  { id:'map1',     actionType:'map',     icon:'🗺️', title:'거슐랭에 식당 추가',   target:1, reward:30, unit:'회' },
 ];
 
 function getChallengeKey(actionTypeOrId) {
@@ -5516,6 +5524,7 @@ function toggleChallengeBanner() {
 
 function buildWeeklyChallenges() {
   if (typeof WEEKLY_CHALLENGES === 'undefined') return;
+  if (!window._challengeReady) return; // Firebase 로드 전 렌더링 차단
   const el = document.getElementById('challenge-list');
   if (!el) return;
   const now = new Date();
@@ -5754,7 +5763,6 @@ async function loadWeeklyChallengesFromDB() {
     if (snap?.weeklyChallenges && snap.weeklyChallenges.length > 0) {
       WEEKLY_CHALLENGES.length = 0;
       snap.weeklyChallenges.forEach(c => {
-        // actionType이 없는 구버전 데이터면 id에서 추정
         if (!c.actionType) {
           if (c.id.startsWith('record')) c.actionType = 'record';
           else if (c.id.startsWith('feed')) c.actionType = 'feed';
@@ -5762,13 +5770,21 @@ async function loadWeeklyChallengesFromDB() {
           else if (c.id.startsWith('share')) c.actionType = 'share';
           else if (c.id.startsWith('login')) c.actionType = 'login';
           else if (c.id.startsWith('reaction')) c.actionType = 'reaction';
+          else if (c.id.startsWith('map')) c.actionType = 'map';
           else c.actionType = c.id;
         }
         WEEKLY_CHALLENGES.push(c);
       });
-      buildWeeklyChallenges();
     }
-  } catch(e) { console.warn('[거지방] 챌린지 로드 실패:', e); }
+    // Firebase 로드 완료 → 렌더링 허용
+    window._challengeReady = true;
+    buildWeeklyChallenges();
+  } catch(e) {
+    console.warn('[거지방] 챌린지 로드 실패:', e);
+    // 실패해도 기본값으로 렌더링 허용
+    window._challengeReady = true;
+    buildWeeklyChallenges();
+  }
 }
 
 
@@ -5856,7 +5872,7 @@ function renderGeojiMap() {
     <div style="position:relative;height:calc(100vh - 120px);display:flex;flex-direction:column;">
       <!-- 거지맵 안내 배너 -->
       <div style="background:linear-gradient(135deg,#fff5f7,#fff);border-bottom:2px solid var(--pink-dim2);padding:10px 16px;flex-shrink:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--pink);margin-bottom:2px;">🗺️ 거지맵 이용 안내</div>
+        <div style="font-size:13px;font-weight:700;color:var(--pink);margin-bottom:2px;">🗺️ 거슐랭가이드 이용 안내</div>
         <div style="font-size:12px;color:var(--text2);line-height:1.6;">극한의 가성비 식당만 올려주세요 💰<br>가성비 낮은 식당은 검토 후 삭제될 수 있어요.</div>
       </div>
     <!-- 검색/필터 바 -->
