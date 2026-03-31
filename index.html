@@ -3339,9 +3339,9 @@ async function doConvert() {
   closeOverlay('ov-convert');
   localStorage.setItem('gj_coins', coins);
 
-  // 토스포인트 실제 지급 (uid 전체 전달, giveTossPoints에서 정제)
+  // 토스포인트 실제 지급
   const userKey = myProfile.uid;
-  if (userKey && userKey.startsWith('toss_') && typeof giveTossPoints === 'function') {
+  if (userKey && typeof giveTossPoints === 'function') {
     const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, pts);
     showToast(ok ? '🎉 토스 포인트 ' + pts + 'P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
   } else {
