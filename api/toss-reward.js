@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     // 1단계: 지급 키 발급
     const keyBody = JSON.stringify({ promotionCode });
     const keyRes = await mtlsRequest(
-      `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/promotion/key`,
+      `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/promotion/execute-promotion/get-key`,
       {
         method: 'POST',
         headers: {
