@@ -3150,6 +3150,51 @@ window.claimRankReward = async function() {
   }
 };
 
+function shareApp() {
+  const shareText = '거지방 - 매일 매시 매초 본인이 거지임을 잊지마세요 😂\n지출 올리고 AI 거지방장한테 혼나기!\n\n앱인토스에서 거지 챌린지 검색!';
+  const shareUrl = 'https://minion.toss.im/p3bYrBU';
+
+  // 토스 앱 share SDK 사용
+  if (typeof window.share === 'function') {
+    window.share({
+      title: '거지 챌린지',
+      description: shareText,
+      imageUrl: 'https://static.toss.im/appsintoss/30705/1e023176-068e-42b8-811c-91bb763ab1fd.png',
+      link: shareUrl,
+    }).then((result) => {
+      // 카카오톡으로 공유했을 때만 챌린지 달성
+      if (result?.sharedTo === 'kakaotalk' || result?.platform === 'kakaotalk') {
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🎉 앱 공유 챌린지 달성! 거지력 +25점');
+      } else if (result) {
+        // 다른 플랫폼도 일단 달성 처리 (토스 SDK 응답에 따라)
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🔗 공유 완료! 거지력 +25점');
+      }
+    }).catch(() => {
+      // SDK 없으면 navigator.share 폴백
+      _shareAppFallback(shareText, shareUrl);
+    });
+    return;
+  }
+  _shareAppFallback(shareText, shareUrl);
+}
+
+function _shareAppFallback(text, url) {
+  if (navigator.share) {
+    navigator.share({ title: '거지 챌린지', text: text + '\n' + url })
+      .then(() => {
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🔗 공유 완료! 거지력 +25점');
+      }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(url).then(() => showToast('📋 링크가 복사됐어요!'));
+  }
+}
+
 function sharePiggyLink() {
   // 공유 리워드 SDK (하루 3번, +10점)
   const SHARE_REWARD_KEY = 'gj_share_' + new Date().toISOString().slice(0,10);
@@ -5493,7 +5538,10 @@ function buildWeeklyChallenges() {
       <div style="height:3px;background:var(--surface);border-radius:2px;">
         <div style="height:100%;width:${pct}%;background:${done?'var(--green)':'var(--pink)'};border-radius:2px;transition:width .3s;"></div>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${prog}/${ch.target}${ch.unit}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <div style="font-size:10px;color:var(--text3);">${prog}/${ch.target}${ch.unit}</div>
+        ${ch.actionType==='share' && !done ? `<button onclick="shareApp()" style="background:var(--pink);color:#fff;border:none;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🔗 공유하기</button>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
