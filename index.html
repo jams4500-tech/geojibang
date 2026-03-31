@@ -480,6 +480,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="header-badge">247명 참여중</div>
+          <button onclick="shareApp()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">🔗 공유</button>
           <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
             <span class="profile-name" id="header-profile-name">거지</span>
@@ -5911,11 +5912,18 @@ function renderGeojiMap() {
             <input id="place-menu" placeholder="예) 김밥, 라면, 순대국밥" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
           </div>
           <div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가격 *</div>
-            <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
-              <input id="place-price" placeholder="예) 2,000~4,000" style="flex:1;border:none;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:transparent;">
-              <span style="padding:10px 12px;font-size:14px;color:var(--text3);background:var(--surface2);border-left:1px solid var(--border);white-space:nowrap;">원</span>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가격 * <span style="color:var(--text3);font-size:11px;">(대표 메뉴 기준)</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+              ${['1,000','2,000','3,000','4,000','5,000','6,000','7,000','8,000','9,000','10,000','12,000','15,000','20,000','25,000','30,000','기타직접입력'].map(p=>`<button type="button" onclick="selectPrice('${p}',this)" class="price-select-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;font-size:13px;cursor:pointer;font-family:inherit;">${p==='기타직접입력'?'✏️ 직접입력':p+'원'}</button>`).join('')}
             </div>
+            <div id="price-custom-wrap" style="display:none;margin-top:6px;">
+              <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                <input id="place-price-custom" placeholder="예) 8,500~12,000" style="flex:1;border:none;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:transparent;" oninput="document.getElementById('place-price').value=this.value">
+                <span style="padding:10px 12px;font-size:14px;color:var(--text3);background:var(--surface2);border-left:1px solid var(--border);white-space:nowrap;">원</span>
+              </div>
+            </div>
+            <input type="hidden" id="place-price">
+            <div id="price-selected-display" style="font-size:12px;color:var(--pink);margin-top:4px;"></div>
           </div>
           <div>
             <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가성비 포인트</div>
@@ -6011,7 +6019,7 @@ function getMarkerContent(place, zoom) {
     // 확대 - 이름+가격 전체
     return `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:120px;">
       <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${place.name}</div>
-      <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price||place.menu||''}</div>
+      <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price ? (place.price+'원') : (place.menu||'')}</div>
     </div>`;
   }
 }
@@ -6111,6 +6119,33 @@ function togglePlaceTag(tag, btn) {
   } else {
     _addPlaceTags.add(tag);
     btn.style.background = 'rgba(232,82,122,0.1)'; btn.style.borderColor = 'var(--pink)'; btn.style.color = 'var(--pink)';
+  }
+}
+
+function selectPrice(val, btn) {
+  // 모든 버튼 초기화
+  document.querySelectorAll('.price-select-btn').forEach(b => {
+    b.style.background = 'var(--surface2)';
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--text2)';
+  });
+  // 선택된 버튼 강조
+  btn.style.background = 'var(--pink)';
+  btn.style.borderColor = 'var(--pink)';
+  btn.style.color = '#fff';
+
+  const customWrap = document.getElementById('price-custom-wrap');
+  const priceInput = document.getElementById('place-price');
+  const display = document.getElementById('price-selected-display');
+
+  if (val === '기타직접입력') {
+    if (customWrap) customWrap.style.display = 'block';
+    if (priceInput) priceInput.value = '';
+    if (display) display.textContent = '';
+  } else {
+    if (customWrap) customWrap.style.display = 'none';
+    if (priceInput) priceInput.value = val;
+    if (display) display.textContent = '✅ ' + val + '원 선택됨';
   }
 }
 
