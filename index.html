@@ -6057,6 +6057,11 @@ function initNaverMap() {
 
 async function loadMapPlaces() {
   if (!window.GJ?.loadPlaces) return;
+  // 이미 로드됐으면 캐시 사용
+  if (_mapPlaces.length > 0) {
+    renderMapMarkers();
+    return;
+  }
   try {
     _mapPlaces = await window.GJ.loadPlaces();
     renderMapMarkers();
