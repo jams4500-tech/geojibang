@@ -6080,16 +6080,52 @@ function getMarkerContent(place, zoom) {
   }
 }
 
+var _renderMarkerTimer = null;
+var _lastRenderedZoom = -1;
+
 function renderMapMarkers() {
   if (!_geojiMap) return;
+  // 디바운스 - 200ms 내 연속 호출 무시
+  clearTimeout(_renderMarkerTimer);
+  _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 200);
+
+  // 줌 리스너 한 번만 등록
+  if (!_geojiMap._zoomListenerAdded) {
+    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
+    _geojiMap._zoomListenerAdded = true;
+  }
+}
+
+function _doRenderMapMarkers() {
+  if (!_geojiMap) return;
+  const zoom = _geojiMap.getZoom();
+  const filtered = _mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter);
+
+  // 줌 레벨 변경 없고 마커 수도 같으면 아이콘만 업데이트
+  if (zoom === _lastRenderedZoom && _mapMarkers.length === filtered.filter(p => p.lat && p.lng).length) {
+    return; // 변화 없으면 스킵
+  }
+  _lastRenderedZoom = zoom;
+
+  // 줌 레벨별 최대 마커 수 제한
+  const maxMarkers = zoom <= 11 ? 30 : zoom <= 13 ? 60 : filtered.length;
+
+  // 기존 마커 제거
   _mapMarkers.forEach(m => m.setMap(null));
   _mapMarkers = [];
 
-  const filtered = _mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter);
-  const zoom = _geojiMap.getZoom();
+  // 현재 지도 범위 안의 것 우선 표시
+  const bounds = _geojiMap.getBounds();
+  const inBounds = filtered.filter(p => {
+    if (!p.lat || !p.lng) return false;
+    if (!bounds) return true;
+    const pos = new naver.maps.LatLng(p.lat, p.lng);
+    return bounds.hasLatLng(pos);
+  });
+  const outBounds = filtered.filter(p => p.lat && p.lng && !inBounds.includes(p));
+  const toRender = [...inBounds, ...outBounds].slice(0, maxMarkers);
 
-  filtered.forEach(place => {
-    if (!place.lat || !place.lng) return;
+  toRender.forEach(place => {
     const marker = new naver.maps.Marker({
       position: new naver.maps.LatLng(place.lat, place.lng),
       map: _geojiMap,
@@ -6101,12 +6137,6 @@ function renderMapMarkers() {
     naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
     _mapMarkers.push(marker);
   });
-
-  // 줌 변경 시 마커 업데이트 (한 번만 등록)
-  if (!_geojiMap._zoomListenerAdded) {
-    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
-    _geojiMap._zoomListenerAdded = true;
-  }
 }
 
 function filterMapCat(cat) {
