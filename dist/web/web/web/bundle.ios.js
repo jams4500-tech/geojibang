@@ -9,10 +9,10 @@ var global = typeof globalThis !== 'undefined' ? globalThis : typeof global !== 
     host: ''
   };
   global.__appsInToss = {
-    deploymentId: "019d2cc9-d637-78fc-ab11-8ab6e9124b4d",
+    deploymentId: "019d475a-d7ba-7b4c-a37a-e650a7e3c360",
     brandDisplayName: "\uAC70\uC9C0 \uCC4C\uB9B0\uC9C0",
     brandPrimaryColor: "#e8527a",
-    brandIcon: "",
+    brandIcon: "https://static.toss.im/appsintoss/30705/1e023176-068e-42b8-811c-91bb763ab1fd.png",
     webViewType: "partner",
     navigationBar: "{\"withBackButton\":true,\"withHomeButton\":false}"
   };
@@ -132,10 +132,10 @@ if (global.__MICRO_FRONTEND__ == null) {
     host: ''
   };
   global.__appsInToss = {
-    deploymentId: "019d2cc9-d637-78fc-ab11-8ab6e9124b4d",
+    deploymentId: "019d475a-d7ba-7b4c-a37a-e650a7e3c360",
     brandDisplayName: "\uAC70\uC9C0 \uCC4C\uB9B0\uC9C0",
     brandPrimaryColor: "#e8527a",
-    brandIcon: "",
+    brandIcon: "https://static.toss.im/appsintoss/30705/1e023176-068e-42b8-811c-91bb763ab1fd.png",
     webViewType: "partner",
     navigationBar: "{\"withBackButton\":true,\"withHomeButton\":false}"
   };

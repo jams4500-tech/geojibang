@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>거지방 어드민</title>
+<style>
+:root{--bg:#0e0a0c;--surface:#1a1218;--surface2:#231820;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0e8ec;--text2:#c0a8b4;--text3:#7a5f68;--pink:#e8527a;--pink-dim:rgba(232,82,122,0.12);--green:#44cc88;--red:#ff5555;--gold:#d4a844;--blue:#7ab4f0;--radius:12px;--radius-sm:8px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;font-size:14px;}
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;}
+.login-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:36px 32px;width:340px;text-align:center;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo-title{font-size:17px;font-weight:900;color:var(--pink);}
+.sidebar-logo-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.sidebar-stats{padding:14px 18px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mini-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;}
+.mini-stat-val{font-size:18px;font-weight:700;color:var(--pink);}
+.mini-stat-label{font-size:10px;color:var(--text3);margin-top:1px;}
+nav{padding:10px 8px;flex:1;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;color:var(--text2);font-size:13px;border-radius:var(--radius-sm);transition:all .15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--pink-dim);color:var(--pink);font-weight:600;}
+.nav-icon{font-size:15px;width:20px;text-align:center;}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);}
+.main{flex:1;overflow-y:auto;padding:24px;}
+.page-header{margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;}
+.page-sub{font-size:13px;color:var(--text3);margin-top:4px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.stat-val{font-size:28px;font-weight:700;line-height:1;}
+.stat-label{font-size:11px;color:var(--text3);margin-top:6px;}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:4px;font-weight:600;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.card-title{font-size:14px;font-weight:600;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;color:var(--text3);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--surface2);}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.badge-pink{background:var(--pink-dim);color:var(--pink);}
+.badge-green{background:rgba(68,204,136,.15);color:var(--green);}
+.badge-gold{background:rgba(212,168,68,.15);color:var(--gold);}
+.badge-blue{background:rgba(122,180,240,.15);color:var(--blue);}
+.badge-gray{background:var(--surface2);color:var(--text3);}
+.badge-red{background:rgba(255,85,85,.15);color:var(--red);}
+.btn{padding:7px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s;}
+.btn-pink{background:var(--pink);color:#fff;}.btn-pink:hover{background:#d44068;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);}.btn-ghost:hover{border-color:var(--pink);color:var(--pink);}
+.btn-red{background:rgba(255,85,85,.15);border:1px solid rgba(255,85,85,.3);color:var(--red);}
+.btn-gold{background:rgba(212,168,68,.15);border:1px solid rgba(212,168,68,.3);color:var(--gold);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+.form-input:focus{border-color:var(--pink);}
+.search-bar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.av{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;min-width:440px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:16px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:5px;display:block;font-weight:600;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border2);color:var(--text);font-size:13px;padding:10px 20px;border-radius:30px;z-index:999;transition:transform .3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.loading{text-align:center;padding:48px;color:var(--text3);}
+.empty{text-align:center;padding:48px;color:var(--text3);font-size:13px;line-height:1.8;}
+.price-input{width:80px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;text-align:right;}
+.price-input:focus{outline:none;border-color:var(--pink);}
+.comment-row-admin{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.comment-row-admin:last-child{border-bottom:none;}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:40px;margin-bottom:8px;">🥫</div>
+    <div style="font-size:22px;font-weight:900;color:var(--pink);margin-bottom:4px;">거지방 어드민</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:24px;">We Are Geoji · 관리자 전용</div>
+    <input class="form-input" id="pw-input" type="password" placeholder="비밀번호 입력" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn btn-pink" style="width:100%;padding:12px;" onclick="checkPw()">로그인</button>
+    <div id="pw-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">비밀번호가 틀렸어요</div>
+  </div>
+</div>
+
+<div class="layout" id="admin-app" style="display:none;">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">🥫 거지방 어드민</div>
+      <div class="sidebar-logo-sub">geojibang-5254c</div>
+    </div>
+    <div class="sidebar-stats">
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-users">-</div><div class="mini-stat-label">전체 회원</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-posts">-</div><div class="mini-stat-label">게시물</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-premium" style="color:var(--gold);">-</div><div class="mini-stat-label">구독 회원</div></div>
+      <div class="mini-stat"><div class="mini-stat-val" id="ss-score" style="color:var(--green);font-size:13px;">-</div><div class="mini-stat-label">총 거지력</div></div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>대시보드</div>
+      <div class="nav-item" onclick="showPage('posts')" id="nav-posts"><span class="nav-icon">📝</span>게시물 관리</div>
+      <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon">👥</span>회원 관리</div>
+      <div class="nav-item" onclick="showPage('ranking')" id="nav-ranking"><span class="nav-icon">🏆</span>랭킹 관리</div>
+      <div class="nav-item" onclick="showPage('shop')" id="nav-shop"><span class="nav-icon">🏪</span>상점 가격 관리</div>
+      <div class="nav-item" onclick="showPage('challenge')" id="nav-challenge"><span class="nav-icon">🔥</span>챌린지 관리</div>
+      <div class="nav-item" onclick="showPage('rewards')" id="nav-rewards"><span class="nav-icon">🏆</span>리워드 신청 관리</div>
+      <div class="nav-item" onclick="showPage('geojimap')" id="nav-geojimap"><span class="nav-icon">🗺️</span>거지맵 관리</div>
+      <div class="nav-item" onclick="showPage('mapreports')" id="nav-mapreports"><span class="nav-icon">🚨</span>거지맵 신고 관리</div>
+    </nav>
+    <div class="sidebar-footer">pw: gj2026admin · v2.2</div>
+  </div>
+  <div class="main" id="main-content"><div class="loading">🥫 Firebase 연결 중...</div></div>
+</div>
+
+<!-- 모달 -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <h3 id="modal-title">수정</h3>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-pink" id="modal-save-btn" onclick="submitModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 댓글 모달 -->
+<div class="modal-bg" id="comment-modal">
+  <div class="modal" style="max-width:700px;">
+    <h3 id="cmt-modal-title">댓글 관리</h3>
+    <div id="cmt-modal-body"><div class="loading">불러오는 중...</div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('comment-modal').classList.remove('open')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,query,orderBy,limit,where,serverTimestamp,writeBatch,deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const ADMIN_PW = 'gj2026admin';
+const FB = {apiKey:"AIzaSyAXv86i3jRToWBr2T9nv9o-BCpYWfHew9k",authDomain:"geojibang-5254c.firebaseapp.com",projectId:"geojibang-5254c",storageBucket:"geojibang-5254c.firebasestorage.app",messagingSenderId:"856762520566",appId:"1:856762520566:web:4c8289a4ad8f559a426dd7"};
+const db = getFirestore(initializeApp(FB,'geojibang-admin'));
+
+const COLS = {
+  users:    ()=>collection(db,'geojibang_users'),
+  posts:    ()=>collection(db,'geojibang_posts'),
+  ranking:  ()=>collection(db,'geojibang_ranking'),
+  settings: ()=>collection(db,'geojibang_ranking'),
+  comments: (pid)=>collection(db,'geojibang_posts',pid,'geojibang_comments'),
+};
+
+const GRADES=[{min:2000,label:'거지신 👑',color:'#e8527a'},{min:1000,label:'전설의 거지 🔥',color:'#f0c040'},{min:600,label:'거지 고수 ⚡',color:'#7ab4f0'},{min:300,label:'프로 거지 🎯',color:'#44cc88'},{min:100,label:'동네 거지 🥫',color:'#c0a8b4'},{min:0,label:'거지 새싹 🌱',color:'#7a5f68'}];
+const RANK_TITLES=['거지왕 👑','거지대장 🎖','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛','거지반장 📛'];
+const REWARDS=[5000,3000,1000,500,500,0,0,0,0,0];
+const DEFAULT_PRICES={room_default:0,room_cave:200,room_rooftop:300,room_gosiwon:150,room_park:500,room_subway:300,room_jjimjil:350,room_rooftop2:400,room_library:250,room_toilet:150,room_church:200,room_mart:350,room_sauna:400,room_cyber:450,room_pojang:350,room_semi:200,room_airport:500,room_camping:450,char_default:0,char_paper_bag:100,char_crown:400,char_santa:250,char_ninja:350,char_vip:500,char_ghost:200,char_chef:250,char_cowboy:300,char_alien:350,char_zombie:300,char_clown:250,char_pirate:400,char_mummy:300,char_wizard:450,char_robot:500,char_vampire:400,char_snowman:200,char_crab:350};
+const ITEM_NAMES={room_default:'기본 방',room_cave:'지하 동굴방',room_rooftop:'옥탑방',room_gosiwon:'고시원',room_park:'공원 벤치',room_subway:'지하철 역사',room_jjimjil:'찜질방',room_rooftop2:'옥상 별빛방',room_library:'도서관 자리',room_toilet:'화장실 피신',room_church:'교회 무료급식',room_mart:'대형마트 시식',room_sauna:'목욕탕 탈의실',room_cyber:'PC방',room_pojang:'포장마차',room_semi:'반지하',room_airport:'공항 대합실',room_camping:'공원 텐트',char_default:'기본 거지',char_paper_bag:'종이봉투 머리',char_crown:'거지왕 왕관',char_santa:'산타 거지',char_ninja:'닌자 거지',char_vip:'VIP 거지',char_ghost:'투명 거지',char_chef:'백수 셰프',char_cowboy:'카우보이 거지',char_alien:'외계인 거지',char_zombie:'좀비 거지',char_clown:'광대 거지',char_pirate:'해적 거지',char_mummy:'미라 거지',char_wizard:'마법사 거지',char_robot:'고장난 로봇',char_vampire:'흡혈귀 거지',char_snowman:'눈사람 거지',char_crab:'게 거지'};
+
+const gg = s => GRADES.find(g=>s>=g.min)||GRADES[5];
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+const timeAgo = d=>{const s=Math.floor((Date.now()-d.getTime())/1000);if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분 전';if(s<86400)return Math.floor(s/3600)+'시간 전';return Math.floor(s/86400)+'일 전';};
+
+let modal = null;
+
+// ── 로그인 ──────────────────────────────────
+window.checkPw = () => {
+  if (document.getElementById('pw-input').value === ADMIN_PW) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'flex';
+    loadSS(); showPage('dashboard');
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+  }
+};
+
+async function loadSS() {
+  const [u,p] = await Promise.all([getDocs(COLS.users()), getDocs(COLS.posts())]);
+  const ud = u.docs.map(d=>d.data());
+  document.getElementById('ss-users').textContent = u.size;
+  document.getElementById('ss-posts').textContent = p.size;
+  document.getElementById('ss-premium').textContent = ud.filter(u=>u.isPremium).length;
+  document.getElementById('ss-score').textContent = ud.reduce((s,u)=>s+(u.monthScore||0),0).toLocaleString();
+}
+
+// ── 라우팅 ──────────────────────────────────
+window.showPage = async page => {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-'+page)?.classList.add('active');
+  const m = document.getElementById('main-content');
+  m.innerHTML = '<div class="loading">🥫 불러오는 중...</div>';
+  try {
+    if (page==='dashboard') await renderDashboard(m);
+    else if (page==='posts')   await renderPosts(m);
+    else if (page==='users')   await renderUsers(m);
+    else if (page==='ranking') await renderRanking(m);
+    else if (page==='shop')    await renderShop(m);
+    else if (page==='challenge') await renderChallenge(m);
+    else if (page==='rewards')   await renderRewards(m);
+    else if (page==='geojimap')  await renderGeojiMap(m);
+    else if (page==='mapreports') await renderMapReports(m);
+  } catch(e) { m.innerHTML=`<div class="empty">⚠️ 오류: ${e.message}</div>`; console.error(e); }
+};
+
+// ── 대시보드 ──────────────────────────────────
+async function renderDashboard(m) {
+  const [uS,pS] = await Promise.all([getDocs(COLS.users()), getDocs(COLS.posts())]);
+  const users = uS.docs.map(d=>({id:d.id,...d.data()}));
+  const posts = pS.docs.map(d=>({id:d.id,...d.data()}));
+  const prem = users.filter(u=>u.isPremium).length;
+  const totalMs = users.reduce((s,u)=>s+(u.monthScore||0),0);
+  const totalRxn = posts.reduce((s,p)=>s+(p.rxn||[]).reduce((a,b)=>a+b,0),0);
+
+  m.innerHTML = `
+  <div class="page-header"><div class="page-title">📊 대시보드</div><div class="page-sub">${new Date().toLocaleDateString('ko-KR')} 기준</div></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">${users.length}</div><div class="stat-label">전체 회원</div><div class="stat-sub">구독 ${prem}명 · 월 ${(prem*990).toLocaleString()}원</div></div>
+    <div class="stat-card"><div class="stat-val">${posts.length}</div><div class="stat-label">전체 게시물</div><div class="stat-sub">총 반응 ${totalRxn}개</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--gold);">${totalMs.toLocaleString()}</div><div class="stat-label">이달 총 거지력</div><div class="stat-sub">평균 ${users.length?Math.round(totalMs/users.length):0}점/인</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--pink);">${totalRxn}</div><div class="stat-label">전체 반응 수</div><div class="stat-sub">🙇${posts.reduce((s,p)=>s+(p.rxn?.[0]||0),0)} 🤔${posts.reduce((s,p)=>s+(p.rxn?.[1]||0),0)} 💸${posts.reduce((s,p)=>s+(p.rxn?.[2]||0),0)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">🏆 거지력 TOP 5</div><button class="btn btn-ghost btn-sm" onclick="showPage('ranking')">전체</button></div>
+      <table><tr><th>순위</th><th>닉네임</th><th>월 거지력</th><th>계급</th></tr>
+      ${[...users].sort((a,b)=>(b.monthScore||0)-(a.monthScore||0)).slice(0,5).map((u,i)=>`
+      <tr><td><b style="color:${i<3?'var(--pink)':'var(--text3)'};">${i+1}위</b></td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${esc(u.nick||'?')}</div></td>
+      <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+      <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">📈 계급 분포</div></div>
+      <div style="padding:12px 16px;display:flex;gap:6px;flex-wrap:wrap;">
+        ${GRADES.map(g=>{const cnt=users.filter(u=>gg(u.totalScore||0).label===g.label).length;return`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:8px 12px;text-align:center;"><div style="font-size:18px;font-weight:700;color:${g.color};">${cnt}</div><div style="font-size:9px;color:var(--text3);margin-top:1px;">${g.label}</div></div>`;}).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── 게시물 관리 ──────────────────────────────
+async function renderPosts(m) {
+  const snap = await getDocs(query(COLS.posts(), orderBy('createdAt','desc'), limit(100)));
+  const posts = snap.docs.map(d=>({id:d.id,...d.data()}));
+  m.innerHTML = `
+  <div class="page-header"><div class="page-title">📝 게시물 관리</div><div class="page-sub">최근 ${posts.length}개 · 클릭해서 댓글 보기</div></div>
+  <div class="card">
+    <div class="search-bar">
+      <input class="form-input" id="post-search" placeholder="작성자/가맹점 검색..." oninput="filterTbl('posts-tb','post-search',['author','item'])">
+      <button class="btn btn-ghost" onclick="showPage('posts')">새로고침</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>작성자</th><th>가맹점</th><th>금액</th><th>반응</th><th>시간</th><th>관리</th></tr></thead>
+      <tbody id="posts-tb">
+      ${posts.map(p=>`<tr data-author="${esc(p.authorName||'')}" data-item="${esc(p.item||'')}">
+        <td><div style="display:flex;align-items:center;gap:6px;">
+          <div class="av" style="background:${p.authorBg||'#3a1520'};color:${p.authorColor||'#e8527a'};">${(p.authorName||'?')[0]}</div>
+          <div><div>${esc(p.authorName||'?')}</div><div style="font-size:10px;color:var(--text3);">${(p.authorUid||'').slice(0,8)}</div></div>
+        </div></td>
+        <td><div style="font-weight:600;">${esc(p.item||'-')}</div><div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">${esc(p.desc||'')}</div></td>
+        <td style="color:var(--pink);font-weight:700;white-space:nowrap;">${esc(p.amount||'-')}</td>
+        <td style="white-space:nowrap;"><span class="badge badge-blue">🙇${p.rxn?.[0]||0}</span> <span class="badge badge-gray">🤔${p.rxn?.[1]||0}</span> <span class="badge badge-red">💸${p.rxn?.[2]||0}</span></td>
+        <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${p.createdAt?.toDate?timeAgo(p.createdAt.toDate()):'-'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-sm" onclick="openCommentModal('${p.id}','${esc(p.authorName||'')}')">💬 댓글</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="editPost('${p.id}','${esc(p.desc||'')}','${esc(p.item||'')}','${esc(p.amount||'')}')">수정</button>
+          <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delPost('${p.id}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+// ── 댓글 모달 ──────────────────────────────────
+window.openCommentModal = async (postId, authorName) => {
+  document.getElementById('cmt-modal-title').textContent = `💬 댓글 관리 — ${authorName}님 게시물`;
+  document.getElementById('cmt-modal-body').innerHTML = '<div class="loading">댓글 불러오는 중...</div>';
+  document.getElementById('comment-modal').classList.add('open');
+  try {
+    const snap = await getDocs(query(COLS.comments(postId), orderBy('createdAt','asc')));
+    const comments = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if (comments.length === 0) {
+      document.getElementById('cmt-modal-body').innerHTML = '<div class="empty">댓글이 없어요</div>';
+      return;
+    }
+    document.getElementById('cmt-modal-body').innerHTML = comments.map(c=>`
+      <div class="comment-row-admin">
+        <div class="av" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};flex-shrink:0;">${(c.authorName||'?')[0]}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span style="font-weight:600;font-size:13px;">${esc(c.authorName||'익명')}</span>
+            <span style="font-size:10px;color:var(--text3);">${c.createdAt?.toDate?timeAgo(c.createdAt.toDate()):''}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);">${esc(c.text||'')}</div>
+        </div>
+        <button class="btn btn-red btn-sm" onclick="delComment('${postId}','${c.id}',this)">삭제</button>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('cmt-modal-body').innerHTML = `<div class="empty">오류: ${e.message}</div>`;
+  }
+};
+
+window.delComment = async (postId, commentId, btn) => {
+  if (!confirm('이 댓글을 삭제할까요?')) return;
+  try {
+    await deleteDoc(doc(db,'geojibang_posts',postId,'geojibang_comments',commentId));
+    btn.closest('.comment-row-admin').remove();
+    toast('🗑 댓글 삭제됨');
+  } catch(e) { toast('⚠️ 실패: '+e.message); }
+};
+
+window.editPost = (id,desc,item,amount) => {
+  modal = {type:'post', id};
+  document.getElementById('modal-title').textContent = '게시물 수정';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">가맹점명</label><input class="form-input" id="m-item" value="${item}"></div>
+    <div class="form-group"><label class="form-label">금액</label><input class="form-input" id="m-amount" value="${amount}"></div>
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-input" id="m-desc" rows="3">${desc}</textarea></div>`;
+  document.getElementById('edit-modal').classList.add('open');
+};
+window.delPost = async id => {
+  if (!confirm('삭제할까요?')) return;
+  try { await deleteDoc(doc(db,'geojibang_posts',id)); toast('🗑 삭제됨'); showPage('posts'); }
+  catch(e) { toast('⚠️ '+e.message); }
+};
+
+// ── 회원 관리 ──────────────────────────────────
+async function renderUsers(m) {
+  const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc')));
+  const users = snap.docs.map(d=>({id:d.id,...d.data()}));
+  m.innerHTML = `
+  <div class="page-header"><div class="page-title">👥 회원 관리</div><div class="page-sub">전체 ${users.length}명 · Firebase에 직접 저장</div></div>
+  <div class="card">
+    <div class="search-bar">
+      <input class="form-input" id="user-search" placeholder="닉네임 검색..." oninput="filterTbl('users-tb','user-search',['nick'])">
+      <button class="btn btn-ghost" onclick="showPage('users')">새로고침</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>회원</th><th>UID</th><th>월 거지력</th><th>누적 거지력</th><th>계급</th><th>구독</th><th>관리</th></tr></thead>
+      <tbody id="users-tb">
+      ${users.map(u=>`<tr data-nick="${esc(u.nick||'')}">
+        <td><div style="display:flex;align-items:center;gap:8px;">
+          <div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>
+          <div><div style="font-weight:600;">${esc(u.nick||'?')}</div><div style="font-size:10px;color:var(--text3);">${esc(u.bio||'')}</div></div>
+        </div></td>
+        <td><div style="font-size:10px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.id.startsWith('toss_')?'<span style="color:var(--green);font-weight:700;">🔵토스</span>':'<span style="color:var(--text3);">닉네임</span>'}<br>${esc(u.id)}</div></td>
+        <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+        <td><span class="badge badge-gold">${(u.totalScore||0).toLocaleString()}점</span></td>
+        <td style="font-size:11px;color:${gg(u.totalScore||0).color};">${gg(u.totalScore||0).label}</td>
+        <td>${u.isPremium?'<span class="badge badge-green">구독중</span>':'<span class="badge badge-gray">무료</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-sm" onclick="openScoreLog('${u.id}','${esc(u.nick||'')}')">📋 기록</button>
+          <button class="btn btn-gold btn-sm" style="margin-left:4px;" onclick="openAdjustScore('${u.id}','${esc(u.nick||'')}')">점수 조정</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="openEditUser('${u.id}')">수정</button>
+          <button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delUser('${u.id}','${esc(u.nick||'')}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+window.openEditUser = async uid => {
+  modal = {type:'user', id:uid};
+  document.getElementById('modal-title').textContent = '회원 정보 수정';
+  document.getElementById('modal-body').innerHTML = '<div class="loading">불러오는 중...</div>';
+  document.getElementById('edit-modal').classList.add('open');
+  // Firebase에서 최신 값 직접 읽기
+  const snap = await getDoc(doc(db,'geojibang_users',uid));
+  const u = snap.data() || {};
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">UID: ${uid}</div>
+    <div class="form-group"><label class="form-label">닉네임</label><input class="form-input" id="m-nick" value="${esc(u.nick||'')}"></div>
+    <div class="form-group"><label class="form-label">한 줄 소개</label><input class="form-input" id="m-bio" value="${esc(u.bio||'')}"></div>
+    <div class="form-group"><label class="form-label">월 거지력 (현재: ${u.monthScore||0}점)</label><input class="form-input" id="m-month" type="number" value="${u.monthScore||0}"></div>
+    <div class="form-group"><label class="form-label">누적 거지력 (현재: ${u.totalScore||0}점)</label><input class="form-input" id="m-total" type="number" value="${u.totalScore||0}"></div>
+    <div class="form-group"><label class="form-label">구독 상태</label><select class="form-input" id="m-premium"><option value="false" ${!u.isPremium?'selected':''}>무료</option><option value="true" ${u.isPremium?'selected':''}>구독중</option></select></div>`;
+};
+
+window.openAdjustScore = (uid, nick) => {
+  modal = {type:'score', id:uid};
+  document.getElementById('modal-title').textContent = `${nick} · 점수 조정`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">현재 값에서 더하거나 빼는 방식으로 조정돼요</div>
+    <div class="form-group"><label class="form-label">월 거지력 증감 (예: +10, -5)</label><input class="form-input" id="m-md" type="number" value="0"></div>
+    <div class="form-group"><label class="form-label">누적 거지력 증감 (예: +50, -10)</label><input class="form-input" id="m-td" type="number" value="0"></div>
+    <div style="font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,85,85,0.08);border-radius:8px;">⚠️ 이 작업은 되돌릴 수 없어요</div>`;
+};
+
+window.openScoreLog = async (uid, nick) => {
+  document.getElementById('modal-title').textContent = `${nick} · 거지력 기록`;
+  document.getElementById('modal-body').innerHTML = '<div class="loading">불러오는 중...</div>';
+  document.getElementById('edit-modal').classList.add('open');
+  modal = {type:'log', id:uid};
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'geojibang_score_logs'),
+      where('uid', '==', uid),
+      limit(100)
+    ));
+    const logs = snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    if (!logs.length) {
+      document.getElementById('modal-body').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:16px 0;">기록이 없어요.</div>';
+      return;
+    }
+    const typeLabel = {
+      feed: '📢 피드 게시물', comment: '💬 댓글', reaction: '🙇 반응',
+      challenge: '🔥 챌린지', shop: '🛍 상점 구매', admin: '⚙️ 관리자 조정',
+      coin: '🪙 동전 교환', subscribe: '💎 구독'
+    };
+    document.getElementById('modal-body').innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="border-bottom:1px solid var(--border);">
+          <th style="padding:6px;text-align:left;">일시</th>
+          <th style="padding:6px;text-align:left;">유형</th>
+          <th style="padding:6px;text-align:right;">월 거지력</th>
+          <th style="padding:6px;text-align:right;">누적 거지력</th>
+        </tr></thead>
+        <tbody>${logs.map(l=>{
+          const d = l.createdAt?.toDate?.() || new Date(l.createdAt||0);
+          const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+          const mSign = (l.monthDelta||0) > 0 ? '+' : '';
+          const tSign = (l.totalDelta||0) > 0 ? '+' : '';
+          const mColor = (l.monthDelta||0) > 0 ? 'var(--green)' : (l.monthDelta||0) < 0 ? 'var(--red)' : 'var(--text3)';
+          const tColor = (l.totalDelta||0) > 0 ? 'var(--gold)' : (l.totalDelta||0) < 0 ? 'var(--red)' : 'var(--text3)';
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px;color:var(--text3);">${dateStr}</td>
+            <td style="padding:6px;">${typeLabel[l.type]||l.type||'기타'}</td>
+            <td style="padding:6px;text-align:right;color:${mColor};font-weight:700;">${mSign}${(l.monthDelta||0)}점</td>
+            <td style="padding:6px;text-align:right;color:${tColor};font-weight:700;">${tSign}${(l.totalDelta||0)}점</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<div style="color:var(--red);">오류: ${e.message}</div>`;
+  }
+  document.getElementById('edit-modal').classList.add('open');
+};
+
+window.delUser = async (id, nick) => {
+  if (!confirm(`"${nick}" 회원을 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
+  try { await deleteDoc(doc(db,'geojibang_users',id)); toast('🗑 삭제됨'); showPage('users'); }
+  catch(e) { toast('⚠️ '+e.message); }
+};
+
+// ── 랭킹 관리 ──────────────────────────────────
+async function renderRanking(m) {
+  const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(20)));
+  const users = snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()}));
+  const now=new Date();
+  // 다음 월요일 계산
+  const dayOfWeek = now.getDay();
+  const daysUntilMonday = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntilMonday);
+  next.setHours(8, 0, 0, 0);
+  const diff=next-now, dd=Math.floor(diff/86400000), hh=Math.floor((diff%86400000)/3600000);
+
+  // 이번주 주차 키 (YYYY-WXX)
+  function getThisWeekKey(d) {
+    const date = new Date(d||now);
+    date.setHours(0,0,0,0);
+    date.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+    const year = date.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const week = Math.ceil(((date - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${year}-W${String(week).padStart(2,'0')}`;
+  }
+  const ymStr = getThisWeekKey();
+  const announcedSnap = await getDoc(doc(db,'geojibang_ranking', ymStr));
+  const isAnnounced = announcedSnap.exists();
+
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">🏆 랭킹 관리</div><div class="page-sub">다음 월요일까지 ${dd}일 ${hh}시간</div></div>
+
+  ${isAnnounced ? `
+  <div style="background:rgba(68,204,136,.08);border:1px solid rgba(68,204,136,.2);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--green);">✅ ${ymStr} 이주 거지왕 발표 중</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">앱 랭킹 탭에 이번주 거지왕이 표시되고 있어요</div>
+    </div>
+    <button class="btn btn-red btn-sm" onclick="cancelKing('${ymStr}')">📢 발표 취소</button>
+  </div>` : `
+  <div style="background:rgba(255,85,85,.06);border:1px solid rgba(255,85,85,.15);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text2);">⏸ ${ymStr} 거지왕 미발표</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:3px;">발표 전까지 앱에 지난주 거지왕이 표시되지 않아요</div>
+    </div>
+  </div>`}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">이주 TOP 10</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-gold btn-sm" onclick="announceKing()" ${isAnnounced ? 'style="opacity:.5;" title="이미 발표됨 — 취소 후 재발표 가능"' : ''}>🎺 거지왕 발표</button>
+          <button class="btn btn-red btn-sm" onclick="resetMonthScores()">🔄 주간 거지력 초기화</button>
+        </div>
+      </div>
+      <table><tr><th>순위/칭호</th><th>닉네임</th><th>월 거지력</th><th>리워드</th></tr>
+      ${users.slice(0,5).map((u,i)=>`<tr>
+        <td><div style="font-weight:700;color:${i===0?'var(--gold)':i===1?'var(--text2)':'var(--text3)'};">${u.rank}위</div><div style="font-size:10px;color:var(--text3);">${RANK_TITLES[i]}</div></td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${esc(u.nick||'?')}</div></td>
+        <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}점</span></td>
+        <td>${REWARDS[i] > 0 ? `<span class="badge badge-gold">${REWARDS[i].toLocaleString()}P</span>` : '<span style="color:var(--text3);font-size:12px;">-</span>'}</td>
+      </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">전체 TOP 20</div></div>
+      <div style="overflow-y:auto;max-height:320px;"><table>
+        <tr><th>순위</th><th>닉네임</th><th>월 거지력</th><th>누적</th></tr>
+        ${users.map((u,i)=>`<tr>
+          <td style="color:${i<3?'var(--pink)':'var(--text3)'};font-weight:${i<3?700:400};">${u.rank}</td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="av" style="background:${u.avatarBg||'#3a1520'};color:${u.avatarColor||'#e8527a'};">${(u.nick||'?')[0]}</div>${esc(u.nick||'?')}</div></td>
+          <td><span class="badge badge-pink">${(u.monthScore||0).toLocaleString()}</span></td>
+          <td style="color:var(--gold);">${(u.totalScore||0).toLocaleString()}</td>
+        </tr>`).join('')}
+      </table></div>
+    </div>
+  </div>`;
+}
+
+window.resetMonthScores = async () => {
+  if (!confirm('모든 회원의 주간 거지력을 0으로 초기화할까요?\n누적 거지력은 그대로 유지됩니다.')) return;
+  const snap = await getDocs(COLS.users());
+  const batch = writeBatch(db);
+  snap.docs.forEach(d=>batch.update(doc(db,'geojibang_users',d.id),{monthScore:0}));
+  await batch.commit();
+  toast('✅ 주간 거지력 초기화 완료'); showPage('ranking');
+};
+
+window.cancelKing = async (ym) => {
+  if (!confirm(`${ym} 거지왕 발표를 취소할까요?\n앱에서 이번주 거지왕 섹션이 사라져요.`)) return;
+  try {
+    await updateDoc(doc(db,'geojibang_ranking', ym), { announced: false, announcedAt: deleteField() });
+    toast('✅ 거지왕 발표 취소됐어요. 앱에서 더 이상 표시되지 않아요.');
+    showPage('ranking');
+  } catch(e) { toast('⚠️ 실패: ' + e.message); }
+};
+
+window.announceKing = async () => {
+  const now = new Date();
+  function getWeekKey() {
+    const d = new Date(now);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1));
+    const year = d.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return year + '-W' + String(week).padStart(2,'0');
+  }
+  const ymStr = getWeekKey();
+  const existing = await getDoc(doc(db,'geojibang_ranking', ymStr));
+  if (existing.exists()) {
+    if (!confirm(`이미 ${ymStr} 거지왕이 발표됐어요.\n다시 발표하면 기존 데이터가 덮어씌워져요. 계속할까요?`)) return;
+  } else {
+    if (!confirm(`이주의 거지왕을 발표할까요? (${ymStr})\n앱 랭킹 탭에 즉시 표시돼요.`)) return;
+  }
+  try {
+    const snap = await getDocs(query(COLS.users(), orderBy('monthScore','desc'), limit(10)));
+    const winners = snap.docs.map((d,i)=>({uid:d.id,...d.data(),rank:i+1}));
+    const winnerData = winners.map((w,i)=>({
+      uid: w.uid || '',
+      nick: w.nick || '익명',
+      score: w.monthScore || 0,
+      reward: REWARDS[i] || 0,
+      rank: i+1
+    })).filter(w => w.uid);
+    await setDoc(doc(db,'geojibang_ranking', ymStr),{
+      winners: winnerData,
+      announcedAt: serverTimestamp(),
+      announced: true
+    });
+    toast('🎺 거지왕 발표 완료! 앱에 즉시 반영돼요.');
+    showPage('ranking');
+  } catch(e) {
+    console.error('[거지왕 발표 오류]', e);
+    alert('발표 실패: ' + e.message);
+  }
+};
+
+// ── 상점 가격 관리 ──────────────────────────────
+async function renderShop(m) {
+  // Firebase에서 현재 저장된 가격 불러오기
+  const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+  const rawData = settingSnap.exists() ? settingSnap.data() : {};
+  // updatedAt 등 non-price 필드 제거
+  const savedPrices = Object.fromEntries(
+    Object.entries(rawData).filter(([k]) => k.startsWith('room_') || k.startsWith('char_'))
+  );
+  const prices = {...DEFAULT_PRICES, ...savedPrices};
+
+  const uSnap = await getDocs(COLS.users());
+  const users = uSnap.docs.map(d=>d.data());
+
+  const ROOMS = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2','room_library','room_toilet','room_church','room_mart','room_sauna','room_cyber','room_pojang','room_semi','room_airport','room_camping'];
+  const CHARS = ['char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy','char_alien','char_zombie','char_clown','char_pirate','char_mummy','char_wizard','char_robot','char_vampire','char_snowman','char_crab'];
+
+  const priceRow = (id) => `<tr>
+    <td>${ITEM_NAMES[id]}</td>
+    <td><input type="number" class="price-input" id="price-${id}" value="${prices[id]??DEFAULT_PRICES[id]??0}" min="0"></td>
+    <td><span class="badge badge-gold" id="badge-${id}">${(prices[id]||0)===0?'<span class="badge badge-green">무료</span>':(prices[id]||0)+'점'}</span></td>
+  </tr>`;
+
+  const cnt1000=users.filter(u=>(u.totalScore||0)>=1000).length;
+  const cnt500=users.filter(u=>(u.totalScore||0)>=500&&(u.totalScore||0)<1000).length;
+  const cnt100=users.filter(u=>(u.totalScore||0)>=100&&(u.totalScore||0)<500).length;
+  const cntLow=users.filter(u=>(u.totalScore||0)<100).length;
+
+  m.innerHTML=`
+  <div class="page-header"><div class="page-title">🏪 상점 가격 관리</div><div class="page-sub">Firebase에 저장 → 앱 재접속 시 자동 적용</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card"><div class="card-header"><div class="card-title">🏠 방 아이템</div></div>
+      <table><tr><th>아이템</th><th>가격(점)</th><th>현재</th></tr>${ROOMS.map(priceRow).join('')}</table>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">🧑 거지 스킨</div></div>
+      <table><tr><th>아이템</th><th>가격(점)</th><th>현재</th></tr>${CHARS.map(priceRow).join('')}</table>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button class="btn btn-pink" onclick="savePrices()" style="padding:12px 24px;font-size:14px;">💾 가격 Firebase에 저장</button>
+    <button class="btn btn-ghost" onclick="resetPrices()">기본값으로 초기화</button>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">💰 누적 거지력 분포</div></div>
+    <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      ${[{l:'1000점+ (환전가능)',v:cnt1000,c:'var(--gold)'},{l:'500~999점',v:cnt500,c:'var(--green)'},{l:'100~499점',v:cnt100,c:'var(--blue)'},{l:'100점 미만',v:cntLow,c:'var(--text3)'}]
+        .map(s=>`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;text-align:center;min-width:110px;"><div style="font-size:22px;font-weight:700;color:${s.c};">${s.v}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${s.l}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+window.savePrices = async () => {
+  const ids = ['room_default','room_cave','room_rooftop','room_gosiwon','room_park','room_subway','room_jjimjil','room_rooftop2','room_library','room_toilet','room_church','room_mart','room_sauna','room_cyber','room_pojang','room_semi','room_airport','room_camping','char_default','char_paper_bag','char_crown','char_santa','char_ninja','char_vip','char_ghost','char_chef','char_cowboy','char_alien','char_zombie','char_clown','char_pirate','char_mummy','char_wizard','char_robot','char_vampire','char_snowman','char_crab'];
+  const prices = {};
+  for (const id of ids) {
+    const el = document.getElementById('price-'+id);
+    if (el) prices[id] = parseInt(el.value) || 0;
+  }
+  try {
+    // Firebase Firestore에 저장 (앱에서 읽어감)
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
+      ...prices, updatedAt: serverTimestamp()
+    });
+    toast('✅ 가격이 Firebase에 저장됐어요! 앱 재접속 시 반영');
+    showPage('shop'); // 새로고침해서 저장된 값 확인
+  } catch(e) { toast('⚠️ 저장 실패: '+e.message); console.error(e); }
+};
+
+window.resetPrices = async () => {
+  if (!confirm('기본 가격으로 초기화할까요?')) return;
+  try {
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
+      ...DEFAULT_PRICES, updatedAt: serverTimestamp()
+    });
+    toast('✅ 기본 가격으로 초기화됐어요'); showPage('shop');
+  } catch(e) { toast('⚠️ '+e.message); }
+};
+
+// ── 모달 저장 ──────────────────────────────────
+window.submitModal = async () => {
+  if (!modal) return;
+  const btn = document.getElementById('modal-save-btn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    if (modal.type === 'post') {
+      await updateDoc(doc(db,'geojibang_posts',modal.id), {
+        item:   document.getElementById('m-item').value.trim(),
+        amount: document.getElementById('m-amount').value.trim(),
+        desc:   document.getElementById('m-desc').value.trim(),
+        updatedAt: serverTimestamp()
+      });
+      toast('✅ 게시물 수정됐어요');
+    }
+    else if (modal.type === 'user') {
+      const monthVal = parseInt(document.getElementById('m-month').value);
+      const totalVal = parseInt(document.getElementById('m-total').value);
+      const nick = document.getElementById('m-nick').value.trim();
+      const bio  = document.getElementById('m-bio').value.trim();
+      const isPremium = document.getElementById('m-premium').value === 'true';
+      if (!nick) { toast('⚠️ 닉네임을 입력해주세요'); btn.disabled=false; btn.textContent='저장'; return; }
+      // 명시적 값으로 setDoc (merge 없이 특정 필드만 정확히 업데이트)
+      await updateDoc(doc(db,'geojibang_users',modal.id), {
+        nick, bio,
+        monthScore: isNaN(monthVal) ? 0 : monthVal,
+        totalScore: isNaN(totalVal) ? 0 : totalVal,
+        isPremium,
+        updatedAt: serverTimestamp()
+      });
+      toast('✅ 회원 정보 수정됐어요 (앱 재접속 시 반영)');
+    }
+    else if (modal.type === 'score') {
+      const md = parseInt(document.getElementById('m-md').value) || 0;
+      const td = parseInt(document.getElementById('m-td').value) || 0;
+      if (md === 0 && td === 0) { toast('⚠️ 변경할 값을 입력해주세요'); btn.disabled=false; btn.textContent='저장'; return; }
+      // 현재 Firebase 값 직접 읽어서 계산
+      const snap = await getDoc(doc(db,'geojibang_users',modal.id));
+      const cur = snap.data() || {};
+      const newMonth = Math.max(0, (cur.monthScore||0) + md);
+      const newTotal = Math.max(0, (cur.totalScore||0) + td);
+      await updateDoc(doc(db,'geojibang_users',modal.id), {
+        monthScore: newMonth,
+        totalScore: newTotal,
+        updatedAt:  serverTimestamp()
+      });
+      toast(`✅ 점수 조정: 월 ${cur.monthScore||0}→${newMonth}, 누적 ${cur.totalScore||0}→${newTotal}`);
+    }
+    closeModal();
+    const cur = document.querySelector('.nav-item.active')?.id?.replace('nav-','');
+    if (cur) setTimeout(()=>showPage(cur), 400);
+  } catch(e) {
+    toast('⚠️ 실패: '+e.message);
+    console.error('submitModal 오류:', e);
+    btn.disabled=false; btn.textContent='저장';
+  }
+};
+
+window.closeModal = () => {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.getElementById('modal-save-btn').disabled = false;
+  document.getElementById('modal-save-btn').textContent = '저장';
+  modal = null;
+};
+
+// ── 공통 ──────────────────────────────────
+window.filterTbl = (tbodyId, inputId, keys) => {
+  const q = document.getElementById(inputId)?.value.toLowerCase()||'';
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(r=>{
+    r.style.display = keys.some(k=>r.dataset[k]?.toLowerCase().includes(q)) ? '' : 'none';
+  });
+};
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ── 챌린지 관리 ────────────────────────────────────────
+const DEFAULT_CHALLENGES = [
+  { id:'record3',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회', active:true },
+  { id:'feed1',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회', active:true },
+  { id:'comment1', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개', active:true },
+  { id:'share1',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회', active:true },
+];
+
+const CHALLENGE_TEMPLATES = [
+  { id:'record',   actionType:'record',  icon:'✏️', title:'지출 기록하기',   target:3,  reward:30,  unit:'회' },
+  { id:'feed',     actionType:'feed',    icon:'📢', title:'피드에 올리기',    target:1,  reward:20,  unit:'회' },
+  { id:'comment',  actionType:'comment', icon:'💬', title:'댓글 달기',        target:1,  reward:15,  unit:'개' },
+  { id:'share',    actionType:'share',   icon:'🔗', title:'앱 공유하기',      target:1,  reward:25,  unit:'회' },
+  { id:'reaction', actionType:'reaction',icon:'🙇', title:'반응 받기',        target:5,  reward:30,  unit:'개' },
+  { id:'login3',   actionType:'login',   icon:'📅', title:'앱 접속하기',      target:3,  reward:20,  unit:'일' },
+  { id:'login7',   actionType:'login7',  icon:'📅', title:'7일 연속 접속',    target:7,  reward:100, unit:'일' },
+  { id:'map',      actionType:'map',     icon:'🗺️', title:'거지맵 식당 추가',  target:1,  reward:30,  unit:'회' },
+];
+
+window.resetWeeklyChallenges = async () => {
+  if (!confirm('이번주 모든 유저의 챌린지 진행도를 초기화할까요?\n(Firebase의 챌린지 진행 데이터가 삭제돼요)')) return;
+  try {
+    // geojibang_users 전체에서 challengeProgress 필드 초기화
+    const snap = await getDocs(COLS.users());
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => {
+      batch.update(doc(db,'geojibang_users',d.id), { challengeProgress: {} });
+    });
+    await batch.commit();
+    toast('✅ 챌린지 진행도 초기화 완료! (' + snap.docs.length + '명)');
+  } catch(e) {
+    alert('오류: ' + e.message);
+  }
+};
+
+async function renderChallenge(m) {
+  // 현재 설정 로드
+  const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+  const savedChallenges = settingSnap.exists() && settingSnap.data().weeklyChallenges
+    ? settingSnap.data().weeklyChallenges
+    : DEFAULT_CHALLENGES;
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🔥 챌린지 관리</div>
+    <button class="btn btn-red btn-sm" onclick="resetWeeklyChallenges()" style="margin-left:auto;">🔄 이번주 챌린지 진행도 초기화</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+    <!-- 현재 활성 챌린지 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">현재 이주의 챌린지</div>
+        <button class="btn btn-pink btn-sm" onclick="saveChallenges()">💾 저장</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">앱에 표시될 챌린지를 설정해요. 최대 4개 활성화 가능.</div>
+      <div id="active-challenge-list">
+        ${savedChallenges.map((ch, i) => `
+        <div class="card" style="margin-bottom:8px;padding:12px;" id="ch-row-${i}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:18px;">${ch.icon}</span>
+            <input id="ch-title-${i}" value="${ch.title}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            <button onclick="removeChallengeRow(${i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">목표 횟수</div>
+              <input type="number" id="ch-target-${i}" value="${ch.target}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">거지력 보상</div>
+              <input type="number" id="ch-reward-${i}" value="${ch.reward}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">단위</div>
+              <input id="ch-unit-${i}" value="${ch.unit}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+          </div>
+          <input type="hidden" id="ch-id-${i}" value="${ch.id}">
+          <input type="hidden" id="ch-icon-${i}" value="${ch.icon}">
+          <input type="hidden" id="ch-atype-${i}" value="${ch.actionType||ch.id}">
+        </div>`).join('')}
+      </div>
+      <div id="ch-empty" style="display:${savedChallenges.length===0?'block':'none'};font-size:12px;color:var(--text3);text-align:center;padding:16px;">템플릿에서 챌린지를 추가하세요</div>
+    </div>
+
+    <!-- 챌린지 템플릿 -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">챌린지 템플릿</div></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">클릭하면 현재 챌린지에 추가돼요.</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${CHALLENGE_TEMPLATES.map(t => `
+        <div onclick="addChallengeFromTemplate(${JSON.stringify(t).replace(/"/g,'&quot;')})"
+          style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid var(--border);transition:border-color .15s;"
+          onmouseover="this.style.borderColor='var(--pink)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${t.icon}</span>
+            <span style="font-size:13px;color:var(--text);">${t.title}</span>
+          </div>
+          <span style="font-size:12px;color:var(--gold);font-weight:700;">+${t.reward}점</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+let _challengeCount = 0;
+
+window.addChallengeFromTemplate = function(t) {
+  const list = document.getElementById('active-challenge-list');
+  if (!list) return;
+  const rows = list.querySelectorAll('[id^="ch-row-"]');
+  if (rows.length >= 4) { toast('최대 4개까지 설정 가능해요'); return; }
+  const i = Date.now(); // unique index
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = `ch-row-${i}`;
+  div.style.cssText = 'margin-bottom:8px;padding:12px;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="font-size:18px;">${t.icon}</span>
+      <input id="ch-title-${i}" value="${t.title}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;">
+      <button onclick="this.closest('[id^=ch-row]').remove();checkEmpty()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">목표 횟수</div><input type="number" id="ch-target-${i}" value="${t.target}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">거지력 보상</div><input type="number" id="ch-reward-${i}" value="${t.reward}" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">단위</div><input id="ch-unit-${i}" value="${t.unit}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;font-family:inherit;"></div>
+    </div>
+    <input type="hidden" id="ch-id-${i}" value="${t.id}">
+    <input type="hidden" id="ch-icon-${i}" value="${t.icon}">
+    <input type="hidden" id="ch-atype-${i}" value="${t.actionType||t.id}">`;
+  list.appendChild(div);
+  document.getElementById('ch-empty').style.display = 'none';
+};
+
+window.removeChallengeRow = function(i) {
+  document.getElementById('ch-row-'+i)?.remove();
+  checkEmpty();
+};
+
+function checkEmpty() {
+  const list = document.getElementById('active-challenge-list');
+  const empty = document.getElementById('ch-empty');
+  if (!list || !empty) return;
+  empty.style.display = list.querySelectorAll('[id^="ch-row-"]').length === 0 ? 'block' : 'none';
+}
+
+window.saveChallenges = async function() {
+  const list = document.getElementById('active-challenge-list');
+  if (!list) return;
+  const rows = list.querySelectorAll('[id^="ch-row-"]');
+  const challenges = [];
+  rows.forEach(row => {
+    const i = row.id.replace('ch-row-', '');
+    const title  = document.getElementById('ch-title-'+i)?.value?.trim();
+    const target = parseInt(document.getElementById('ch-target-'+i)?.value) || 1;
+    const reward = parseInt(document.getElementById('ch-reward-'+i)?.value) || 10;
+    const unit   = document.getElementById('ch-unit-'+i)?.value?.trim() || '회';
+    const id     = document.getElementById('ch-id-'+i)?.value || 'custom';
+    const icon   = document.getElementById('ch-icon-'+i)?.value || '✏️';
+    const atype  = document.getElementById('ch-atype-'+i)?.value || id;
+    if (title) challenges.push({ id, actionType: atype, icon, title, target, reward, unit, active: true });
+  });
+  if (challenges.length === 0) { toast('챌린지를 최소 1개 추가해주세요'); return; }
+  try {
+    const settingSnap = await getDoc(doc(db,'geojibang_ranking','_settings'));
+    const existing = settingSnap.exists() ? settingSnap.data() : {};
+    await setDoc(doc(db,'geojibang_ranking','_settings'), {
+      ...existing,
+      weeklyChallenges: challenges
+    });
+    toast(`✅ 챌린지 ${challenges.length}개 저장됐어요! 앱에 즉시 반영돼요.`);
+  } catch(e) { toast('⚠️ 저장 실패: '+e.message); }
+};
+
+// ── 거지맵 관리 ──────────────────────────────────
+async function renderGeojiMap(m) {
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc')));
+  const places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🗺️ 거지맵 관리</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="page-sub">총 ${places.length}개</div>
+      <button class="btn btn-ghost btn-sm" onclick="renderGeojiMapSorted('likes')">👍 추천순</button>
+      <button class="btn btn-ghost btn-sm" onclick="renderGeojiMapSorted('dislikes')">👎 비추천순</button>
+    </div>
+  </div>
+  <div class="card">
+    <table>
+      <tr><th>식당명</th><th>카테고리</th><th>메뉴/가격</th><th>평점</th><th>등록자</th><th>👍/👎</th><th>관리</th></tr>
+      ${places.map(p => `<tr>
+        <td>
+          <div style="font-weight:700;">${esc(p.name)}</div>
+          <div style="font-size:11px;color:var(--text3);">${esc(p.address||'')}</div>
+        </td>
+        <td><span class="badge">${p.category||'기타'}</span></td>
+        <td>
+          <div style="font-size:12px;">${esc(p.menu||'')}</div>
+          <div style="font-size:12px;color:var(--pink);font-weight:700;">${esc(p.price||'')}</div>
+        </td>
+        <td><span class="badge badge-gold">${'🥫'.repeat(Math.min(p.rating||1,5))}</span></td>
+        <td style="font-size:12px;">${esc(p.authorNick||'익명')}</td>
+        <td><span style='color:var(--pink)'>👍 ${p.likes||0}</span> / <span style='color:var(--text3)'>👎 ${p.dislikes||0}</span></td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="editPlace('${p.id}')">수정</button>
+          <button class="btn btn-ghost btn-sm" onclick="manageComments('${p.id}','${esc(p.name)}')">💬 댓글</button>
+          <button class="btn btn-red btn-sm" onclick="deletePlace('${p.id}','${esc(p.name)}')">삭제</button>
+        </td>
+      </tr>`).join('')}
+    </table>
+  </div>
+
+  <!-- 수정 폼 -->
+  <div id="edit-place-form" style="display:none;" class="card" style="margin-top:16px;">
+    <div class="card-header"><div class="card-title">✏️ 식당 수정</div></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <input type="hidden" id="edit-place-id">
+      <div><label style="font-size:12px;color:var(--text3);">식당명</label><input id="edit-place-name" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">주소</label><input id="edit-place-addr" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">대표 메뉴</label><input id="edit-place-menu" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">가격</label><input id="edit-place-price" class="text-input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:12px;color:var(--text3);">가성비 포인트</label><textarea id="edit-place-desc" class="text-input" style="width:100%;margin-top:4px;height:60px;resize:none;"></textarea></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-pink" onclick="saveEditPlace()">저장</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('edit-place-form').style.display='none'">취소</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+window.editPlace = async (id) => {
+  const snap = await getDoc(doc(db,'geojimap_places',id));
+  if (!snap.exists()) return;
+  const p = snap.data();
+  document.getElementById('edit-place-id').value = id;
+  document.getElementById('edit-place-name').value = p.name || '';
+  document.getElementById('edit-place-addr').value = p.address || '';
+  document.getElementById('edit-place-menu').value = p.menu || '';
+  document.getElementById('edit-place-price').value = p.price || '';
+  document.getElementById('edit-place-desc').value = p.desc || '';
+  const form = document.getElementById('edit-place-form');
+  form.style.display = 'block';
+  form.scrollIntoView({ behavior: 'smooth' });
+};
+
+window.manageComments = async (placeId, placeName) => {
+  const snap = await getDocs(query(
+    collection(db,'geojimap_places',placeId,'comments'),
+    orderBy('createdAt','asc')
+  ));
+  const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const modal = document.getElementById('edit-modal');
+  document.getElementById('modal-title').textContent = `💬 "${placeName}" 댓글 관리`;
+  document.getElementById('modal-body').innerHTML = comments.length === 0
+    ? '<div style="text-align:center;padding:24px;color:var(--text3);">댓글이 없어요</div>'
+    : comments.map(c => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:700;color:var(--text);">${esc(c.authorNick||'익명')}</span>
+            <span style="font-size:11px;color:var(--text3);">${c.createdAt?.toDate ? new Date(c.createdAt.toDate()).toLocaleString('ko-KR') : '-'}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);">${esc(c.text||'')}</div>
+        </div>
+        <button class="btn btn-red btn-sm" style="margin-left:8px;flex-shrink:0;" onclick="deletePlaceComment('${placeId}','${c.id}',this)">삭제</button>
+      </div>`).join('');
+  modal.classList.add('open');
+};
+
+window.deletePlaceComment = async (placeId, commentId, btn) => {
+  if (!confirm('댓글을 삭제할까요?')) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId,'comments',commentId));
+    btn.closest('div[style*="border-bottom"]').remove();
+    toast('✅ 댓글 삭제됐어요.');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.saveEditPlace = async () => {
+  const id = document.getElementById('edit-place-id').value;
+  if (!id) return;
+  try {
+    await updateDoc(doc(db,'geojimap_places',id), {
+      name: document.getElementById('edit-place-name').value.trim(),
+      address: document.getElementById('edit-place-addr').value.trim(),
+      menu: document.getElementById('edit-place-menu').value.trim(),
+      price: document.getElementById('edit-place-price').value.trim(),
+      desc: document.getElementById('edit-place-desc').value.trim(),
+    });
+    toast('✅ 수정 완료!');
+    document.getElementById('edit-place-form').style.display = 'none';
+    showPage('geojimap');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.deletePlace = async (id, name) => {
+  if (!confirm(`"${name}" 식당을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',id));
+    toast('🗑️ 삭제됐어요.');
+    showPage('geojimap');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+// ── 거지맵 신고 관리 ──────────────────────────────────
+async function renderMapReports(m) {
+  m.innerHTML = '<div class="loading">🚨 신고 내역 불러오는 중...</div>';
+  // 전체 장소 가져와서 각각 reports 서브컬렉션 확인
+  const placesSnap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc')));
+  const reports = [];
+  for (const placeDoc of placesSnap.docs) {
+    const rSnap = await getDocs(collection(db,'geojimap_places',placeDoc.id,'reports'));
+    rSnap.docs.forEach(r => {
+      reports.push({ placeId: placeDoc.id, placeName: placeDoc.data().name, ...r.data(), reportId: r.id });
+    });
+  }
+  reports.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🚨 거지맵 신고 관리</div>
+    <div class="page-sub">총 ${reports.length}건</div>
+  </div>
+  <div class="card">
+    ${reports.length === 0 ? '<div class="empty">신고 내역이 없어요</div>' : `
+    <table>
+      <tr><th>식당명</th><th>신고 사유</th><th>신고자</th><th>신고일시</th><th>관리</th></tr>
+      ${reports.map(r => `<tr>
+        <td><span class="badge badge-pink">${esc(r.placeName||'')}</span></td>
+        <td>${esc(r.reason||'')}</td>
+        <td style="font-size:12px;">${esc(r.reporterNick||'익명')}</td>
+        <td style="font-size:11px;color:var(--text3);">${r.createdAt?.toDate ? new Date(r.createdAt.toDate()).toLocaleString('ko-KR') : '-'}</td>
+        <td style="display:flex;gap:4px;">
+          <button class="btn btn-red btn-sm" onclick="deletePlaceFromReport('${r.placeId}','${esc(r.placeName||'')}')">식당 삭제</button>
+          <button class="btn btn-ghost btn-sm" onclick="dismissReport('${r.placeId}','${r.reportId}')">무시</button>
+        </td>
+      </tr>`).join('')}
+    </table>`}
+  </div>`;
+}
+
+window.deletePlaceFromReport = async (placeId, name) => {
+  if (!confirm(`"${name}" 식당을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId));
+    toast('🗑️ 식당 삭제됐어요.');
+    showPage('mapreports');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.dismissReport = async (placeId, reportId) => {
+  try {
+    await deleteDoc(doc(db,'geojimap_places',placeId,'reports',reportId));
+    toast('✅ 신고 무시됐어요.');
+    showPage('mapreports');
+  } catch(e) { alert('오류: ' + e.message); }
+};
+
+window.renderGeojiMapSorted = async (sortBy) => {
+  const m = document.getElementById('main-content');
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy(sortBy,'desc')));
+  const places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // 기존 renderGeojiMap 재사용하되 정렬된 데이터로
+  const table = document.querySelector('#main-content table tbody');
+  if (!table) { await renderGeojiMap(m); return; }
+  // 간단히 페이지 다시 로드
+  await renderGeojiMap(m);
+};
+
+// ── 리워드 신청 관리 ──────────────────────────────────
+async function renderRewards(m) {
+  // 모든 유저에서 rewardClaim 있는 사람 찾기
+  const snap = await getDocs(COLS.users());
+  const claims = [];
+  snap.docs.forEach(d => {
+    const data = d.data();
+    if (data.rewardClaim) {
+      claims.push({ uid: d.id, ...data.rewardClaim, nick: data.nick || data.rewardClaim.nick });
+    }
+  });
+
+  // 주차별 그룹핑
+  const grouped = {};
+  claims.forEach(c => {
+    const ym = c.ym || '기타';
+    if (!grouped[ym]) grouped[ym] = [];
+    grouped[ym].push(c);
+  });
+
+  const weeks = Object.keys(grouped).sort().reverse();
+
+  m.innerHTML = `
+  <div class="page-header">
+    <div class="page-title">🏆 리워드 신청 관리</div>
+    <div class="page-sub">총 ${claims.length}건의 신청</div>
+  </div>
+
+  ${weeks.length === 0 ? '<div class="empty">아직 신청자가 없어요</div>' : weeks.map(ym => `
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <div class="card-title">${ym}</div>
+      <div class="page-sub">${grouped[ym].length}명 신청</div>
+    </div>
+    <table>
+      <tr><th>닉네임</th><th>리워드</th><th>신청일시</th><th>상태</th><th>처리</th></tr>
+      ${grouped[ym].map(c => {
+        const claimedAt = c.claimedAt ? new Date(c.claimedAt).toLocaleString('ko-KR') : '-';
+        const isPaid = c.paid;
+        return `<tr>
+          <td><span class="badge badge-pink">${esc(c.nick||'알수없음')}</span><br><span style="font-size:10px;color:var(--text3);">${c.uid?.slice(0,12)||''}</span></td>
+          <td><span class="badge badge-gold">${(c.reward||0).toLocaleString()}P</span></td>
+          <td style="font-size:12px;">${claimedAt}</td>
+          <td>${isPaid ? '<span class="badge" style="background:rgba(68,204,136,.15);color:var(--green);">✅ 지급완료</span>' : '<span class="badge" style="background:rgba(255,150,0,.15);color:#c07000;">⏳ 대기중</span>'}</td>
+          <td>${isPaid ? '-' : `<button class="btn btn-ghost btn-sm" onclick="markRewardPaid('${c.uid}','${ym}')">지급 완료 처리</button>`}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+  </div>`).join('')}
+  `;
+}
+
+window.markRewardPaid = async (uid, ym) => {
+  if (!confirm(`${uid.slice(0,12)}... 의 ${ym} 리워드를 지급 완료 처리할까요?\n앱인토스 콘솔에서 실제 포인트 지급 후 눌러주세요.`)) return;
+  try {
+    const userRef = doc(db, 'geojibang_users', uid);
+    await updateDoc(userRef, { 'rewardClaim.paid': true, 'rewardClaim.paidAt': new Date().toISOString() });
+    toast('✅ 지급 완료 처리됐어요.');
+    showPage('rewards');
+  } catch(e) {
+    alert('오류: ' + e.message);
+  }
+};
+
+</script>
+</body>
+</html>

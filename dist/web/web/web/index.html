@@ -7,34 +7,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f5f4f2;
+  --bg: #f2f0ee;
   --surface: #ffffff;
-  --surface2: #f0eeec;
+  --surface2: #f2f0ee;
   --border: rgba(0,0,0,0.08);
   --border2: rgba(0,0,0,0.14);
   --pink: #e8527a;
-  --pink-light: #c83060;
+  --pink-light: #c0304a;
   --pink-dim: rgba(232,82,122,0.10);
   --pink-dim2: rgba(232,82,122,0.18);
   --text: #191919;
-  --text2: #4a4a4a;
-  --text3: #888888;
-  --gold: #b07800;
-  --gold-dim: rgba(176,120,0,0.12);
-  --green: #1a9954;
-  --red: #e03040;
+  --text2: #4e4e4e;
+  --text3: #999999;
+  --gold: #9a6800;
+  --gold-dim: rgba(154,104,0,0.12);
+  --green: #1a7a40;
+  --red: #d03030;
   --radius: 16px;
   --radius-sm: 10px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e4; color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
 .app { width: 100%; max-width: 420px; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; position: relative; }
-.header { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 14px 18px 12px; position: sticky; top: 0; z-index: 100; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 18px 12px; position: sticky; top: 0; z-index: 100; }
 .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
 .header-title { font-family: 'Black Han Sans', sans-serif; font-size: 22px; color: var(--pink); }
 .header-badge { font-size: 11px; background: var(--pink-dim); color: var(--pink-light); border: 1px solid var(--pink-dim2); padding: 3px 10px; border-radius: 20px; }
 .header-sub { font-size: 11px; color: var(--text3); }
-.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: sticky; top: 64px; z-index: 99; }
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 64px; z-index: 99; }
 .tab { flex: 1; padding: 11px 0; text-align: center; font-size: 13px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; font-weight: 500; }
 .tab.active { color: var(--pink); border-bottom-color: var(--pink); }
 .reward-strip { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
@@ -362,9 +362,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e4; color: var(
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* Onboarding */
-.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 32px 24px; max-width: 420px; left: 50%; transform: translateX(-50%); transition: opacity .3s; overflow-y: auto; }
+.onboarding { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: stretch; background: #ffffff; padding: 0; width: 100%; left: 0; transform: none; overflow-y: auto; }
 .onboarding.hidden { opacity: 0; pointer-events: none; }
-body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hidden; }
+/* overflow는 JS에서 제어 */
 .ob-logo { font-family: 'Black Han Sans', sans-serif; font-size: 40px; color: var(--pink); margin-bottom: 6px; }
 .ob-sub { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
 .ob-can { font-size: 72px; margin-bottom: 24px; line-height: 1; }
@@ -388,38 +388,90 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 .profile-edit-label { font-size: 12px; color: var(--text3); }
 .profile-edit-count { font-size: 11px; color: var(--text3); }
 </style>
+<script src="./sdk-bundle.js"></script>
 </head>
 <body>
+  <script>
+    (function(){
+      var raw = localStorage.getItem('gj_profile');
+      if(raw){
+        try {
+          var p = JSON.parse(raw);
+          // toss_ uid가 있으면 정상 로그인 → 온보딩 스킵
+          if(p && p.uid && p.uid.indexOf('toss_') === 0 && p.nick && p.nick !== '거지'){
+            var s=document.createElement('style');
+            s.textContent='#onboarding{display:none!important}#ob-backdrop{display:none!important}';
+            document.head.appendChild(s);
+            document.addEventListener('DOMContentLoaded', function(){
+              var ob=document.getElementById('onboarding');
+              var bd=document.getElementById('ob-backdrop');
+              if(ob){ ob.style.display='none'; ob.classList.add('hidden'); }
+              if(bd){ bd.style.display='none'; }
+              document.body.style.overflow='';
+            });
+          } else {
+            // toss_ uid 아니면 프로필 지우고 온보딩 표시
+            localStorage.removeItem('gj_profile');
+          }
+        } catch(e) {
+          localStorage.removeItem('gj_profile');
+        }
+      }
+    })();
+  </script>
 <div class="app">
 
   <!-- Onboarding backdrop -->
-  <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);"></div>
+  <div id="ob-backdrop" style="position:fixed;inset:0;z-index:499;background:var(--bg);display:none;"></div>
   <!-- Onboarding -->
   <div class="onboarding" id="onboarding">
-    <div class="ob-can">🥫</div>
-    <div class="ob-logo">거지방</div>
-    <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요<br>입장 전 닉네임을 설정해주세요</div>
-
-    <!-- 토스 로그인 버튼 (토스 미니앱 안에서만 표시) -->
-    <div id="toss-login-area" style="display:none;width:100%;margin-bottom:16px;">
-      <button class="ob-btn" id="toss-login-btn" onclick="loginWithToss()"
-        style="background:linear-gradient(135deg,#0064ff,#0040cc);margin-bottom:10px;opacity:1;">
-        🔵 토스 계정으로 1초 입장
-      </button>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-        <div style="flex:1;height:1px;background:var(--border2);"></div>
-        <span style="font-size:12px;color:var(--text3);">또는 직접 입력</span>
-        <div style="flex:1;height:1px;background:var(--border2);"></div>
+    <!-- 로그인 화면 -->
+    <div id="ob-login-view" style="width:100%;min-height:100vh;display:flex;flex-direction:column;background:#ffffff;">
+      <!-- 상단 히어로 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px 32px;">
+        <div style="font-size:72px;margin-bottom:16px;">🥫</div>
+        <div class="ob-logo" style="margin-bottom:8px;">거지 챌린지</div>
+        <div class="ob-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
+      </div>
+      <!-- 하단 회색 영역 -->
+      <div style="background:#f5f5f5;padding:28px 20px 48px;">
+        <!-- 기능 소개 -->
+        <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">📢</div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">지출 피드에 올리기</div><div style="font-size:12px;color:#888;">AI 거지방장과 사람들이 핀잔을 줘요</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">⚡</div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거지력 쌓기</div><div style="font-size:12px;color:#888;">절약할수록 거지력이 올라가요</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">🏆</div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">이주의 거지왕 도전</div><div style="font-size:12px;color:#888;">1위하면 토스포인트를 드려요</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">🗺️</div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거슐랭 가이드</div><div style="font-size:12px;color:#888;">가성비 식당 공유하고 거지력 쌓아요</div></div>
+          </div>
+        </div>
+        <!-- 토스 로그인 버튼 -->
+        <button id="toss-login-btn" onclick="loginWithToss()" style="width:100%;background:#0064ff;color:#fff;border:none;border-radius:14px;padding:18px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box;margin-bottom:12px;">토스로 시작하기</button>
+        <div id="toss-login-status" style="font-size:12px;color:#888;text-align:center;min-height:16px;"></div>
       </div>
     </div>
 
-    <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
-    <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()" oncompositionend="obCheck()" onkeyup="obCheck()">
-    <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
-    <div class="ob-label">한 줄 소개 <span style="color:var(--text3);">(선택)</span></div>
-    <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()" oncompositionend="obBioCount()" onkeyup="obBioCount()">
-    <div class="ob-char"><span id="ob-bio-len">0</span>/30</div>
-    <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled>거지방 입장하기 🚪</button>
+    <!-- 닉네임 입력 화면 (토스 로그인 성공 후) -->
+    <div id="ob-nick-area" style="display:none;width:100%;min-height:100vh;background:#fff;padding:60px 24px 40px;box-sizing:border-box;">
+      <div style="font-size:24px;font-weight:900;color:#191919;margin-bottom:6px;">닉네임을 설정해주세요</div>
+      <div style="font-size:14px;color:#888;margin-bottom:32px;">거지방에서 사용할 이름이에요</div>
+      <div class="ob-label">닉네임 <span style="color:var(--pink);">*</span></div>
+      <input class="ob-input" id="ob-nick" placeholder="예) 탕진러, 절약왕, 거지킹..." maxlength="12" oninput="obCheck()" oncompositionend="obCheck()" onkeyup="obCheck()">
+      <div class="ob-char"><span id="ob-nick-len">0</span>/12</div>
+      <div class="ob-label" style="margin-top:16px;">한 줄 소개 <span style="color:var(--text3);">(선택)</span></div>
+      <input class="ob-input" id="ob-bio" placeholder="예) 배달비만 월 20만원 씁니다..." maxlength="30" oninput="obBioCount()" oncompositionend="obBioCount()" onkeyup="obBioCount()">
+      <div class="ob-char"><span id="ob-bio-len">0</span>/30</div>
+      <button class="ob-btn" id="ob-btn" onclick="completeOnboarding()" disabled style="margin-top:24px;">거지 챌린지 시작하기 🚪</button>
+    </div>
   </div>
 
   <!-- Main -->
@@ -428,8 +480,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       <div class="header-top">
         <div class="header-title">거지방</div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="sharePiggyLink()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">⚡ 공유</button>
           <div class="header-badge">247명 참여중</div>
+
           <div class="profile-btn" id="header-profile-btn">
             <div class="profile-av" id="header-profile-av" style="background:#3a1520;color:#e8527a;">나</div>
             <span class="profile-name" id="header-profile-name">거지</span>
@@ -438,15 +490,16 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       </div>
       <div class="header-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
     </div>
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('feed')">피드</div>
-      <div class="tab" onclick="showTab('mine')">내 지출</div>
-      <div class="tab" onclick="showTab('rank')">거지 랭킹</div>
-      <div class="tab" onclick="showTab('geoji')">내 거지</div>
+    <div class="tabs" style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
+      <div class="tab active" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
+      <div class="tab" onclick="showTab('mine')" style="flex-shrink:0;">내 지출</div>
+      <div class="tab" onclick="showTab('rank')" style="flex-shrink:0;">거지 랭킹</div>
+      <div class="tab" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
+      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
-    <div id="challenge-banner" style="background:linear-gradient(135deg,#fff5f7,#fde8ee);border-bottom:1px solid rgba(232,82,122,0.15);">
+    <div id="challenge-banner" style="background:linear-gradient(135deg,#fff0f4,#fce8ee);border-bottom:1px solid rgba(232,82,122,0.15);">
       <div onclick="toggleChallengeBanner()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:13px;">🔥</span>
@@ -463,13 +516,8 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     <div class="content">
       <div id="tab-feed" class="section active"></div>
       <div id="tab-mine" class="section">
-        <!-- 광고 배너 -->
-        <div class="ad-card" style="margin-bottom:12px;">
-          <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-          <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-            <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-          </div>
-        </div>
+        <!-- 배너 광고 -->
+        <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
 
 
         <!-- 지출 입력 버튼 -->
@@ -528,38 +576,11 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <canvas id="spend-chart" height="140"></canvas>
         </div>
 
-        <!-- 구독 업셀 카드 -->
-        <div style="background:linear-gradient(135deg,#fff0f4,#fce8ee);border:1px solid var(--pink-dim2);border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;" id="premium-card">
-          <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:.08;pointer-events:none;">🤖</div>
-          <div style="font-size:10px;color:var(--pink-light);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">PREMIUM</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">가계부 맞춤 관리받기</div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:14px;">AI가 내 소비 패턴을 분석해<br>맞춤 절약 전략을 짜드려요</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="premium-features-list">
-            <div class="premium-feat">💰 월수입·저축 설정</div>
-            <div class="premium-feat">🎯 저축 달성률</div>
-            <div class="premium-feat">📋 카테고리 예산</div>
-            <div class="premium-feat">📅 지출 캘린더</div>
-            <div class="premium-feat">📊 AI 주간 리포트</div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <div style="font-size:20px;font-weight:700;color:var(--pink);">월 990원</div>
-              <div style="font-size:11px;color:var(--text3);">언제든 해지 가능</div>
-            </div>
-            <button class="btn-subscribe" onclick="openSubscribe()">구독 시작하기</button>
-          </div>
-        </div>
+
 
         <!-- 구독 중일 때 보이는 프리미엄 패널 (기본 숨김) -->
-        <div id="premium-panel" style="display:none;">
-          <!-- 구독 취소 -->
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text);">🤖 AI 가계부 코치 구독 중</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;">월 990원 · 다음 결제일에 자동 갱신</div>
-            </div>
-            <button onclick="cancelSubscribe()" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;">구독 취소</button>
-          </div>
+        <div id="premium-panel">
+
           <!-- 월 재정 설정 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px;">💰 월 재정 설정</div>
@@ -625,7 +646,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <!-- AI 카테고리 조언 -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:13px;font-weight:500;color:var(--text);">🤖 AI 지출 조언</div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);">🤖 이번 달 지출 조언</div>
               <button onclick="generateCatAdvice()" style="font-size:11px;color:var(--pink);background:transparent;border:none;cursor:pointer;font-family:inherit;">새로 받기</button>
             </div>
             <div id="cat-advice-text" style="font-size:13px;color:var(--text2);line-height:1.7;">
@@ -662,16 +683,11 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
       </div>
       <div id="tab-rank" class="section">
-        <!-- 광고 배너 -->
-        <div class="ad-card" style="margin-bottom:12px;">
-          <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-          <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-            <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-          </div>
-        </div>
+        <!-- 배너 광고 -->
+        <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
 
         <!-- 지난달 거지왕 결과 -->
-        <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#fffbf0,#fff8e0);border:1px solid rgba(176,120,0,.3);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
+        <div id="last-king-section" style="display:none;background:linear-gradient(135deg,#fffbee,#fff5cc);border:1px solid rgba(154,104,0,.25);border-radius:var(--radius);padding:18px;margin-bottom:14px;">
           <div style="text-align:center;margin-bottom:12px;">
             <div style="font-size:32px;">👑</div>
             <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:4px;" id="last-king-month">2025년 2월 거지왕</div>
@@ -696,15 +712,35 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div style="font-size:28px;">⏳</div>
         </div>
 
-        <!-- 이달 거지력 랭킹 -->
-        <div class="rank-header"><div class="rank-title">이달 거지력 랭킹</div><div class="rank-sub">높을수록 더 거지 (명예)</div></div>
+        <!-- 이주의 거지력 현재 랭킹 -->
+        <div class="rank-header">
+          <div class="rank-title">이주의 거지력 현재 랭킹</div>
+          <div class="rank-sub">매주 월요일 거지왕 발표 🏆</div>
+        </div>
+        <!-- 거지왕 토스포인트 안내 -->
+        <div style="background:linear-gradient(135deg,#fffbee,#fff5cc);border:1px solid rgba(154,104,0,.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;color:#9a6800;margin-bottom:8px;">🏆 이주의 거지왕 토스포인트 지급</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥇 1위 거지왕</span><span style="font-weight:700;color:#9a6800;">5,000P</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥈 2위 거지대장</span><span style="font-weight:700;color:#9a6800;">3,000P</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>🥉 3~5위</span><span style="font-weight:700;color:#9a6800;">1,000P</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#9a6800;margin-top:8px;opacity:0.8;">매주 월요일 자정 기준 · 리워드는 발표 후 영업일 3일 내 지급</div>
+        </div>
         <div class="formula-card">
           <div class="formula-title">거지력 점수 산정 방식</div>
           <div class="formula-row"><div class="formula-key">🙇 거지ㅇㅈ 반응</div><div class="formula-val">+3점</div></div>
           <div class="formula-row"><div class="formula-key">🤔 애매한데 반응</div><div class="formula-val">+0.5점</div></div>
           <div class="formula-row"><div class="formula-key">💸 사치 반응</div><div class="formula-val">-1점</div></div>
           <div class="formula-row"><div class="formula-key">✏️ 피드에 글 쓰기</div><div class="formula-val">+1점</div></div>
-          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 영구 보존</div>
+          <div class="formula-row"><div class="formula-key">🗺️ 거지맵 식당 등록</div><div class="formula-val">+1점</div></div>
+          <div class="formula-note">높을수록 절약 인정 · 사치 판정이 많으면 점수 깎임 · 누적 거지력은 상점에서 사용 가능</div>
         </div>
         <div id="rank-list"></div>
         <div class="my-rank">
@@ -734,16 +770,16 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
             <div style="font-size:20px;">✨</div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-            <div onclick="openGeojilryeokShop(100)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.2);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
+            <div onclick="openGeojilryeokShop(100)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.18);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
               <div style="font-size:14px;font-weight:700;color:#b088ff;">100점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 990</div>
             </div>
-            <div onclick="openGeojilryeokShop(500)" style="background:rgba(120,80,220,0.10);border:1px solid rgba(120,80,220,0.3);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;position:relative;">
+            <div onclick="openGeojilryeokShop(500)" style="background:rgba(120,80,220,0.10);border:1px solid rgba(120,80,220,0.28);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;position:relative;">
               <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);background:#b088ff;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;">인기</div>
               <div style="font-size:14px;font-weight:700;color:#b088ff;">500점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 3,900</div>
             </div>
-            <div onclick="openGeojilryeokShop(2000)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.2);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
+            <div onclick="openGeojilryeokShop(2000)" style="background:rgba(120,80,220,0.06);border:1px solid rgba(120,80,220,0.18);border-radius:var(--radius-sm);padding:8px;text-align:center;cursor:pointer;">
               <div style="font-size:14px;font-weight:700;color:#b088ff;">2000점</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;">₩ 9,900</div>
             </div>
@@ -754,7 +790,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
 
 
         <!-- 내 리워드 수령 (수상 시 표시) -->
-        <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#f0fff8,#e8f8f0);border:1px solid rgba(26,153,84,.3);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
+        <div id="my-reward-card" style="display:none;background:linear-gradient(135deg,#edfff5,#d8f5e8);border:1px solid rgba(26,122,64,.25);border-radius:var(--radius);padding:16px;margin-top:12px;text-align:center;">
           <div style="font-size:24px;margin-bottom:6px;" id="my-reward-emoji">🥇</div>
           <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:2px;" id="my-reward-title">이달의 거지왕 선정!</div>
           <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="my-reward-desc">토스포인트 100,000P 리워드가 준비됐어요</div>
@@ -765,6 +801,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
     </div>
       <!-- 내 거지 탭 -->
       <div id="tab-geoji" class="section"></div>
+      <div id="tab-map" class="section" style="padding:0;"></div>
   </div>
 
   <!-- Begging can page -->
@@ -826,12 +863,6 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <div class="pac-small">매일 포인트 받는</div>
           <div class="pac-title">출석 복권</div>
           <div class="pac-note" id="pac-lotto-note">오늘 1회 무료</div>
-        </div>
-        <div class="pac" onclick="event.stopPropagation();sharePiggyLink()">
-          <div class="pac-icon">⚡</div>
-          <div class="pac-small">광고 없애려면</div>
-          <div class="pac-title">공유하기</div>
-          <div class="pac-note">친구에게 공유</div>
         </div>
       </div>
       <div class="exc-list">
@@ -911,7 +942,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
           <span class="lc-badge lb-ad">광고 시청</span>
           <span class="lc-icon">🌟</span>
           <div class="lc-title">꽝 없는 복권</div>
-          <div class="lc-desc">꽝 없음<br>거지력 1~10점</div>
+          <div class="lc-desc">꽝 없음 · 하루 1회<br>거지력 1~10점</div>
         </div>
       </div>
     </div>
@@ -1207,7 +1238,7 @@ body:has(.onboarding:not(.hidden):not([style*="display: none"])) { overflow: hid
       </div>
       <div style="font-size:11px;color:var(--pink-light);text-align:right;">커피 한 잔보다<br>싸요 ☕</div>
     </div>
-    <button class="btn-pink" onclick="confirmSubscribe()">990원으로 시작하기</button>
+    <button class="btn-pink" onclick="showToast('이미 무료로 이용 중이에요! 🎉')">990원으로 시작하기</button>
     <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px;">첫 달 무료 · 이후 매월 자동 결제</div>
   </div>
 </div>
@@ -1267,12 +1298,19 @@ window.GJ.loadUserByNick = async (nick) => {
   return snap.empty ? null : snap.docs[0].data();
 };
 
-window.GJ.updateScore = async (uid, monthDelta, totalDelta) => {
+window.GJ.updateScore = async (uid, monthDelta, totalDelta, type='reaction') => {
   await updateDoc(doc(db, 'geojibang_users', uid), {
     monthScore: increment(monthDelta),
     totalScore: increment(totalDelta),
     updatedAt: serverTimestamp()
   });
+  // 거지력 변경 기록 저장
+  try {
+    await addDoc(collection(db, 'geojibang_score_logs'), {
+      uid, monthDelta, totalDelta, type,
+      createdAt: serverTimestamp()
+    });
+  } catch(e) {}
 };
 
 // ── 피드 게시물 ──────────────────────────────────────
@@ -1297,10 +1335,11 @@ window.GJ.loadPosts = async (limitN = 20) => {
 
 window.GJ.listenPosts = (callback) => {
   const q = query(COLS.posts(), orderBy('createdAt', 'desc'), limit(20));
-  return onSnapshot(q, snap => {
+  const unsub = onSnapshot(q, snap => {
     const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(posts);
   });
+  return unsub;
 };
 
 window.GJ.updateRxn = async (postId, rxnArr) => {
@@ -1391,6 +1430,29 @@ window.GJ.listenRanking = (callback) => {
 window.GJ.ready = true;
 console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 
+// ── 거지맵 Firebase 메서드 ──
+window.GJ.loadPlaces = async () => {
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc'), limit(5000)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+window.GJ.addPlace = async (data) => {
+  return await addDoc(collection(db,'geojimap_places'), { ...data, createdAt: serverTimestamp() });
+};
+window.GJ.addPlaceComment = async (placeId, data) => {
+  return await addDoc(collection(db,'geojimap_places',placeId,'comments'), { ...data, createdAt: serverTimestamp() });
+};
+window.GJ.loadPlaceComments = async (placeId) => {
+  const snap = await getDocs(query(collection(db,'geojimap_places',placeId,'comments'), orderBy('createdAt','asc'), limit(50)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+window.GJ.updatePlaceLike = async (placeId, likedBy) => {
+  await updateDoc(doc(db,'geojimap_places',placeId), { likes: likedBy.length, likedBy });
+};
+window.GJ.updatePlaceDislike = async (placeId, dislikedBy) => {
+  await updateDoc(doc(db,'geojimap_places',placeId), { dislikes: dislikedBy.length, dislikedBy });
+};
+window.GJ._placeReportsCol = (placeId) => collection(db,'geojimap_places',placeId,'reports');
+
 // 앱 시작 시 랭킹 실시간 리스너 바로 시작 (온보딩 여부 무관)
 if (window.GJ?.ready) {
   window.GJ.listenRanking((rankers) => {
@@ -1415,8 +1477,10 @@ if (window.GJ?.ready) {
 }
 
 // 앱 시작 시 피드 리스너 시작
+let _feedUnsubscribe = null;
 window.GJ.startFeedListener = () => {
-window.GJ.listenPosts(async (posts) => {
+  if (_feedUnsubscribe) { try { _feedUnsubscribe(); } catch(e){} _feedUnsubscribe = null; }
+  _feedUnsubscribe = window.GJ.listenPosts(async (posts) => {
   const feed = document.getElementById('tab-feed');
   if (!feed) return;
 
@@ -1436,7 +1500,7 @@ window.GJ.listenPosts(async (posts) => {
   }
   if (emptyEl) emptyEl.remove();
 
-  // 기존 Firebase 게시물 제거 후 최신순 재렌더링
+  // Firebase 게시물만 제거 (로컬 글 보존)
   feed.querySelectorAll('.post[data-firebase="1"]').forEach(el => el.remove());
 
   // createdAt 기준 최신순 (Firebase orderBy('createdAt','desc') 이미 최신순이지만 로컬 게시물과 합쳐서 정렬)
@@ -1474,6 +1538,21 @@ window.GJ.listenPosts(async (posts) => {
       feed.appendChild(el);
     }
     insertAfter = el;
+    // 미니 캐릭터 아바타 적용
+    setTimeout(() => {
+      const av=el.querySelector('.avatar.profile-click');
+      if(av){
+        const c=av.dataset.char||'char_default', bg=av.dataset.bg||'#3a1520';
+        av.style.cssText='background:'+bg+';padding:0;overflow:hidden;width:36px;height:36px;border-radius:50%;flex-shrink:0;';
+        const svg=makeMiniCharSvg(c,36); if(svg) av.innerHTML=svg;
+      }
+      // 댓글 아바타도 적용
+      el.querySelectorAll('.comment-av.profile-click').forEach(ca=>{
+        const c=ca.dataset.char||'char_default', bg=ca.dataset.bg||'#3a1520';
+        ca.style.cssText='background:'+bg+';padding:0;overflow:hidden;width:28px;height:28px;border-radius:50%;flex-shrink:0;';
+        const svg=makeMiniCharSvg(c,28); if(svg) ca.innerHTML=svg;
+      });
+    }, 0);
 
     // 5개마다 광고 삽입
     const firebasePosts = feed.querySelectorAll('.post[data-firebase="1"]');
@@ -1588,23 +1667,37 @@ window.GJ.initProfile = async () => {
 // ── addToFeed Firebase 연동 버전 ─────────────────────
 window.GJ.publishPost = async (where, amount, memo) => {
   const uid = window.myProfile.uid || ('gj_' + Date.now());
-  const postId = await window.GJ.addPost({
-    authorUid: uid,
-    authorName: window.myProfile.nick,
-    authorMonthScore: window.myMonthScore,
-    authorBg: window.myProfile.bg,
-    authorColor: window.myProfile.c,
-    authorRoom: window.myItems?.equippedRoom || 'room_default',
-    authorChar: window.myItems?.equippedChar || 'char_default',
-    authorMonthSpend: window.getMonthSpend ? window.getMonthSpend() : 0,
-    desc: memo || '그냥 썼음',
-    item: where,
-    amount: parseInt(amount).toLocaleString() + '원',
-  });
-  // 글 올리자마자 AI 핀잔 생성 → Firebase 저장 (이후 재호출 없음)
+  const savedProfile = JSON.parse(localStorage.getItem('gj_profile') || '{}');
+  const actualNick = (window.myProfile.nick && window.myProfile.nick !== '거지')
+    ? window.myProfile.nick
+    : (savedProfile.nick || window.myProfile.nick);
+  if (!window.GJ?.ready) {
+    console.warn('[거지방] Firebase 미연결 상태에서 글 쓰기 시도');
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  let postId;
+  try {
+    postId = await window.GJ.addPost({
+      authorUid: uid,
+      authorName: actualNick,
+      authorMonthScore: window.myMonthScore,
+      authorBg: window.myProfile.bg,
+      authorColor: window.myProfile.c,
+      authorRoom: window.myItems?.equippedRoom || 'room_default',
+      authorChar: window.myItems?.equippedChar || 'char_default',
+      authorMonthSpend: window.getMonthSpend ? window.getMonthSpend() : 0,
+      desc: memo || '그냥 썼음',
+      item: where,
+      amount: parseInt(amount).toLocaleString() + '원',
+    });
+  } catch(e) {
+    console.error('[거지방] 글 저장 실패:', e);
+    return null;
+  }
+  // 글 올리자마자 AI 핀잔 생성
   try {
     const ctx = `${memo||''} ${where} ${amount}원`;
-    const r = await fetch('/api/roast', {
+    const r = await fetch('https://geojibang.vercel.app/api/roast', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ context: ctx })
     });
@@ -1635,6 +1728,7 @@ window.GJ.submitComment = async (postId, text) => {
     authorBg: window.myProfile.bg || '#3a1520',
     authorColor: window.myProfile.c || '#e8527a',
     authorMonthScore: window.myMonthScore || 0,
+    authorMonthSpend: window.getMonthSpend ? window.getMonthSpend() : 0,
     authorRoom: window.myItems?.equippedRoom || 'room_default',
     authorChar: window.myItems?.equippedChar || 'char_default',
     text
@@ -1651,13 +1745,28 @@ function timeAgo(date) {
 }
 
 // 앱 로드 후 프로필 초기화
-setTimeout(() => window.GJ.initProfile(), 500);
+setTimeout(async () => {
+  await window.GJ.initProfile();
+  if (localStorage.getItem('gj_profile') && window.GJ?.startFeedListener) {
+    window.GJ.startFeedListener();
+  }
+}, 500);
+setTimeout(() => checkSubExpiry(), 300);
 setTimeout(() => loadItemPrices(), 1000);
 setTimeout(() => loadLastKing(), 2000);
-setTimeout(() => buildWeeklyChallenges(), 600);
+// 챌린지는 Firebase 설정 로드 후에만 표시 (깜빡임 방지)
+window._challengeReady = false;
+function buildWeeklyChallengesWhenReady() {
+  if (window._challengeReady) {
+    buildWeeklyChallenges();
+  } else {
+    setTimeout(buildWeeklyChallengesWhenReady, 200);
+  }
+}
+setTimeout(buildWeeklyChallengesWhenReady, 300);
 setTimeout(() => loadWeeklyChallengesFromDB(), 3000);
 // 토스 미니앱 환경이면 로그인 버튼 표시
-setTimeout(() => initTossLoginUI(), 100);
+// initTossLoginUI 제거됨
 
 // 내 유저 문서 실시간 감시 — 어드민에서 점수 수정 시 즉시 반영
 function startMyScoreListener(uid) {
@@ -1702,9 +1811,10 @@ document.addEventListener('visibilitychange', async () => {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 const API = "/api/roast"; // Vercel 프록시 — API 키 서버에서 관리
-let coins = 0, todayEarned = 0, adCb = null;
-const MAX_DAILY = 5;
-const MAX_GOLDEN_DAILY = 3; // 꽝없는 복권 하루 3회 제한
+var coins = parseInt(localStorage.getItem('gj_coins') || '0');
+let todayEarned = 0, adCb = null;
+const MAX_DAILY = 20;
+const MAX_GOLDEN_DAILY = 1; // 꽝없는 복권 하루 1회 제한
 
 // 오늘 날짜 키 (자정마다 초기화)
 const _todayKey = new Date().toISOString().slice(0,10);
@@ -1863,19 +1973,21 @@ function submitWriteManual() {
 
 /* FAB show only on feed tab */
 function showTab(n) {
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji'][i]===n));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji','map'][i]===n));
+  document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
-  if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); generateCatAdvice(); buildTxSummary(); }
+  if (n === 'mine') { restoreFinanceInputs(); buildCatBars(); buildChart('week'); buildCatBudgetList(); buildSpendCalendar(); _loadCachedAdvice(); _loadCachedReport(); buildTxSummary(); }
   if (n === 'geoji') {
     renderGeojiTab();
-    // 실제 프로필 방+캐릭터 렌더링
     setTimeout(() => {
       const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
       const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
       renderRoom('geoji-room-svg', equippedRoom, equippedChar);
     }, 50);
+  }
+  if (n === 'map') {
+    renderGeojiMap();
   }
 }
 
@@ -1903,6 +2015,14 @@ function buildFeed() {
 
 function makePost(p) {
   const el=document.createElement('div'); el.className='post'; el.id='post-'+p.id;
+  setTimeout(()=>{
+    const av=el.querySelector('.avatar.profile-click');
+    if(av){
+      av.style.cssText='background:'+p.abg+';padding:0;overflow:hidden;width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+      const svg=makeMiniCharSvg(p.authorChar||'char_default',36);
+      if(svg) av.innerHTML=svg; else av.textContent=p.init;
+    }
+  },0);
   const savedRxn = getSavedRxn(p.id);
   const labels=['🙇 거지ㅇㅈ','🤔 애매한데','💸 사치'];
   const rxnBtns = [0,1,2].map(i => {
@@ -1919,7 +2039,6 @@ function makePost(p) {
   const isMyPost = p.authorUid && myProfile.uid && p.authorUid === myProfile.uid;
   const myPostBtns = isMyPost
     ? `<div style="display:flex;gap:6px;">
-        <button class="post-edit-btn" data-pid="${p.id}" onclick="openEditPostFromBtn(this)">수정</button>
         <button class="post-del-btn" onclick="deleteMyPost('${p.id}')">삭제</button>
        </div>`
     : '';
@@ -1955,7 +2074,7 @@ function makePost(p) {
       const cml = document.getElementById('cml-' + p.id);
       if (!cml) return;
       cml.innerHTML = comments.map(c =>
-        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;">${(c.authorName||'익')[0]}</div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}</div><div class="comment-bubble">${c.text}</div></div></div>`
+        `<div class="comment-row"><div class="comment-av profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};cursor:pointer;width:28px;height:28px;border-radius:50%;overflow:hidden;padding:0;flex-shrink:0;">${(()=>{const svg=makeMiniCharSvg(c.authorChar||'char_default',28);return svg||((c.authorName||'익')[0]);})()} </div><div><div class="comment-name profile-click" data-uid="${c.authorUid||''}" data-nick="${(c.authorName||'익명')}" data-bg="${c.authorBg||'#3a1520'}" data-c="${c.authorColor||'#e8527a'}" data-score="${c.authorMonthScore||0}" data-room="${c.authorRoom||'room_default'}" data-char="${c.authorChar||'char_default'}" style="cursor:pointer;">${c.authorName||'익명'}${c.authorMonthSpend > 0 ? `<span style="font-size:9px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:1px 5px;margin-left:4px;">${new Date().getMonth()+1}월 ${c.authorMonthSpend.toLocaleString()}원</span>` : ''}</div><div class="comment-bubble">${c.text}</div></div></div>`
       ).join('');
       const countEl = document.getElementById('cmt-count-' + p.id);
       if (countEl) countEl.textContent = comments.length > 0 ? comments.length + '개 보기' : '달기';
@@ -1964,18 +2083,144 @@ function makePost(p) {
   return el;
 }
 
+// TossAds 초기화 (앱 로드 시 1회)
+let _tossAdsReady = false;
+const BANNER_AD_ID = 'ait-ad-test-banner-id';           // 배너 리스트형
+const NATIVE_AD_ID = 'ait-ad-test-native-image-id';     // 배너 피드형
+const INTERSTITIAL_AD_ID = 'ait-ad-test-interstitial-id'; // 전면형
+const REWARDED_AD_ID = 'ait-ad-test-rewarded-id';        // 리워드형
+
+function initTossAds() {
+  // TossAds 배너 SDK
+  if (typeof window.TossAds !== 'undefined' && window.TossAds.initialize) {
+    window.TossAds.initialize({
+      callbacks: {
+        onInitialized: () => {
+          _tossAdsReady = true;
+          console.log('[TossAds] 배너 초기화 완료');
+          // 모든 배너 자리에 부착
+          document.querySelectorAll('[data-ad-slot]').forEach(el => {
+            const adId = el.dataset.adSlot === 'native' ? NATIVE_AD_ID : BANNER_AD_ID;
+            window.TossAds.attachBanner(adId, el, {
+              theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+              callbacks: {
+                onNoFill: () => { el.style.display = 'none'; },
+                onAdFailedToRender: () => { el.style.display = 'none'; },
+              }
+            });
+          });
+        },
+        onInitializationFailed: (e) => console.warn('[TossAds] 초기화 실패:', e),
+      }
+    });
+  }
+
+  // 전면형/리워드 광고 미리 로드
+  if (typeof window.loadFullScreenAd !== 'undefined') {
+    try {
+      window.loadFullScreenAd({
+        options: { adGroupId: INTERSTITIAL_AD_ID },
+        onEvent: (e) => { if (e.type === 'loaded') window._interstitialReady = true; },
+        onError: () => {}
+      });
+      window.loadFullScreenAd({
+        options: { adGroupId: REWARDED_AD_ID },
+        onEvent: (e) => { if (e.type === 'loaded') window._rewardedReady = true; },
+        onError: () => {}
+      });
+    } catch(e) { /* 토스앱 전용 */ }
+  }
+}
+setTimeout(initTossAds, 1000);
+setTimeout(() => {
+  // 리워드 광고 로드 재시도
+  if (!window._rewardedReady && typeof window.loadFullScreenAd !== 'undefined') {
+    try {
+      window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} }); } catch(e){}
+  }
+}, 3000);
+
+// 전면형 광고 표시
+function showInterstitialAd(onDismiss) {
+  if (typeof window.showFullScreenAd === 'undefined' || !window._interstitialReady) {
+    onDismiss?.(); return;
+  }
+  window.showFullScreenAd({
+    options: { adGroupId: INTERSTITIAL_AD_ID },
+    onEvent: (e) => {
+      if (e.type === 'dismissed' || e.type === 'failedToShow') {
+        window._interstitialReady = false;
+        // 다음 광고 미리 로드
+        try { window.loadFullScreenAd({ options: { adGroupId: INTERSTITIAL_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._interstitialReady=true; }, onError: ()=>{} }); } catch(e){}
+        onDismiss?.();
+      }
+    },
+    onError: () => { onDismiss?.(); }
+  });
+}
+
+// 리워드형 광고 표시
+function showRewardedAd(onRewarded, onDismiss) {
+  if (typeof window.showFullScreenAd === 'undefined' || !window._rewardedReady) {
+    onDismiss?.(); return;
+  }
+  window.showFullScreenAd({
+    options: { adGroupId: REWARDED_AD_ID },
+    onEvent: (e) => {
+      if (e.type === 'userEarnedReward') { onRewarded?.(e.data); }
+      if (e.type === 'dismissed' || e.type === 'failedToShow') {
+        window._rewardedReady = false;
+        try { window.loadFullScreenAd({ options: { adGroupId: REWARDED_AD_ID }, onEvent: ev => { if(ev.type==='loaded') window._rewardedReady=true; }, onError: ()=>{} }); } catch(e){}
+        onDismiss?.();
+      }
+    },
+    onError: () => { onDismiss?.(); }
+  });
+}
+
 function makeAd(i) {
-  const el=document.createElement('div'); el.className='ad-card';
-  el.innerHTML=`<div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-    <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-      <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-    </div>`;
+  const el = document.createElement('div');
+  el.className = 'ad-card';
+  el.style.cssText = 'width:100%;min-height:96px;overflow:hidden;';
+  el.id = 'toss-ad-slot-' + i;
+  el.dataset.adSlot = 'banner';
+  attachBannerToEl(el);
   return el;
+}
+
+function attachBannerToEl(el) {
+  if (typeof window.TossAds !== 'undefined' && typeof window.TossAds?.attachBanner === 'function') {
+    if (_tossAdsReady) {
+      window.TossAds.attachBanner(BANNER_AD_ID, el, {
+        theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+        callbacks: {
+          onNoFill: () => { el.style.display = 'none'; },
+          onAdFailedToRender: () => { el.style.display = 'none'; },
+        }
+      });
+    } else {
+      // 초기화 대기 후 부착
+      const check = setInterval(() => {
+        if (_tossAdsReady) {
+          clearInterval(check);
+          window.TossAds.attachBanner(BANNER_AD_ID, el, {
+            theme: 'auto', tone: 'blackAndWhite', variant: 'expanded',
+            callbacks: {
+              onNoFill: () => { el.style.display = 'none'; },
+              onAdFailedToRender: () => { el.style.display = 'none'; },
+            }
+          });
+        }
+      }, 500);
+      setTimeout(() => clearInterval(check), 10000);
+    }
+  }
 }
 
 function sharePost(btn) {
   const name = btn.dataset.name, item = btn.dataset.item, amount = btn.dataset.amount;
-  const text = name + '님이 ' + item + ' ' + amount + ' 지출해서 거지방에서 혼나는 중 😂\n\n나도 거지방 입장하기 👉 https://toss.im/geojibang';
+  const text = name + '님이 ' + item + ' ' + amount + ' 지출해서 거지방에서 혼나는 중 😂\n\n나도 거지방 입장하기 👉 intoss://geojibang';
+  addChallengeProgress('share'); buildWeeklyChallenges();
   if (navigator.share) {
     navigator.share({ title: '거지방', text }).catch(() => {});
   } else if (navigator.clipboard) {
@@ -2019,8 +2264,10 @@ function castRxn(btn,id,idx) {
 
     // 게시물 작성자 UID 가져오기
     const postEl = document.getElementById('post-'+id);
-    const authorUid = postEl?.querySelector('.profile-click')?.dataset?.uid || '';
-    const isMyPost = authorUid && myProfile.uid && authorUid === myProfile.uid;
+    // 아바타(.avatar)에서 authorUid 읽기 (댓글 profile-click 제외)
+    const avatarEl = postEl?.querySelector('.avatar.profile-click');
+    const authorUid = avatarEl?.dataset?.uid || postEl?.querySelector('.profile-click')?.dataset?.uid || '';
+    const isMyPost = !!(authorUid && myProfile.uid && authorUid === myProfile.uid);
 
     if (isMyPost) {
       // 내 글에 반응 — 내 점수 변경
@@ -2032,13 +2279,26 @@ function castRxn(btn,id,idx) {
       const monthDelta = s > 0 ? s : (s < 0 ? s : 0);
       const totalDelta = s > 0 ? s : 0;
       if (monthDelta !== 0 || totalDelta !== 0) {
-        window.GJ.updateScore(authorUid, monthDelta, totalDelta)
+        window.GJ.updateScore(authorUid, monthDelta, totalDelta, 'reaction')
           .catch(e => console.warn('[거지방] 작성자 점수 저장 실패:', e));
+      }
+    } else if (!authorUid) {
+      // authorUid 없는 구버전 게시물: 내 점수로 대체
+      if (s > 0) { myMonthScore += s; myTotalScore += s; }
+      if (s < 0) { myMonthScore = Math.max(0, myMonthScore + s); }
+      updateMyRankUI();
+      if (window.GJ?.ready && myProfile.uid) {
+        window.GJ.updateScore(myProfile.uid, s > 0 ? s : s < 0 ? s : 0, s > 0 ? s : 0).catch(()=>{});
       }
     }
 
-    const msg = s>0 ? '👍 +'+s+'점! 거지ㅇㅈ 판정' : s<0 ? '💸 사치 판정!' : '🤔 애매 판정';
+    const isOwn = document.getElementById('post-'+id)?.querySelector('.profile-click')?.dataset?.uid === myProfile.uid;
+    const msg = s>0
+      ? (isOwn ? '👍 내 글에 +'+s+'점!' : '👍 거지ㅇㅈ 판정! 작성자에게 +'+s+'점')
+      : s<0 ? '💸 사치 판정!' : '🤔 애매 판정';
     showToast(msg);
+    // 내 점수도 즉시 UI 반영 (Firebase 실시간 리스너 느릴 때 대비)
+    if (isOwn && s !== 0) updateMyRankUI();
   }
 }
 function toggleCmt(id) { document.getElementById(id).classList.toggle('open'); }
@@ -2065,14 +2325,13 @@ async function genRoast(pid, ctx) {
   const el = document.getElementById('rt-' + pid);
   if (!el) return;
   try {
-    const r = await fetch('/api/roast', {
+    const r = await fetch('https://geojibang.vercel.app/api/roast', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ context: ctx })
     });
     const d = await r.json();
     const text = d?.text || '말문이 막힙니다.';
     el.textContent = text;
-    // Firebase에 핀잔 저장 — 다음엔 재호출 없이 바로 표시
     if (window.GJ?.ready) {
       window.GJ.saveRoast(pid, text).catch(() => {});
     }
@@ -2271,15 +2530,13 @@ function selectCat(el) { document.querySelectorAll('.cat-chip').forEach(c=>c.cla
 function checkManualForm() { document.getElementById('manual-share-btn').disabled=!(parseInt(document.getElementById('m-amount').value)>0); }
 function addToFeed(where,amount,memo) {
   const pid='n'+Date.now(), feed=document.getElementById('tab-feed');
-  const p={id:pid,name:myProfile.nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0],authorUid:myProfile.uid||'',authorRoom:myItems?.equippedRoom||'room_default',authorChar:myItems?.equippedChar||'char_default',authorMonthSpend:getMonthSpend()};
+  const nick = (myProfile.nick && myProfile.nick !== '거지') ? myProfile.nick : (JSON.parse(localStorage.getItem('gj_profile')||'{}').nick || myProfile.nick);
+  const p={id:pid,name:nick,score:myMonthScore,abg:myProfile.bg,ac:myProfile.c,init:myProfile.nick.charAt(0),time:'방금 전',desc:memo||'그냥 썼음',item:where,amount:parseInt(amount).toLocaleString()+'원',comments:[],rxn:[0,0,0],authorUid:myProfile.uid||'',authorRoom:myItems?.equippedRoom||'room_default',authorChar:myItems?.equippedChar||'char_default',authorMonthSpend:getMonthSpend()};
   const empty = document.getElementById('feed-empty');
   if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
-  // 글 쓰면 거지력 +1점
+  // 글 쓰면 거지력 +1점 (UI만 - Firebase는 publishPost에서 처리)
   myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
-  if(window.GJ?.ready && myProfile.uid) {
-    window.GJ.updateScore(myProfile.uid, 1, 1).catch(()=>{});
-  }
   // 챌린지 진행
   addChallengeProgress('record');
   addChallengeProgress('feed');
@@ -2463,6 +2720,7 @@ function buildPiggyAds() {
 }
 
 function updatePiggy() {
+  localStorage.setItem('gj_coins', coins); // 동전 저장
   const _get = id => document.getElementById(id);
   const _set = (id, val) => { const el=_get(id); if(el) el.textContent=val; };
 
@@ -2476,7 +2734,7 @@ function updatePiggy() {
   if (hintIcon && hintText) {
     if(todayEarned>=MAX_DAILY) {
       hintIcon.textContent='😴';
-      hintText.textContent='오늘 구걸 한도를 다 채웠어요! 내일 또 오세요';
+      hintText.textContent='오늘은 더이상 구걸이 어려워요 (하루 20개 제한) 🥲';
       if(pigLimit) pigLimit.textContent='';
     } else {
       hintIcon.textContent='🙏';
@@ -2513,7 +2771,7 @@ function updatePiggy() {
 
   // 내 거지 탭 동전 뱃지 업데이트
   const geojiBadge=document.getElementById('geoji-coin-badge');
-  if(geojiBadge) geojiBadge.textContent=`동전 ${coins}개`;
+  if(geojiBadge) geojiBadge.innerHTML=`🪙 <b>${coins}</b>개`;
 }
 
 let tapCount = 0;
@@ -2530,7 +2788,7 @@ function showBegBubble(text) {
 }
 
 function tapPiggy() {
-  if(todayEarned>=MAX_DAILY){showToast('오늘 구걸 한도를 다 채웠어요!');return;}
+  if(todayEarned>=MAX_DAILY){showToast('오늘은 더이상 구걸이 어려워요 (하루 20개 제한) 🥲');return;}
   tapCount++;
   // shake can
   const w=document.getElementById('piggy-svg-wrap');
@@ -2550,8 +2808,8 @@ function tapPiggy() {
   }
 }
 
-let myMonthScore = 0;   // 월 거지력 — 랭킹용, 매달 초기화
-let myTotalScore = 0;   // 누적 거지력 — 영구 누적, 환전용
+var myMonthScore = 0;   // 월 거지력 — 랭킹용, 매달 초기화
+var myTotalScore = 0;   // 누적 거지력 — 영구 누적, 환전용
 
 // 누적 거지력 계급 테이블
 const TOTAL_GRADES = [
@@ -2651,7 +2909,7 @@ function updateMyRankUI() {
   }, 1500);
 }
 
-function doExchange(type,cost) {
+async function doExchange(type,cost) {
   if(coins<cost){showToast('동전이 ' + cost + '개 필요해요');return;}
   tapCount = 0; // 깡통 탭 카운트 리셋
   coins-=cost; updatePiggy();
@@ -2663,16 +2921,19 @@ function doExchange(type,cost) {
     myTotalScore += 10;
     updateMyRankUI();
     if(window.GJ?.ready && myProfile.uid) {
-      window.GJ.updateScore(myProfile.uid, 10, 10).catch(()=>{});
+      window.GJ.updateScore(myProfile.uid, 10, 10, 'coin').catch(()=>{});
     }
     showToast('🙇 거지력 +10점! 월 랭킹 & 누적 반영됨');
   } else if(type==='point5'){
-    // 토스포인트 5P (프로모션 API 연동 후 실제 지급)
-    showToast('💚 토스포인트 5P 지급 신청됐어요! 영업일 내 지급');
-    // 프로모션 코드 등록 후 아래 코드 활성화
-    // if(typeof grantPromotionReward !== 'undefined') {
-    //   grantPromotionReward({ params: { promotionCode: 'GEOJI_COIN5', amount: 5 } });
-    // }
+    // 토스포인트 5P 실제 지급
+    const userKey = myProfile.uid || window.myProfile?.uid;
+    if (userKey && typeof giveTossPoints === 'function') {
+      showToast('💚 토스포인트 5P 지급 중...');
+      const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, 5);
+      showToast(ok ? '🎉 토스포인트 5P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
+    } else {
+      showToast('💚 토스포인트 5P 지급 신청됐어요! 영업일 내 지급');
+    }
   } else if(type==='lotto'){
     const beggingLevels=['상','중','하','최하','바닥'];
     const emoji=['🌟','✨','😐','😢','💀'];
@@ -2756,24 +3017,46 @@ async function loadLastKing() {
   if (!window.GJ?.ready) return;
   try {
     const now = new Date();
-    // 지난달 먼저 확인, 없으면 이번달 확인 (어드민에서 이번달로 발표한 경우)
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const ymPrev = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
-    const ymCurr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-    let rankingData = await window.GJ.loadRanking(ymPrev);
-    let usedYm = ymPrev;
-    let usedMonth = prevMonth;
+    // 주차 키 계산 (어드민과 동일한 방식)
+    function getWeekKey(d) {
+      const date = new Date(d || now);
+      date.setHours(0,0,0,0);
+      date.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+      const year = date.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const week = Math.ceil(((date - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+      return `${year}-W${String(week).padStart(2,'0')}`;
+    }
 
-    // 지난달 없으면 이번달 확인
+    // 이번주 → 지난주 순서로 확인
+    const ymCurr = getWeekKey(now);
+    const lastWeek = new Date(now); lastWeek.setDate(now.getDate() - 7);
+    const ymPrev = getWeekKey(lastWeek);
+
+    let rankingData = await window.GJ.loadRanking(ymCurr);
+    let usedYm = ymCurr;
+    let usedMonth = now;
+
+    // 이번주 없으면 지난주 확인
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
-      rankingData = await window.GJ.loadRanking(ymCurr);
-      usedYm = ymCurr;
-      usedMonth = now;
+      rankingData = await window.GJ.loadRanking(ymPrev);
+      usedYm = ymPrev;
+      usedMonth = lastWeek;
     }
 
     const section = document.getElementById('last-king-section');
     if (!rankingData || !rankingData.winners || !rankingData.winners.length) {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    // announced 필드 체크 - 미발표 상태면 숨김
+    if (rankingData.announced === false || (!rankingData.announcedAt && !rankingData.announced)) {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    // 데이터 유효성 검사
+    if (!rankingData.winners[0] || !rankingData.winners[0].nick) {
       if (section) section.style.display = 'none';
       return;
     }
@@ -2782,82 +3065,193 @@ async function loadLastKing() {
     if (!section) return;
     section.style.display = 'block';
 
-    const monthLabel = `${usedMonth.getFullYear()}년 ${usedMonth.getMonth()+1}월 거지왕`;
+    const monthLabel = `${usedYm} 거지왕`;
     document.getElementById('last-king-month').textContent = monthLabel;
     document.getElementById('last-king-name').textContent = data[0].nick || '알 수 없음';
     document.getElementById('last-king-score').textContent = '거지력 ' + (data[0].score || 0).toLocaleString() + '점';
 
-    const REWARDS_LIST = [100000,30000,10000,10000,10000];
-    const MEDALS = ['🥇','🥈','🥉','🥉','🥉'];
-    document.getElementById('last-king-list').innerHTML = data.map((w,i) =>
-      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+    const REWARDS_LIST = [5000,3000,1000,1000,1000,0,0,0,0,0];
+    const MEDALS = ['🥇','🥈','🥉','4위','5위','6위','7위','8위','9위','10위'];
+    // 리워드 있는 순위만 표시 (6~10위 제외)
+    const displayData = data.filter((w,i) => (REWARDS_LIST[i] || 0) > 0);
+    document.getElementById('last-king-list').innerHTML = displayData.map((w,i) => {
+      const reward = REWARDS_LIST[i] || 0;
+      const score = typeof w.score === 'number' ? w.score : (w.monthScore || 0);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span>${MEDALS[i]}</span>
-          <span style="font-size:13px;">${w.nick||'알 수 없음'}</span>
+          <span style="font-size:${i<3?'16':'13'}px;min-width:24px;">${MEDALS[i]}</span>
+          <div>
+            <div style="font-size:${i<3?'14':'13'}px;font-weight:${i===0?'700':'500'};color:var(--text);">${w.nick||'알 수 없음'}</div>
+            <div style="font-size:11px;color:var(--text3);">거지력 ${score.toLocaleString()}점</div>
+          </div>
         </div>
-        <span style="font-size:12px;color:var(--gold);font-weight:700;">토스포인트 ${REWARDS_LIST[i].toLocaleString()}P</span>
-      </div>`
-    ).join('');
+        ${reward > 0 ? `<span style="font-size:12px;color:var(--gold);font-weight:700;">${reward.toLocaleString()}P</span>` : '<span style="font-size:11px;color:var(--text3);">-</span>'}
+      </div>`;
+    }).join('');
 
     // 내가 순위 안에 있으면 보상 받기 버튼 표시
-    const myRank = data.findIndex(w => w.uid === myProfile.uid || w.nick === myProfile.nick);
-    if (myRank >= 0) {
+    const myUid = myProfile.uid || '';
+    const myNick = myProfile.nick || '';
+    const myRank = data.findIndex(w =>
+      (w.uid && myUid && w.uid === myUid) ||
+      (w.nick && myNick && w.nick === myNick && myNick !== '거지')
+    );
+    const claimArea = document.getElementById('my-reward-claim-area');
+    if (myRank >= 0 && claimArea) {
       const claimKey = 'gj_claimed_' + usedYm;
       const alreadyClaimed = localStorage.getItem(claimKey);
-      const claimArea = document.getElementById('my-reward-claim-area');
-      if (claimArea) {
-        claimArea.style.display = 'block';
-        document.getElementById('my-reward-claim-title').textContent =
-          '🎉 ' + (myRank+1) + '위 달성! 리워드 대상자예요';
-        document.getElementById('my-reward-claim-desc').textContent =
-          '토스포인트 ' + REWARDS_LIST[myRank].toLocaleString() + 'P 지급 대상';
-        const btn = document.getElementById('my-reward-claim-btn');
+      claimArea.style.display = 'block';
+      document.getElementById('my-reward-claim-title').textContent =
+        '🎉 ' + (myRank+1) + '위 달성! 리워드 대상자예요';
+      const rewardAmt = REWARDS_LIST[myRank] || 0;
+      document.getElementById('my-reward-claim-desc').textContent =
+        '토스포인트 ' + rewardAmt.toLocaleString() + 'P 지급 대상';
+      const btn = document.getElementById('my-reward-claim-btn');
+      if (btn) {
         if (alreadyClaimed) {
           btn.textContent = '✅ 신청 완료';
           btn.disabled = true;
           btn.style.opacity = '0.5';
+        } else {
+          btn.textContent = '🏆 보상 받기 신청';
+          btn.disabled = false;
+          btn.style.opacity = '1';
         }
         btn.dataset.ym = usedYm;
-        btn.dataset.reward = REWARDS_LIST[myRank];
+        btn.dataset.reward = rewardAmt;
       }
     }
   } catch(e) { console.warn('[거지방] 지난달 거지왕 로드 실패:', e); }
 }
 
-window.claimRankReward = function() {
+window.claimRankReward = async function() {
   const btn = document.getElementById('my-reward-claim-btn');
   const ym = btn.dataset.ym;
-  const reward = btn.dataset.reward;
+  const reward = parseInt(btn.dataset.reward || 0);
   if (!ym || !reward) return;
-  // 신청 기록 저장
-  localStorage.setItem('gj_claimed_' + ym, '1');
-  btn.textContent = '✅ 신청 완료';
+  btn.textContent = '지급 중...';
   btn.disabled = true;
-  btn.style.opacity = '0.5';
-  showToast('🏆 ' + parseInt(reward).toLocaleString() + 'P 보상 신청 완료! 영업일 3일 내 지급돼요');
-  // Firebase에 신청 기록 저장 (어드민에서 확인용)
+
+  // 프로모션 코드 선택
+  let promoCode;
+  if (reward >= 5000) promoCode = PROMO_KING_1ST;
+  else if (reward >= 3000) promoCode = PROMO_KING_2ND;
+  else promoCode = PROMO_KING_3TO5;
+
+  // 토스포인트 실제 지급
+  const userKey = myProfile.uid; // giveTossPoints에서 정제
+  let ok = false;
+  if (userKey && promoCode) {
+    ok = await giveTossPoints(userKey, promoCode, reward);
+  }
+
+  if (ok) {
+    localStorage.setItem('gj_claimed_' + ym, '1');
+    btn.textContent = '✅ 지급 완료';
+    btn.style.opacity = '0.5';
+    showToast('🏆 토스포인트 ' + reward.toLocaleString() + 'P 지급됐어요!');
+  } else {
+    btn.textContent = '✅ 신청 완료';
+    btn.style.opacity = '0.5';
+    showToast('신청이 접수됐어요. 영업일 3일 내 지급돼요.');
+  }
+
+  // Firebase에 신청 기록 저장
   if (window.GJ?.ready && myProfile.uid) {
     window.GJ.saveUser(myProfile.uid, {
-      rewardClaim: { ym, reward: parseInt(reward), nick: myProfile.nick, claimedAt: new Date().toISOString() }
+      rewardClaim: { ym, reward, nick: myProfile.nick, claimedAt: new Date().toISOString(), paid: ok }
     }).catch(()=>{});
   }
 };
 
-function sharePiggyLink() {
-  const url = window.location.href.split('?')[0];
-  const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
+function shareApp() {
+  const shareText = '거지방 - 매일 매시 매초 본인이 거지임을 잊지마세요 😂\n지출 올리고 AI 거지방장한테 혼나기!\n\n앱인토스에서 거지 챌린지 검색!';
+  const shareUrl = 'https://minion.toss.im/p3bYrBU';
+
+  // 토스 앱 share SDK 사용
+  if (typeof window.share === 'function') {
+    window.share({
+      title: '거지 챌린지',
+      description: shareText,
+      imageUrl: 'https://static.toss.im/appsintoss/30705/1e023176-068e-42b8-811c-91bb763ab1fd.png',
+      link: shareUrl,
+    }).then((result) => {
+      // 카카오톡으로 공유했을 때만 챌린지 달성
+      if (result?.sharedTo === 'kakaotalk' || result?.platform === 'kakaotalk') {
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🎉 앱 공유 챌린지 달성! 거지력 +25점');
+      } else if (result) {
+        // 다른 플랫폼도 일단 달성 처리 (토스 SDK 응답에 따라)
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🔗 공유 완료! 거지력 +25점');
+      }
+    }).catch(() => {
+      // SDK 없으면 navigator.share 폴백
+      _shareAppFallback(shareText, shareUrl);
+    });
+    return;
+  }
+  _shareAppFallback(shareText, shareUrl);
+}
+
+function _shareAppFallback(text, url) {
   if (navigator.share) {
-    navigator.share({ title: '거지 챌린지', text, url }).catch(()=>{});
-  } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+    navigator.share({ title: '거지 챌린지', text: text + '\n' + url })
+      .then(() => {
+        addChallengeProgress('share');
+        buildWeeklyChallenges();
+        showToast('🔗 공유 완료! 거지력 +25점');
+      }).catch(() => {});
   } else {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    showToast('📋 링크가 복사됐어요!');
+    navigator.clipboard?.writeText(url).then(() => showToast('📋 링크가 복사됐어요!'));
   }
 }
 
+function sharePiggyLink() {
+  // 공유 리워드 SDK (하루 3번, +10점)
+  const SHARE_REWARD_KEY = 'gj_share_' + new Date().toISOString().slice(0,10);
+  const shareCount = parseInt(localStorage.getItem(SHARE_REWARD_KEY) || '0');
+  if (shareCount >= 3) {
+    showToast('오늘 공유 리워드는 3번까지만 받을 수 있어요'); return;
+  }
+
+  if (typeof window.AppsInToss?.contactsViral === 'function') {
+    // 토스 공유 리워드 SDK
+    window.AppsInToss.contactsViral({
+      rewardId: '492ba2bd-f4fa-42c4-b6e3-72b1614ea5b0',
+      onSuccess: () => {
+        localStorage.setItem(SHARE_REWARD_KEY, String(shareCount + 1));
+        myMonthScore += 10; myTotalScore += 10; updateMyRankUI();
+        if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 10, 10, 'share').catch(()=>{});
+        addChallengeProgress('share'); buildWeeklyChallenges();
+        showToast('🎉 공유 완료! 거지력 +10점!');
+      },
+      onCancel: () => { showToast('공유를 취소했어요'); },
+      onError: (e) => { console.warn('[공유 리워드]', e); showToast('공유 중 오류가 발생했어요'); },
+    });
+  } else {
+    // 폴백: 일반 공유
+    const url = 'intoss://geojibang';
+    const text = '나 지금 거지방에서 지출 공개하고 혼나는 중 😂\n같이 거지 챌린지 해요 👉 ' + url;
+    addChallengeProgress('share'); buildWeeklyChallenges();
+    if (navigator.share) {
+      navigator.share({ title: '거지 챌린지', text, url }).then(() => {
+        localStorage.setItem(SHARE_REWARD_KEY, String(shareCount + 1));
+        myMonthScore += 10; myTotalScore += 10; updateMyRankUI();
+        if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 10, 10, 'share').catch(()=>{});
+        showToast('🎉 공유 완료! 거지력 +10점!');
+      }).catch(()=>{});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => showToast('📋 링크가 복사됐어요!'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+  }
+}
 function openCounseling() {
   document.getElementById('counseling-input').value = '';
   document.getElementById('counseling-input-area').style.display = 'block';
@@ -2872,7 +3266,7 @@ async function submitCounseling() {
   document.getElementById('counseling-result-area').style.display = 'block';
   document.getElementById('counseling-answer').innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   try {
-    const r = await fetch('/api/roast', {
+    const r = await fetch('https://geojibang.vercel.app/api/roast', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ context: '[고민상담] ' + q })
     });
@@ -2996,9 +3390,61 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
 }
 
 function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
-function doConvert() {
-  const sets=Math.floor(coins/5), pts=sets*5; coins=coins%5; updatePiggy(); closeOverlay('ov-convert');
-  showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
+// ── 토스 프로모션 코드 ──────────────────────────────────
+const PROMO_COIN_EXCHANGE  = 'TEST_01KMYJQ3EGJZ3PHCXZYZFBD8Z2'; // 동전5개→5P
+const PROMO_KING_1ST       = 'TEST_01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
+const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
+const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
+
+async function giveTossPoints(userKey, promotionCode, amount) {
+  const cleanKey = String(userKey).replace(/[^0-9]/g, '');
+  console.log('[giveTossPoints] cleanKey:', cleanKey, 'promo:', promotionCode, 'amount:', amount);
+  if (!cleanKey) {
+    console.warn('[giveTossPoints] 유효하지 않은 userKey:', userKey);
+    return false;
+  }
+  try {
+    console.log('[giveTossPoints] fetch 시작');
+    const res = await fetch('https://geojibang.vercel.app/api/toss-reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userKey: cleanKey, promotionCode, amount })
+    });
+    console.log('[giveTossPoints] fetch 완료, status:', res.status);
+    const data = await res.json();
+    console.log('[giveTossPoints] 응답:', JSON.stringify(data));
+    if (data.success) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch(e) {
+    console.error('[giveTossPoints] fetch 오류:', e.message);
+    return false;
+  }
+}
+
+async function doConvert() {
+  const sets = Math.floor(coins/5);
+  const pts = sets * 5;
+  if (pts <= 0) return;
+  const btn = document.getElementById('cv-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
+  coins = coins % 5;
+  updatePiggy();
+  closeOverlay('ov-convert');
+  localStorage.setItem('gj_coins', coins);
+
+  // 토스포인트 실제 지급
+  const userKey = (myProfile.uid || window.myProfile?.uid);
+  console.log('[동전교환] uid:', userKey, '| pts:', pts, '| PROMO:', PROMO_COIN_EXCHANGE, '| giveFn:', typeof giveTossPoints);
+  if (userKey && typeof giveTossPoints === 'function') {
+    const ok = await giveTossPoints(userKey, PROMO_COIN_EXCHANGE, pts);
+    showToast(ok ? '🎉 토스 포인트 ' + pts + 'P 지급됐어요!' : '신청 접수! 영업일 3일 내 지급돼요.');
+  } else {
+    showToast('🎉 토스 포인트 ' + pts + 'P 전환 완료!');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '토스 포인트로 받기'; }
 }
 
 /* lottery */
@@ -3015,7 +3461,7 @@ function playLottery(type) {
   }
   if (type === 'golden') {
     if (goldenUsedCount >= MAX_GOLDEN_DAILY) {
-      showToast('꽝없는 복권은 하루 3회까지만 가능해요');
+      showToast('꽝없는 복권은 하루 1회만 가능해요');
       return;
     }
     closeOverlay('ov-lottery');
@@ -3048,17 +3494,33 @@ function closeLottery() { document.getElementById('lot-pick').style.display='blo
 
 /* ad */
 function watchAd(cb) {
-  adCb=cb;
-  const em=['📺','🎬','🛍','🏖','🚗','🍕','👟','💄'];
-  document.getElementById('ad-emoji').textContent=em[Math.floor(Math.random()*em.length)];
-  document.getElementById('ad-bar').style.width='0%';
-  document.getElementById('ad-countdown').textContent='5초 후 완료...';
+  if (typeof window.showFullScreenAd !== 'undefined' && window._rewardedReady) {
+    let rewarded = false;
+    showRewardedAd(
+      () => {
+        rewarded = true;
+        if (cb) cb(); // 보상 완료 즉시 콜백
+      },
+      () => {
+        if (rewarded) return; // 보상 받았으면 dismissed 무시
+        // 실제 스킵/실패 시만 폴백 없이 토스트만
+        showToast('광고를 끝까지 시청해야 보상을 받을 수 있어요');
+      }
+    );
+    return;
+  }
+  // 폴백: 5초 시뮬레이션
+  adCb = cb;
+  const em = ['📺','🎬','🛍','🏖','🚗','🍕','👟','💄'];
+  document.getElementById('ad-emoji').textContent = em[Math.floor(Math.random()*em.length)];
+  document.getElementById('ad-bar').style.width = '0%';
+  document.getElementById('ad-countdown').textContent = '5초 후 완료...';
   openOverlay('ov-ad');
-  let e=0; const iv=setInterval(()=>{
-    e+=100; document.getElementById('ad-bar').style.width=Math.min(100,(e/5000)*100)+'%';
-    const rem=Math.ceil((5000-e)/1000); document.getElementById('ad-countdown').textContent=rem>0?`${rem}초 후 완료...`:'완료!';
-    if(e>=5000){clearInterval(iv);setTimeout(()=>{closeOverlay('ov-ad');if(adCb){adCb();adCb=null;}},400);}
-  },100);
+  let e = 0; const iv = setInterval(() => {
+    e += 100; document.getElementById('ad-bar').style.width = Math.min(100,(e/5000)*100) + '%';
+    const rem = Math.ceil((5000-e)/1000); document.getElementById('ad-countdown').textContent = rem > 0 ? `${rem}초 후 완료...` : '완료!';
+    if (e >= 5000) { clearInterval(iv); setTimeout(() => { closeOverlay('ov-ad'); if (adCb) { adCb(); adCb = null; } }, 400); }
+  }, 100);
 }
 
 function openEditPostFromBtn(btn) {
@@ -3073,18 +3535,39 @@ function openEditPostFromBtn(btn) {
   openEditPost(pid, desc, item, amountRaw);
 }
 function deleteMyPost(pid) {
-  if (!confirm('이 게시물을 삭제할까요?')) return;
+  // 이 글로 얻은 거지력 계산
+  const rxn = document.querySelectorAll(`#rxn-${pid} .rxn-btn`);
+  let lostScore = 0;
+  if (rxn.length >= 3) {
+    const counts = Array.from(rxn).map(b => parseInt(b.textContent.match(/\d+/)?.[0]) || 0);
+    lostScore = counts[0]*3 + counts[1]*0.5 - counts[2]*1 + 1; // 반응 + 글쓰기 +1
+    lostScore = Math.max(0, lostScore);
+  } else {
+    lostScore = 1; // 최소 글쓰기 +1점
+  }
+  const msg = `이 게시물을 삭제할까요?\n\n⚠️ 이 글로 얻은 거지력 약 ${lostScore.toFixed(1)}점이 차감돼요.\n(반응으로 받은 거지력 포함)`;
+  if (!confirm(msg)) return;
+  // 거지력 차감
+  if (lostScore > 0) {
+    myMonthScore = Math.max(0, myMonthScore - lostScore);
+    myTotalScore = Math.max(0, myTotalScore - lostScore);
+    window.myMonthScore = myMonthScore;
+    window.myTotalScore = myTotalScore;
+    updateMyRankUI();
+    if (window.GJ?.ready && myProfile.uid) {
+      window.GJ.updateScore(myProfile.uid, -lostScore, -lostScore, 'delete').catch(()=>{});
+    }
+  }
   // 로컬에서 즉시 제거
   document.getElementById('post-' + pid)?.remove();
   // Firebase에서 삭제
   if (window.GJ?.ready) {
     window.GJ.deletePost(pid)
-      .then(() => showToast('게시물이 삭제됐어요'))
+      .then(() => showToast('게시물이 삭제됐어요. 거지력 ' + lostScore.toFixed(1) + '점 차감됐어요.'))
       .catch(() => showToast('삭제 중 오류가 발생했어요'));
   } else {
     showToast('게시물이 삭제됐어요');
   }
-  // 반응 기록 삭제
   localStorage.removeItem(getRxnKey(pid));
 }
 
@@ -3122,8 +3605,18 @@ function submitEditPost() {
 // 아이템 가격 — Firebase geojibang_settings/item_prices 에서 로드
 // (어드민에서 변경 → 앱 재접속 시 자동 반영)
 const DEFAULT_ITEM_PRICES = {
-  room_default:0, room_cave:200, room_rooftop:300, room_gosiwon:150, room_park:500,
-  char_default:0, char_paper_bag:100, char_crown:400, char_santa:250, char_ninja:350, char_vip:500
+  // 방 배경
+  room_default:0,    room_cave:200,    room_rooftop:300,  room_gosiwon:150,
+  room_park:500,     room_subway:300,  room_jjimjil:350,  room_rooftop2:400,
+  room_library:250,  room_toilet:150,  room_church:200,   room_mart:350,
+  room_sauna:400,    room_cyber:450,   room_pojang:350,   room_semi:200,
+  room_airport:500,  room_camping:450,
+  // 캐릭터 스킨
+  char_default:0,    char_paper_bag:100, char_crown:400,  char_santa:250,
+  char_ninja:350,    char_vip:500,       char_ghost:200,  char_chef:250,
+  char_cowboy:300,   char_alien:350,     char_zombie:300, char_clown:250,
+  char_pirate:400,   char_mummy:300,     char_wizard:450, char_robot:500,
+  char_vampire:400,  char_snowman:200,   char_crab:350,
 };
 let _loadedItemPrices = null;
 async function loadItemPrices() {
@@ -3150,7 +3643,17 @@ const ROOM_ITEMS = [
   { id:'room_park',   name:'공원 벤치',   desc:'임대료 0원 노숙 스팟',          emoji:'🌳', type:'room', bg:'#b8e4a8', wall:'#8ac888', floor:'#6aaa60' },
   { id:'room_subway', name:'지하철 역사', desc:'막차 끊긴 후 잠드는 곳',        emoji:'🚇', type:'room', bg:'#2a2a3a', wall:'#383848', floor:'#4a4a5a' },
   { id:'room_jjimjil',name:'찜질방',      desc:'24시간 500원짜리 안식처',       emoji:'🧖', type:'room', bg:'#4a2020', wall:'#5a2828', floor:'#3a1818' },
-  { id:'room_rooftop2',name:'옥상 별빛방',desc:'별이 보이는 고급(?) 야외 숙소', emoji:'✨', type:'room', bg:'#0a0820', wall:'#100c30', floor:'#6a5030' },
+  { id:'room_rooftop2',name:'옥상 별빛방',  desc:'별이 보이는 고급(?) 야외 숙소',      emoji:'✨', type:'room', bg:'#0a0820', wall:'#100c30', floor:'#6a5030' },
+  { id:'room_library', name:'도서관 자리',  desc:'무료 냉난방 + 와이파이의 성지',      emoji:'📚', type:'room', bg:'#f0ebe0', wall:'#d8cdb0', floor:'#b89870' },
+  { id:'room_toilet',  name:'화장실 피신',  desc:'회사 화장실에서 퇴근까지 버팀',      emoji:'🚽', type:'room', bg:'#e8f4f8', wall:'#c8e4f0', floor:'#a0c8d8' },
+  { id:'room_church',  name:'교회 무료급식',desc:'영혼이 아닌 배를 채우러 온 거지',    emoji:'⛪', type:'room', bg:'#f8f0e8', wall:'#e8d8c0', floor:'#c8a870' },
+  { id:'room_mart',    name:'대형마트 시식',desc:'시식 코너만 돌면 점심 해결',         emoji:'🛒', type:'room', bg:'#ffffff', wall:'#e8e8e8', floor:'#d0d0d0' },
+  { id:'room_sauna',   name:'목욕탕 탈의실',desc:'5000원으로 하루 종일 있는 곳',       emoji:'🛁', type:'room', bg:'#e8f0f8', wall:'#c0d8e8', floor:'#90b8cc' },
+  { id:'room_cyber',   name:'PC방',         desc:'알바비 탕진하는 또 다른 집',         emoji:'🖥️', type:'room', bg:'#0d0d1a', wall:'#151528', floor:'#1a1a2e' },
+  { id:'room_pojang',  name:'포장마차',      desc:'소주 한 병에 안주 무한 리필',        emoji:'🏮', type:'room', bg:'#2a1505', wall:'#3d2008', floor:'#1a0d02' },
+  { id:'room_semi',    name:'반지하',        desc:'습기와 함께하는 아늑한 공간',        emoji:'🌊', type:'room', bg:'#1a2a1a', wall:'#223322', floor:'#2a3a2a' },
+  { id:'room_airport', name:'공항 대합실',   desc:'출국 없이 새우잠 자는 성지',        emoji:'✈️', type:'room', bg:'#f0f0f8', wall:'#d8d8e8', floor:'#b0b8c8' },
+  { id:'room_camping', name:'공원 텐트',     desc:'캠핑 감성 노숙. 자연인이 될 뻔',    emoji:'⛺', type:'room', bg:'#1a3a0a', wall:'#223a12', floor:'#4a8a30' },
 ];
 
 const CHAR_ITEMS = [
@@ -3163,9 +3666,19 @@ const CHAR_ITEMS = [
   { id:'char_ghost',     name:'투명 거지',     desc:'존재 자체가 미스터리한 거지',      emoji:'👻', type:'char' },
   { id:'char_chef',      name:'백수 셰프',     desc:'요리는 못하지만 복장은 셰프',      emoji:'👨‍🍳', type:'char' },
   { id:'char_cowboy',    name:'카우보이 거지',  desc:'서부 개척시대 낭만 거지',         emoji:'🤠', type:'char' },
+  { id:'char_alien',     name:'외계인 거지',    desc:'우주에서 온 가난한 존재',           emoji:'👽', type:'char' },
+  { id:'char_zombie',    name:'좀비 거지',      desc:'뇌보다 돈이 더 필요한',             emoji:'🧟', type:'char' },
+  { id:'char_clown',     name:'광대 거지',      desc:'웃어야 하는데 사실 울고 싶은',      emoji:'🤡', type:'char' },
+  { id:'char_pirate',    name:'해적 거지',      desc:'빈 보물 지도를 든 해적',            emoji:'🏴‍☠️', type:'char' },
+  { id:'char_mummy',     name:'미라 거지',      desc:'붕대로 온몸을 감싼 절약왕',         emoji:'🧟', type:'char' },
+  { id:'char_wizard',    name:'마법사 거지',    desc:'돈 버는 마법은 실패한 마법사',       emoji:'🧙', type:'char' },
+  { id:'char_robot',     name:'고장난 로봇',    desc:'AI보다 가난한 로봇 거지',           emoji:'🤖', type:'char' },
+  { id:'char_vampire',   name:'흡혈귀 거지',    desc:'피 대신 잔돈을 노리는',             emoji:'🧛', type:'char' },
+  { id:'char_snowman',   name:'눈사람 거지',    desc:'녹기 전에 구걸해야 하는',           emoji:'⛄', type:'char' },
+  { id:'char_crab',      name:'게 거지',        desc:'옆걸음으로 도망치는 거지',          emoji:'🦀', type:'char' },
 ];
 
-let myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
+var myItems = JSON.parse(localStorage.getItem('gj_items') || '{"owned":["room_default","char_default"],"equippedRoom":"room_default","equippedChar":"char_default"}');
 function saveMyItems() { localStorage.setItem('gj_items', JSON.stringify(myItems)); }
 
 // ── 싸이월드 감성 도트 아트 ─────────────────────────────
@@ -3246,11 +3759,18 @@ function _drawCharCore(char, cx, groundY, S) {
   g += px(ox,     oy+15*S,3*S, 2*S, c.shoe);
   g += px(ox+5*S, oy+15*S,3*S, 2*S, c.shoe);
   g += px(ox,     oy+15*S,3*S, S,   adjustColor(c.shoe,20));
-  // 깡통
-  g += px(ox-2*S, oy+10*S,2*S, 3*S, '#c0a888');
-  g += px(ox-2*S, oy+10*S,2*S, S,   '#e0c8a0');
-  g += px(ox-2*S, oy+11*S,S,   S,   'rgba(255,255,255,0.6)');
-  g += px(ox-2*S, oy+12*S,2*S, S,   '#a09070');
+  // 깡통 (크게, 고화질)
+  const canX = ox-4*S, canY = oy+9*S, canW = 4*S, canH = 6*S;
+  g += px(canX,   canY,       canW, canH,   '#b8a080');       // 본체
+  g += px(canX,   canY,       canW, S,      '#d4bc96');       // 뚜껑 하이라이트
+  g += px(canX,   canY+canH-S,canW, S,      '#8a7060');       // 바닥
+  g += px(canX+S, canY+S,     S,   canH-2*S,'rgba(255,255,255,0.5)'); // 광택
+  g += px(canX,   canY+2*S,   canW, S,      '#c8a870');       // 라벨 상단
+  g += px(canX,   canY+3*S,   canW, 2*S,    '#e8c888');       // 라벨
+  g += px(canX,   canY+5*S-S, canW, S,      '#c8a870');       // 라벨 하단
+  // 라벨 글씨 (🥫 느낌)
+  g += px(canX+S, canY+3*S,   S,   S,      '#a07840');
+  g += px(canX+2*S,canY+3*S,  S,   S,      '#a07840');
 
   // 모자/액세서리
   if (cid==='paper_bag') {
@@ -3309,6 +3829,238 @@ function _drawCharCore(char, cx, groundY, S) {
     g += px(ox+2*S, oy-4*S, 4*S, S,   '#2a2a40');
     g += px(ox+3*S, oy+9*S, 2*S, 2*S, c.acc);
     g += px(ox+3*S, oy+10*S,2*S, 2*S, c.acc);
+  } else if (cid==='alien') {
+    // 큰 머리
+    g += px(ox-S,   oy-6*S, 10*S,6*S, '#88cc44');
+    g += px(ox-S,   oy-6*S, 10*S,S,   '#aae060');
+    // 큰 눈 두 개
+    g += px(ox,     oy-5*S, 3*S, 3*S, '#111111');
+    g += px(ox+5*S, oy-5*S, 3*S, 3*S, '#111111');
+    g += px(ox+S,   oy-5*S, S,   S,   '#ffffff');
+    g += px(ox+6*S, oy-5*S, S,   S,   '#ffffff');
+    // 안테나
+    g += px(ox+S,   oy-9*S, S,   3*S, '#88cc44');
+    g += px(ox+6*S, oy-9*S, S,   3*S, '#88cc44');
+    g += px(ox,     oy-10*S,3*S, S,   '#ffee00');
+    g += px(ox+5*S, oy-10*S,3*S, S,   '#ffee00');
+    // 우주복
+    g += px(ox+S,   oy+S,   6*S, 8*S, '#aaddaa');
+    g += px(ox+2*S, oy+S,   4*S, S,   '#cceecc');
+    g += px(ox+3*S, oy+4*S, 2*S, 2*S, '#ffee00');
+  } else if (cid==='zombie') {
+    // 좀비 피부 회녹색
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#5a8a40');
+    g += px(ox+S,   oy-4*S, 6*S, S,   '#6aa050');
+    // 헝클어진 머리
+    g += px(ox,     oy-6*S, 2*S, 2*S, '#3a5028');
+    g += px(ox+6*S, oy-6*S, 2*S, 2*S, '#3a5028');
+    g += px(ox+2*S, oy-7*S, 4*S, S,   '#3a5028');
+    // 눈 - X자
+    g += px(ox+2*S, oy-3*S, S,   S,   '#cc2020');
+    g += px(ox+3*S, oy-4*S, S,   S,   '#cc2020');
+    g += px(ox+5*S, oy-3*S, S,   S,   '#cc2020');
+    g += px(ox+6*S, oy-4*S, S,   S,   '#cc2020');
+    // 상처
+    g += px(ox+S,   oy-2*S, 3*S, S,   '#882020');
+    // 팔 뻗기
+    g += px(ox-3*S, oy+3*S, 3*S, S,   c.skin);
+    g += px(ox-4*S, oy+2*S, S,   2*S, c.skin);
+    // 찢어진 옷
+    g += px(ox+S,   oy+S,   6*S, 8*S, '#446622');
+    g += px(ox+2*S, oy+6*S, S,   3*S, '#3a5028');
+    g += px(ox+5*S, oy+5*S, S,   4*S, '#3a5028');
+  } else if (cid==='clown') {
+    // 광대 머리 (흰 분장)
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#f8f8f8');
+    g += px(ox+S,   oy-4*S, 6*S, S,   '#ffffff');
+    // 빨간 코
+    g += px(ox+3*S, oy-3*S, 2*S, 2*S, '#ee2020');
+    // 큰 웃음 (삐뚜)
+    g += px(ox+2*S, oy-S,   4*S, S,   '#cc2020');
+    g += px(ox+S,   oy-2*S, S,   S,   '#cc2020');
+    g += px(ox+6*S, oy-2*S, S,   S,   '#cc2020');
+    // 눈 (별 모양)
+    g += px(ox+2*S, oy-4*S, S,   S,   '#2020cc');
+    g += px(ox+5*S, oy-4*S, S,   S,   '#2020cc');
+    // 화려한 옷
+    g += px(ox+S,   oy+S,   2*S, 8*S, '#ee2020');
+    g += px(ox+3*S, oy+S,   2*S, 8*S, '#eeee20');
+    g += px(ox+5*S, oy+S,   2*S, 8*S, '#2020ee');
+    // 거대 모자
+    g += px(ox,     oy-5*S, 8*S, S,   '#ee2020');
+    g += px(ox+2*S, oy-9*S, 4*S, 4*S, '#eeee20');
+    g += px(ox+3*S, oy-9*S, 2*S, 4*S, '#2020ee');
+  } else if (cid==='pirate') {
+    // 해적 모자
+    g += px(ox,     oy-S,   8*S, 2*S, '#111111');
+    g += px(ox+S,   oy-4*S, 6*S, 3*S, '#111111');
+    g += px(ox+3*S, oy-4*S, 2*S, S,   '#dddddd');
+    g += px(ox+2*S, oy-4*S, S,   S,   '#cc2020');
+    g += px(ox+5*S, oy-4*S, S,   S,   '#cc2020');
+    // 안대
+    g += px(ox+2*S, oy-3*S, 2*S, S,   '#111111');
+    g += px(ox+S,   oy-3*S, S,   S,   '#111111');
+    // 수염
+    g += px(ox+S,   oy-S,   6*S, S,   '#222222');
+    g += px(ox,     oy,     S,   2*S, '#222222');
+    g += px(ox+7*S, oy,     S,   2*S, '#222222');
+    // 해적 옷
+    g += px(ox+S,   oy+S,   6*S, 8*S, '#cc2020');
+    g += px(ox+2*S, oy+2*S, 4*S, S,   '#dddddd');
+    g += px(ox+2*S, oy+4*S, 4*S, S,   '#dddddd');
+    // 갈고리
+    g += px(ox+8*S, oy+3*S, 3*S, S,   '#c0c0c0');
+    g += px(ox+10*S,oy+4*S, S,   2*S, '#c0c0c0');
+  } else if (cid==='mummy') {
+    // 붕대로 전신 감은 미라
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#f0e8d0');
+    g += px(ox+S,   oy-4*S, 6*S, S,   '#ffffff');
+    // 붕대 줄
+    g += px(ox+S,   oy-3*S, 6*S, S,   '#e0d0b0');
+    g += px(ox+S,   oy-S,   6*S, S,   '#e0d0b0');
+    // 눈만 빨갛게
+    g += px(ox+2*S, oy-3*S, 2*S, S,   '#ff4444');
+    g += px(ox+5*S, oy-3*S, 2*S, S,   '#ff4444');
+    // 몸통 붕대
+    g += px(ox+S,   oy+S,   6*S, 8*S, '#f0e8d0');
+    g += px(ox+S,   oy+2*S, 6*S, S,   '#e0d0b0');
+    g += px(ox+S,   oy+4*S, 6*S, S,   '#e0d0b0');
+    g += px(ox+S,   oy+6*S, 6*S, S,   '#e0d0b0');
+    g += px(ox+S,   oy+8*S, 6*S, S,   '#e0d0b0');
+    // 삐져나온 붕대
+    g += px(ox+7*S, oy+2*S, 3*S, S,   '#f0e8d0');
+    g += px(ox-2*S, oy+4*S, 3*S, S,   '#f0e8d0');
+  } else if (cid==='wizard') {
+    // 마법사 고깔모자 (매우 긺)
+    g += px(ox,     oy-S,   8*S, 2*S, '#4a2080');
+    g += px(ox+S,   oy-4*S, 6*S, 3*S, '#4a2080');
+    g += px(ox+2*S, oy-7*S, 4*S, 3*S, '#4a2080');
+    g += px(ox+3*S, oy-10*S,2*S, 3*S, '#4a2080');
+    // 별 장식
+    g += px(ox+3*S, oy-9*S, 2*S, S,   '#ffee00');
+    g += px(ox+2*S, oy-4*S, S,   S,   '#ffee00');
+    g += px(ox+5*S, oy-4*S, S,   S,   '#ffee00');
+    // 지팡이
+    g += px(ox+8*S, oy,     S,   14*S,'#8a5020');
+    g += px(ox+7*S, oy-S,   3*S, 2*S, '#ffee00');
+    g += px(ox+8*S, oy-2*S, S,   S,   '#ffffff');
+    // 로브
+    g += px(ox,     oy+S,   8*S, 8*S, '#4a2080');
+    g += px(ox,     oy+2*S, 8*S, S,   '#6a3090');
+    g += px(ox+3*S, oy+4*S, 2*S, 5*S, '#3a1870');
+    // 수염
+    g += px(ox+2*S, oy,     4*S, S,   '#e0e0e0');
+    g += px(ox+2*S, oy+S,   4*S, 2*S, '#d0d0d0');
+    g += px(ox+3*S, oy+3*S, 2*S, 2*S, '#c0c0c0');
+  } else if (cid==='robot') {
+    // 네모난 로봇 머리
+    g += px(ox,     oy-5*S, 8*S, 5*S, '#808090');
+    g += px(ox,     oy-5*S, 8*S, S,   '#a0a0b0');
+    g += px(ox,     oy-S,   8*S, S,   '#606070');
+    // 안테나
+    g += px(ox+3*S, oy-8*S, 2*S, 3*S, '#606070');
+    g += px(ox+3*S, oy-9*S, 2*S, S,   '#ff4444');
+    // 눈 LED
+    g += px(ox+S,   oy-4*S, 2*S, 2*S, '#00ccff');
+    g += px(ox+5*S, oy-4*S, 2*S, 2*S, '#00ccff');
+    g += px(ox+2*S, oy-4*S, S,   S,   '#88eeff');
+    g += px(ox+6*S, oy-4*S, S,   S,   '#88eeff');
+    // 입 (픽셀)
+    g += px(ox+2*S, oy-2*S, S,   S,   '#333344');
+    g += px(ox+3*S, oy-S,   2*S, S,   '#333344');
+    g += px(ox+5*S, oy-2*S, S,   S,   '#333344');
+    // 몸통 (금속)
+    g += px(ox,     oy+S,   8*S, 8*S, '#707080');
+    g += px(ox,     oy+S,   8*S, S,   '#909090');
+    g += px(ox+2*S, oy+3*S, 4*S, 3*S, '#555565');
+    g += px(ox+3*S, oy+4*S, 2*S, S,   '#00ccff');
+    // 고장 표시
+    g += px(ox+S,   oy+6*S, S,   S,   '#ff4444');
+    g += px(ox+6*S, oy+5*S, S,   S,   '#ffaa00');
+  } else if (cid==='vampire') {
+    // 흡혈귀 - 검은 망토
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#f0e0e0');
+    g += px(ox+S,   oy-4*S, 6*S, S,   '#f8e8e8');
+    // 뾰족한 머리카락
+    g += px(ox+S,   oy-7*S, 2*S, 3*S, '#111111');
+    g += px(ox+5*S, oy-7*S, 2*S, 3*S, '#111111');
+    g += px(ox+3*S, oy-6*S, 2*S, 2*S, '#111111');
+    // 빨간 눈
+    g += px(ox+2*S, oy-3*S, S,   S,   '#cc0000');
+    g += px(ox+5*S, oy-3*S, S,   S,   '#cc0000');
+    // 송곳니
+    g += px(ox+3*S, oy-S,   S,   2*S, '#ffffff');
+    g += px(ox+4*S, oy-S,   S,   2*S, '#ffffff');
+    g += px(ox+3*S, oy,     S,   S,   '#cc0000');
+    // 검은 망토
+    g += px(ox-S,   oy+S,   10*S,8*S, '#111111');
+    g += px(ox,     oy+S,   8*S, S,   '#222222');
+    g += px(ox-S,   oy+2*S, S,   7*S, '#1a1a1a');
+    g += px(ox+8*S, oy+2*S, 2*S, 7*S, '#1a1a1a');
+    g += px(ox+3*S, oy+2*S, 2*S, 7*S, '#1a1a1a');
+    // 빨간 안감
+    g += px(ox,     oy+2*S, 8*S, 7*S, '#880000');
+    g += px(ox,     oy+2*S, 8*S, S,   '#aa0000');
+  } else if (cid==='snowman') {
+    // 눈사람 - 둥근 몸
+    g += px(ox+S,   oy-4*S, 6*S, 4*S, '#f0f8ff');
+    g += px(ox+S,   oy-4*S, 6*S, S,   '#ffffff');
+    // 눈 단추
+    g += px(ox+2*S, oy-3*S, S,   S,   '#222222');
+    g += px(ox+5*S, oy-3*S, S,   S,   '#222222');
+    // 당근 코
+    g += px(ox+3*S, oy-2*S, 3*S, S,   '#ff8800');
+    // 웃는 입
+    g += px(ox+2*S, oy-S,   S,   S,   '#333333');
+    g += px(ox+3*S, oy,     2*S, S,   '#333333');
+    g += px(ox+5*S, oy-S,   S,   S,   '#333333');
+    // 몸통 (더 큰 원)
+    g += px(ox-S,   oy+S,   10*S,8*S, '#e8f4ff');
+    g += px(ox-S,   oy+S,   10*S,S,   '#f8fcff');
+    g += px(ox,     oy+2*S, S,   6*S, '#f0f8ff');
+    g += px(ox+7*S, oy+2*S, S,   6*S, '#f0f8ff');
+    // 단추
+    g += px(ox+3*S, oy+3*S, 2*S, S,   '#333333');
+    g += px(ox+3*S, oy+5*S, 2*S, S,   '#333333');
+    g += px(ox+3*S, oy+7*S, 2*S, S,   '#333333');
+    // 목도리
+    g += px(ox,     oy+S,   8*S, 2*S, '#ee3333');
+    g += px(ox+6*S, oy+3*S, 2*S, 3*S, '#ee3333');
+    // 팔 (나뭇가지)
+    g += px(ox-3*S, oy+3*S, 3*S, S,   '#8a5020');
+    g += px(ox-4*S, oy+2*S, S,   2*S, '#8a5020');
+    g += px(ox+8*S, oy+3*S, 3*S, S,   '#8a5020');
+    g += px(ox+10*S,oy+2*S, S,   2*S, '#8a5020');
+  } else if (cid==='crab') {
+    // 게 - 빨간 갑각
+    g += px(ox+S,   oy-2*S, 6*S, 4*S, '#cc3020');
+    g += px(ox+S,   oy-2*S, 6*S, S,   '#ee4030');
+    g += px(ox+2*S, oy-2*S, 4*S, S,   '#ff6050');
+    // 눈 (튀어나온 눈)
+    g += px(ox,     oy-4*S, 2*S, 2*S, '#cc3020');
+    g += px(ox+6*S, oy-4*S, 2*S, 2*S, '#cc3020');
+    g += px(ox+S,   oy-3*S, S,   S,   '#111111');
+    g += px(ox+6*S, oy-3*S, S,   S,   '#111111');
+    // 집게발 (큰 것)
+    g += px(ox-4*S, oy,     4*S, 2*S, '#cc3020');
+    g += px(ox-5*S, oy-S,   2*S, 2*S, '#cc3020');
+    g += px(ox-5*S, oy+S,   2*S, 2*S, '#cc3020');
+    g += px(ox+8*S, oy,     4*S, 2*S, '#cc3020');
+    g += px(ox+10*S,oy-S,   2*S, 2*S, '#cc3020');
+    g += px(ox+10*S,oy+S,   2*S, 2*S, '#cc3020');
+    // 다리 (6개)
+    g += px(ox,     oy+S,   S,   4*S, '#cc3020');
+    g += px(ox+S,   oy+2*S, S,   4*S, '#cc3020');
+    g += px(ox+6*S, oy+S,   S,   4*S, '#cc3020');
+    g += px(ox+5*S, oy+2*S, S,   4*S, '#cc3020');
+    g += px(ox+3*S, oy+3*S, S,   4*S, '#cc3020');
+    g += px(ox+4*S, oy+3*S, S,   4*S, '#cc3020');
+    // 배
+    g += px(ox+2*S, oy,     4*S, 3*S, '#dd4030');
+    // 거지 깡통 (집게로 들고)
+    g += px(ox-2*S, oy-2*S, 3*S, 4*S, '#b8a080');
+    g += px(ox-2*S, oy-2*S, 3*S, S,   '#d4bc96');
+    g += px(ox-S,   oy-S,   S,   3*S, 'rgba(255,255,255,0.5)');
   }
   return g;
 }
@@ -3484,6 +4236,240 @@ function getRoomDecor(room) {
     ${px(84,126,18,14,'rgba(100,150,255,0.5)')}
     ${px(106,126,18,14,'rgba(255,150,100,0.4)')}
     ${px(128,126,18,14,'rgba(100,200,150,0.5)')}`;
+
+  if (room.id==='room_library') return `
+    ${floorTile(0,148,320,72,'#c8b890','#b8a880')}
+    ${px(0,148,320,4,'#a09070')}
+    ${px(0,0,320,148,'#f0e8d8')}
+    ${px(0,0,320,6,'#8a6840')}
+    ${px(0,142,320,6,'#8a6840')}
+    ${px(0,6,8,136,'#8a6840')} ${px(312,6,8,136,'#8a6840')}
+    ${[0,1,2,3,4,5,6].map(i=>px(16+i*14,12,10,136,['#e87070','#70a0e8','#60c870','#e8c040','#a070e8','#e87830','#60c8c8'][i])).join('')}
+    ${[0,1,2,3,4,5,6].map(i=>px(16+i*14,12,10,4,`rgba(255,255,255,0.4)`)).join('')}
+    ${[0,1,2,3].map(i=>px(16+i*14,12+i*2,10,2,'rgba(0,0,0,0.1)')).join('')}
+    ${px(134,12,10,136,'#d4a840')} ${px(148,12,10,136,'#c890e8')}
+    ${px(162,12,10,136,'#e87070')} ${px(176,12,10,136,'#70c870')}
+    ${px(190,12,10,136,'#70a0e8')} ${px(204,12,10,136,'#e8c040')}
+    ${px(218,12,10,136,'#a070e8')} ${px(232,12,10,136,'#e87830')}
+    ${px(246,12,10,136,'#60c8c8')} ${px(260,12,10,136,'#e87070')}
+    ${px(274,12,10,136,'#70a0e8')} ${px(288,12,10,136,'#60c870')}
+    ${px(100,60,28,24,'rgba(255,240,180,0.9)')}
+    ${px(102,62,24,20,'rgba(255,250,200,0.95)')}
+    ${px(108,66,12,8,'rgba(180,160,100,0.3)')}
+    ${px(80,148,160,8,'#b09870')}`;
+
+  if (room.id==='room_toilet') return `
+    ${floorTile(0,148,320,72,'#c8e0e8','#b8d4dc')}
+    ${px(0,148,320,4,'#90b8c8')}
+    ${px(0,0,320,148,'#e8f4f8')}
+    ${px(0,0,320,4,'#c0d8e0')} ${px(0,144,320,4,'#c0d8e0')}
+    ${px(0,4,4,140,'#c0d8e0')} ${px(316,4,4,140,'#c0d8e0')}
+    ${floorTile(4,4,312,140,'#d8ecf4','#e8f4f8')}
+    ${px(50,20,80,100,'#f0f8fc')}
+    ${px(52,22,76,4,'#d8eef8')}
+    ${px(52,26,76,90,'#e8f4fc')}
+    ${px(56,30,68,4,'rgba(200,220,240,0.6)')}
+    ${px(60,34,8,8,'rgba(180,210,230,0.6)')}
+    ${px(72,34,8,8,'rgba(180,210,230,0.6)')}
+    ${px(84,34,8,8,'rgba(180,210,230,0.6)')}
+    ${px(96,34,8,8,'rgba(180,210,230,0.6)')}
+    ${px(58,80,64,36,'#f8fcff')}
+    ${px(60,82,60,32,'#e0f0f8')}
+    ${px(62,84,56,4,'rgba(255,255,255,0.8)')}
+    ${px(200,40,70,108,'#f0f0f0')}
+    ${px(202,42,66,4,'#e0e0e0')}
+    ${px(202,46,66,98,'#f8f8f8')}
+    ${px(210,50,50,80,'rgba(200,200,200,0.3)')}
+    ${px(215,55,8,8,'rgba(150,150,150,0.5)')}
+    ${px(215,67,8,8,'rgba(150,150,150,0.5)')}
+    ${px(228,55,8,8,'rgba(150,150,150,0.5)')}
+    ${px(228,67,8,8,'rgba(150,150,150,0.5)')}
+    ${px(241,55,8,8,'rgba(150,150,150,0.5)')}
+    ${px(241,67,8,8,'rgba(150,150,150,0.5)')}
+    ${px(100,128,120,20,'#e0e8ec')}
+    ${px(102,130,116,16,'#d0dce4')}`;
+
+  if (room.id==='room_church') return `
+    ${floorTile(0,148,320,72,'#c8a870','#b89860')}
+    ${px(0,148,320,4,'#a08050')}
+    ${px(0,0,320,148,'#f5f0e8')}
+    ${px(120,0,80,60,'#e0d8c8')}
+    ${px(140,0,40,20,'#c8a860')}
+    ${px(155,0,10,30,'#c8a860')}
+    ${px(145,8,30,4,'#c8a860')}
+    ${px(20,30,60,118,'rgba(255,200,100,0.15)')}
+    ${px(240,30,60,118,'rgba(255,200,100,0.15)')}
+    ${px(20,30,60,118,'#d4b880')}
+    ${px(22,32,56,4,'#e8cc90')}
+    ${px(22,36,56,108,'#e0c888')}
+    ${px(28,40,16,32,'rgba(100,160,255,0.4)')}
+    ${px(50,40,16,32,'rgba(255,150,100,0.3)')}
+    ${px(28,76,38,4,'rgba(200,160,80,0.5)')}
+    ${px(240,30,60,118,'#d4b880')}
+    ${px(242,32,56,4,'#e8cc90')}
+    ${px(242,36,56,108,'#e0c888')}
+    ${px(248,40,16,32,'rgba(100,160,255,0.4)')}
+    ${px(270,40,16,32,'rgba(255,150,100,0.3)')}
+    ${px(100,60,120,32,'#8a5030')}
+    ${px(102,62,116,28,'#a06040')}
+    ${px(104,64,112,4,'rgba(255,255,255,0.2)')}
+    ${px(108,68,104,18,'rgba(0,0,0,0.1)')}
+    ${px(130,68,60,18,'rgba(255,220,150,0.1)')}`;
+
+  if (room.id==='room_mart') return `
+    ${floorTile(0,148,320,72,'#e0e0e0','#d8d8d8')}
+    ${px(0,148,320,4,'#c0c0c0')}
+    ${px(0,0,320,148,'#f8f8f8')}
+    ${px(0,0,320,8,'#2060c0')}
+    ${px(8,8,304,8,'rgba(30,80,180,0.15)')}
+    ${px(0,0,80,8,'#e83030')}
+    ${px(8,2,60,4,'#ffffff')}
+    ${[0,1,2,3,4,5].map(i=>px(12+i*36,4,28,2,'rgba(255,255,255,0.8)')).join('')}
+    ${[0,1,2].map(i=>px(i*106,20,100,128,['#ffe0e0','#e0ffe0','#e0e0ff'][i])).join('')}
+    ${[0,1,2].map(i=>[0,1,2,3].map(j=>px(4+i*106,24+j*26,90,20,['#ff8080','#80d880','#80a0ff'][i])).join('')).join('')}
+    ${[0,1,2].map(i=>[0,1,2,3].map(j=>px(6+i*106,26+j*26,86,4,'rgba(255,255,255,0.5)')).join('')).join('')}
+    ${px(318,16,2,132,'#d0d0d0')} ${px(214,16,2,132,'#d0d0d0')} ${px(108,16,2,132,'#d0d0d0')}
+    ${px(0,140,320,8,'#404040')}`;
+
+  if (room.id==='room_sauna') return `
+    ${floorTile(0,148,320,72,'#90b8c8','#80a8b8')}
+    ${px(0,148,320,4,'#608098')}
+    ${px(0,0,320,148,'#c8e0ec')}
+    ${px(0,0,320,148,'rgba(200,230,245,0.4)')}
+    ${px(0,0,8,148,'#a0c0d0')} ${px(312,0,8,148,'#a0c0d0')}
+    ${px(8,0,304,8,'#a0c0d0')} ${px(8,140,304,8,'#a0c0d0')}
+    ${floorTile(30,20,180,100,'#e8f4fc','#d8ecf8')}
+    ${px(30,20,180,100,'rgba(220,240,255,0.3)')}
+    ${px(34,24,172,8,'rgba(255,255,255,0.8)')}
+    ${px(34,32,4,84,'rgba(255,255,255,0.5)')}
+    ${px(34,24,8,8,'rgba(255,255,255,0.9)')}
+    ${[0,1,2,3,4].map(i=>px(240+i*14,16,8,132,'rgba(150,200,220,0.4)')).join('')}
+    ${[0,1,2,3,4,5,6,7].map(i=>px(230,i*18+16,90,2,'rgba(150,200,220,0.3)')).join('')}
+    ${px(60,148,200,20,'rgba(140,190,210,0.5)')}
+    ${px(60,148,200,4,'rgba(180,220,240,0.8)')}
+    ${px(70,152,180,12,'rgba(160,200,220,0.6)')}`;
+
+  if (room.id==='room_cyber') return `
+    ${floorTile(0,148,320,72,'#1a1a2e','#141424')}
+    ${px(0,148,320,4,'#2a2a40')}
+    ${px(0,0,320,148,'#0d0d1a')}
+    ${[0,1,2,3,4,5,6,7,8,9].map(i=>px(i*36,0,2,148,`rgba(0,${80+i*8},${180+i*4},0.1)`)).join('')}
+    ${[0,1,2,3,4,5,6].map(i=>px(0,i*22,320,1,'rgba(0,100,200,0.08)')).join('')}
+    ${px(10,16,80,80,'#111122')} ${px(12,18,76,4,'#001830')}
+    ${px(12,22,76,70,'#000d1a')} ${px(14,24,72,8,'rgba(0,200,255,0.6)')}
+    ${px(14,36,72,8,'rgba(0,200,255,0.3)')} ${px(14,48,72,8,'rgba(0,200,255,0.2)')}
+    ${px(14,60,72,8,'rgba(0,200,255,0.4)')} ${px(14,72,72,8,'rgba(0,200,255,0.15)')}
+    ${px(10,88,80,8,'#1a1a30')}
+    ${px(110,16,80,80,'#111122')} ${px(112,18,76,4,'#001830')}
+    ${px(112,22,76,70,'#000d1a')} ${px(114,24,72,8,'rgba(0,200,255,0.5)')}
+    ${px(114,36,72,8,'rgba(255,80,80,0.3)')} ${px(114,48,72,8,'rgba(0,200,255,0.2)')}
+    ${px(110,88,80,8,'#1a1a30')}
+    ${px(220,16,80,80,'#111122')} ${px(222,18,76,4,'#001830')}
+    ${px(222,22,76,70,'#000d1a')} ${px(222,24,72,8,'rgba(0,255,100,0.5)')}
+    ${px(222,36,72,8,'rgba(0,200,255,0.3)')} ${px(222,48,72,8,'rgba(0,255,100,0.2)')}
+    ${px(220,88,80,8,'#1a1a30')}
+    ${px(0,100,320,48,'#0a0a18')}
+    ${[0,1,2,3,4,5,6,7].map(i=>px(i*40+4,108,34,34,'#111120')).join('')}
+    ${[0,1,2,3,4,5,6,7].map(i=>px(i*40+6,110,30,4,'rgba(0,150,255,0.3)')).join('')}`;
+
+  if (room.id==='room_pojang') return `
+    ${floorTile(0,148,320,72,'#2a1505','#221004')}
+    ${px(0,148,320,4,'#1a0d02')}
+    ${px(0,0,320,148,'#1a0a02')}
+    ${px(0,0,320,20,'#cc4400')}
+    ${px(4,4,312,12,'#dd5500')}
+    ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>px(i*28+2,0,20,20,'rgba(255,100,0,0.2)')).join('')}
+    ${px(0,16,320,4,'#ff8800')}
+    ${px(10,0,8,20,'rgba(255,200,0,0.8)')} ${px(30,0,8,20,'rgba(255,200,0,0.8)')}
+    ${px(50,0,8,20,'rgba(255,200,0,0.8)')} ${px(70,0,8,20,'rgba(255,200,0,0.8)')}
+    ${px(90,0,8,20,'rgba(255,200,0,0.8)')} ${px(110,0,8,20,'rgba(255,200,0,0.8)')}
+    ${px(130,0,8,20,'rgba(255,200,0,0.8)')} ${px(150,0,8,20,'rgba(255,200,0,0.8)')}
+    ${px(20,32,60,80,'rgba(255,100,20,0.15)')}
+    ${px(22,34,56,4,'rgba(255,120,40,0.3)')}
+    ${px(22,38,56,68,'rgba(255,80,20,0.1)')}
+    ${px(26,42,48,24,'rgba(255,120,40,0.2)')}
+    ${px(100,50,120,60,'#3a1808')}
+    ${px(102,52,116,4,'#4a2010')}
+    ${px(102,56,116,50,'#2a1005')}
+    ${px(110,60,100,36,'rgba(255,80,20,0.15)')}
+    ${px(240,30,60,90,'rgba(255,100,20,0.1)')}
+    ${px(60,148,200,20,'rgba(255,80,20,0.3)')}
+    ${px(60,148,200,4,'rgba(255,120,40,0.6)')}`;
+
+  if (room.id==='room_semi') return `
+    ${floorTile(0,148,320,72,'#2a3a2a','#223022')}
+    ${px(0,148,320,4,'#1a2a1a')}
+    ${px(0,0,320,148,'#1a281a')}
+    ${px(0,0,320,148,'rgba(0,80,40,0.15)')}
+    ${px(0,0,320,20,'#243020')}
+    ${px(20,20,280,128,'#1e2c1e')}
+    ${px(22,22,276,4,'#283428')}
+    ${px(22,26,276,120,'rgba(20,40,20,0.8)')}
+    ${px(20,100,280,6,'rgba(100,200,100,0.15)')}
+    ${px(20,106,280,6,'rgba(80,160,80,0.1)')}
+    ${px(20,120,280,8,'rgba(60,120,60,0.2)')}
+    ${px(30,30,80,60,'rgba(60,120,80,0.2)')}
+    ${px(32,32,76,56,'rgba(40,100,60,0.15)')}
+    ${px(36,36,20,20,'rgba(100,180,100,0.15)')}
+    ${px(36,56,20,4,'rgba(100,180,100,0.1)')}
+    ${px(200,30,80,60,'rgba(60,120,80,0.2)')}
+    ${px(202,32,76,56,'rgba(40,100,60,0.15)')}
+    ${[0,1,2,3,4,5,6,7,8,9,10].map(i=>px(i*32,0,2,148,'rgba(0,120,60,0.06)')).join('')}
+    ${[0,1,2,3,4,5].map(i=>px(0,i*26,320,1,'rgba(0,120,60,0.08)')).join('')}
+    ${px(60,130,200,18,'rgba(40,100,60,0.3)')}
+    ${px(60,130,200,4,'rgba(80,160,80,0.5)')}`;
+
+  if (room.id==='room_airport') return `
+    ${floorTile(0,148,320,72,'#d8dce8','#c8ccd8')}
+    ${px(0,148,320,4,'#a8acc0')}
+    ${px(0,0,320,148,'#eef0f8')}
+    ${px(0,0,320,6,'#2060c0')}
+    ${px(0,6,320,4,'#1040a0')}
+    ${px(0,10,320,4,'rgba(30,80,180,0.2)')}
+    ${px(0,0,60,10,'#e83030')}
+    ${px(0,0,20,10,'#ffffff')}
+    ${px(60,18,200,100,'#e8e8f0')}
+    ${px(62,20,196,4,'#c8c8d8')}
+    ${px(62,24,196,90,'#f0f0f8')}
+    ${px(68,28,184,10,'rgba(200,210,240,0.6)')}
+    ${[0,1,2,3,4,5,6].map(i=>px(70+i*26,40,20,70,'rgba(180,190,220,0.3)')).join('')}
+    ${[0,1,2,3,4,5,6].map(i=>px(72+i*26,42,16,4,'rgba(100,130,200,0.4)')).join('')}
+    ${px(10,30,40,118,'#1a1a2a')}
+    ${px(12,32,36,4,'rgba(0,150,255,0.8)')}
+    ${px(12,40,36,4,'rgba(0,200,100,0.6)')}
+    ${px(12,48,36,4,'rgba(255,80,80,0.6)')}
+    ${px(12,56,36,4,'rgba(255,200,0,0.5)')}
+    ${px(12,64,36,40,'rgba(0,100,200,0.2)')}
+    ${px(270,30,40,118,'#1a1a2a')}
+    ${px(272,34,36,8,'rgba(255,255,255,0.7)')}
+    ${px(274,44,32,4,'rgba(200,200,200,0.5)')}
+    ${px(274,50,32,4,'rgba(200,200,200,0.4)')}`;
+
+  if (room.id==='room_camping') return `
+    ${px(0,0,320,148,'#1a3a0a')}
+    ${floorTile(0,148,320,72,'#3a6020','#305418')}
+    ${px(0,148,320,4,'#284818')}
+    ${px(240,8,80,140,'#1e4010')}
+    ${px(260,4,60,144,'#183810')}
+    ${px(270,0,50,144,'#152e0c')}
+    ${[0,1,2,3,4,5,6,7,8].map(i=>px(0,i*18+4,Math.floor(Math.random()*60+260),1,'rgba(30,60,20,0.15)')).join('')}
+    ${px(30,20,40,30,'rgba(255,255,255,0.6)')} ${px(55,10,30,25,'rgba(255,255,255,0.5)')}
+    ${px(40,30,60,20,'rgba(255,255,255,0.65)')}
+    <circle cx="200" cy="30" r="22" fill="rgba(255,220,60,0.85)"/>
+    <circle cx="200" cy="30" r="18" fill="rgba(255,240,100,0.9)"/>
+    ${px(80,60,160,88,'#e87030')}
+    ${px(80,60,160,4,'#f08040')}
+    ${px(80,60,2,88,'#f08040')}
+    ${px(238,60,2,88,'#f08040')}
+    ${px(160,60,2,88,'rgba(0,0,0,0.2)')}
+    ${px(80,64,160,80,'#d06020')}
+    ${px(82,66,156,4,'rgba(255,200,100,0.3)')}
+    ${px(130,100,60,48,'#2a1808')}
+    ${px(132,102,56,44,'#1a1005')}
+    ${px(8,100,20,48,'#5a3010')} ${px(10,102,16,4,'#7a4818')}
+    ${px(40,110,24,38,'#8a5020')} ${px(42,112,20,4,'#aa6828')}
+    ${px(0,130,320,18,'rgba(60,180,60,0.5)')}
+    ${px(0,144,320,4,'rgba(80,200,60,0.6)')}`;
 
   return '';
 }
@@ -3788,7 +4774,7 @@ function closeOverlayOut(e,id){if(!e.target.closest('.sheet'))closeOverlay(id);}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 /* ── Profile & Onboarding ── */
-let myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
+var myProfile = { nick: '거지', bio: '', bg: '#3a1520', c: '#e8527a' };
 let selectedBg = '#3a1520', selectedC = '#e8527a';
 
 function obCheck() {
@@ -3802,97 +4788,74 @@ function obBioCount() {
 
 // ── 토스 로그인 연동 ─────────────────────────────────────
 // 앱인토스 SDK: @apps-in-toss/web-framework
-// 토스 미니앱 환경에서만 appLogin() 사용 가능
-
-function isTossApp() {
-  // 토스 미니앱 WebView 환경 감지
-  return typeof window.AppsInToss !== 'undefined'
-    || navigator.userAgent.includes('TossApp')
-    || new URLSearchParams(location.search).get('referrer') === 'toss';
-}
-
-// 앱 시작 시 토스 환경이면 버튼 표시
-function initTossLoginUI() {
-  if (isTossApp()) {
-    const area = document.getElementById('toss-login-area');
-    if (area) area.style.display = 'block';
-  }
-}
 
 async function loginWithToss() {
   const btn = document.getElementById('toss-login-btn');
+  const status = document.getElementById('toss-login-status');
   if (btn) { btn.disabled = true; btn.textContent = '토스 연동 중...'; }
 
   try {
-    // 1. 앱인토스 SDK로 authorizationCode 획득
-    let authorizationCode;
-    if (typeof window.AppsInToss?.appLogin === 'function') {
-      const result = await window.AppsInToss.appLogin();
-      authorizationCode = result?.authorizationCode;
-    } else {
-      throw new Error('토스 앱 환경이 아니에요. 닉네임으로 입장해주세요.');
+    const _appLogin = window.appLogin || window.AppsInToss?.appLogin;
+    if (typeof _appLogin !== 'function') {
+      throw new Error('토스 앱에서만 로그인할 수 있어요.');
     }
-
+    const result = await _appLogin();
+    const { authorizationCode, referrer } = result || {};
     if (!authorizationCode) throw new Error('토스 인가 코드를 받지 못했어요.');
 
-    // 2. 서버에서 authorizationCode → userKey 교환
-    const res = await fetch('/api/toss-login', {
+    if (status) status.textContent = '계정 정보 확인 중...';
+
+    const res = await fetch('https://geojibang.vercel.app/api/toss-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ authorizationCode }),
+      body: JSON.stringify({ authorizationCode, referrer: referrer || 'DEFAULT' }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || '서버 오류');
 
-    const { userKey, nick: tossNick } = data;
-    const tossUid = 'toss_' + userKey; // 토스 userKey를 UID로 사용
-
-    // 3. Firebase에서 기존 유저인지 확인
+    const tossUid = 'toss_' + data.userKey;
     let existingUser = null;
-    if (window.GJ?.ready) {
-      existingUser = await window.GJ.loadUser(tossUid);
-    }
+    if (window.GJ?.ready) existingUser = await window.GJ.loadUser(tossUid);
 
     if (existingUser) {
-      // 기존 유저: 바로 로그인
       myProfile = {
-        uid:  tossUid,
+        uid: tossUid,
         nick: existingUser.nick,
-        bio:  existingUser.bio || '',
-        bg:   existingUser.avatarBg    || '#3a1520',
-        c:    existingUser.avatarColor || '#e8527a',
+        bio: existingUser.bio || '',
+        bg: existingUser.avatarBg || '#3a1520',
+        c: existingUser.avatarColor || '#e8527a',
       };
       myMonthScore = existingUser.monthScore || 0;
       myTotalScore = existingUser.totalScore || 0;
+      window.myProfile = myProfile;
       localStorage.setItem('gj_profile', JSON.stringify(myProfile));
       applyProfile();
       _updateRankUIOnly();
-      document.getElementById('onboarding').classList.add('hidden');
+      const ob = document.getElementById('onboarding');
+      if (ob) { ob.classList.add('hidden'); ob.style.display = 'none'; }
+      const bd = document.getElementById('ob-backdrop');
+      if (bd) bd.style.display = 'none';
+      document.body.style.overflow = '';
       setTimeout(() => {
-        document.getElementById('onboarding').style.display = 'none';
         if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
       }, 300);
-      showToast('토스 계정으로 로그인됐어요! 반갑습니다 🥫');
+      showToast('반갑습니다, ' + myProfile.nick + '님! 🥫');
     } else {
-      // 신규 유저: 닉네임 입력으로 넘어감 (토스 닉네임 있으면 자동 채움)
-      if (tossNick) {
-        const nickInput = document.getElementById('ob-nick');
-        if (nickInput) {
-          nickInput.value = tossNick.slice(0, 12);
-          document.getElementById('ob-nick-len').textContent = nickInput.value.length;
-        }
-      }
-      // UID를 토스 userKey로 예약
       window._pendingTossUid = tossUid;
-      showToast('토스 계정 확인됐어요! 닉네임을 설정해주세요 👆');
-      if (btn) { btn.disabled = false; btn.textContent = '✅ 토스 연동 완료 - 닉네임 설정 후 입장'; }
-      obCheck();
+      if (data.nick) {
+        const nickInput = document.getElementById('ob-nick');
+        if (nickInput) { nickInput.value = data.nick.slice(0,12); document.getElementById('ob-nick-len').textContent = nickInput.value.length; }
+      }
+      const loginView = document.getElementById('ob-login-view');
+      if (loginView) loginView.style.display = 'none';
+      const nickArea = document.getElementById('ob-nick-area');
+      if (nickArea) nickArea.style.display = 'block';
     }
-
-  } catch (e) {
+  } catch(e) {
     console.warn('[거지방] 토스 로그인 실패:', e);
-    showToast('토스 로그인 실패: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '🔵 토스 계정으로 1초 입장'; }
+    if (status) status.textContent = '로그인 실패: ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = '토스로 시작하기'; }
   }
 }
 
@@ -3900,10 +4863,10 @@ function completeOnboarding() {
   const nick = document.getElementById('ob-nick').value.trim();
   const bio = document.getElementById('ob-bio').value.trim();
   if (!nick) return;
-  // 토스 로그인 완료됐으면 tossUid 사용, 아니면 임시 gj_ UID
   const uid = window._pendingTossUid || ('gj_' + Date.now());
-  window._pendingTossUid = null; // 사용 후 초기화
+  window._pendingTossUid = null;
   myProfile = { nick, bio, bg: '#3a1520', c: '#e8527a', uid };
+  myMonthScore = 0; myTotalScore = 0; // 신규 가입 초기화
   localStorage.setItem('gj_profile', JSON.stringify(myProfile));
   applyProfile();
   document.getElementById('onboarding').classList.add('hidden');
@@ -3973,7 +4936,7 @@ function saveProfile() {
 }
 
 /* ── Ledger ── */
-let isPremium = false;
+var isPremium = true;
 let spendChart = null;
 
 const CAT_DATA = [
@@ -4107,17 +5070,41 @@ function setChartPeriod(period, btn) {
   buildChart(period);
 }
 
-function openSubscribe() { openOverlay('ov-subscribe'); }
-
-function confirmSubscribe() {
-  isPremium = true;
-  closeOverlay('ov-subscribe');
-  document.getElementById('premium-card').style.display = 'none';
-  document.getElementById('premium-panel').style.display = 'block';
-  showToast('🎉 구독 완료! AI 코치가 시작됐어요');
-  generateReport();
+function openSubscribe() {
+  if (typeof window.IAP?.createOneTimePurchaseOrder === 'function') {
+    // 실제 인앱결제
+    const cleanup = window.IAP.createOneTimePurchaseOrder({
+      productId: 'ait.0000024599.c76f623e.518473a16f.4503186930',
+      processProductGrant: async (params) => {
+        // 결제 성공 → 구독 활성화
+        isPremium = true;
+        document.getElementById('premium-panel').style.display = 'block';
+        document.getElementById('premium-card').style.display = 'none';
+        if (window.GJ?.ready && myProfile.uid) {
+          window.GJ.setSubscription(myProfile.uid, true).catch(()=>{});
+        }
+        showToast('💎 가계부 구독이 시작됐어요!');
+        return true; // 지급 완료
+      },
+      onEvent: (e) => {
+        if (e.type === 'purchased') console.log('[IAP] 구매 완료');
+      },
+      onError: (e) => {
+        console.warn('[IAP] 결제 오류:', e);
+        showToast('결제 중 오류가 발생했어요. 다시 시도해주세요.');
+      },
+    });
+  } else {
+    // 폴백 (토스 앱 외 환경)
+    document.getElementById('premium-panel').style.display = 'block';
+    document.getElementById('premium-card').style.display = 'none';
+    isPremium = true;
+    if (window.GJ?.ready && myProfile.uid) {
+      window.GJ.setSubscription(myProfile.uid, true).catch(()=>{});
+    }
+    showToast('💎 가계부 구독이 시작됐어요!');
+  }
 }
-
 function restoreFinanceInputs() {
   const incomeEl = document.getElementById('income-input');
   const savingEl = document.getElementById('saving-input');
@@ -4208,12 +5195,13 @@ function buildSpendCalendar() {
 
 async function generateReport() {
   const el = document.getElementById('ai-report-text');
+  if (!el) return;
   el.innerHTML = '<div class="roast-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   const income = parseInt(document.getElementById('income-input')?.value) || 0;
   const saving = parseInt(document.getElementById('saving-input')?.value) || 0;
   const totalSpend = CAT_DATA.reduce((s,c) => s + c.amt, 0);
   try {
-    const res = await fetch('/api/report', {
+    const res = await fetch('https://geojibang.vercel.app/api/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4226,13 +5214,35 @@ async function generateReport() {
       })
     });
     const data = await res.json();
-    el.textContent = data?.text || '분석 중 오류가 발생했어요.';
+    const reportText = data?.text || '분석 중 오류가 발생했어요.';
+    el.textContent = reportText;
+    localStorage.setItem('gj_cached_report', reportText);
   } catch {
     el.textContent = '네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
   }
 }
 
 buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
+
+// 딥링크 처리 - intoss://geojibang/geoschleng
+(function() {
+  try {
+    const path = window.location.pathname || '';
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const full = path + hash + search;
+    if (full.includes('geoschleng') || document.referrer.includes('geoschleng')) {
+      setTimeout(() => showTab('map'), 800);
+    }
+  } catch(e) {}
+  // 토스 앱 SDK referrer로도 처리
+  if (typeof window.AppsInToss !== 'undefined') {
+    try {
+      const ref = window.AppsInToss?.getReferrer?.() || '';
+      if (ref.includes('geoschleng')) setTimeout(() => showTab('map'), 800);
+    } catch(e) {}
+  }
+})();
 
 // 오늘 복권 사용 상태 UI 반영
 if (lotteryUsed) {
@@ -4298,16 +5308,7 @@ window.saveProfile = async function() {
   }
 };
 
-// 구독 확정 — Firebase 동기화 추가
-const _origConfirmSubscribe = confirmSubscribe;
-window.confirmSubscribe = async function() {
-  _origConfirmSubscribe();
-  if (window.GJ?.ready && myProfile.uid) {
-    try {
-      await window.GJ.setSubscription(myProfile.uid, true);
-    } catch(e) { console.warn('[거지방] 구독 Firebase 저장 실패:', e); }
-  }
-};
+// 구독 비활성화 (무료)
 
 // 저장된 프로필 있으면 온보딩 스킵
 const _saved = localStorage.getItem('gj_profile');
@@ -4318,20 +5319,49 @@ if (_saved) {
       myProfile.uid = 'gj_' + Date.now();
       localStorage.setItem('gj_profile', JSON.stringify(myProfile));
     }
+    window.myProfile = myProfile;
     applyProfile();
     const ob = document.getElementById('onboarding');
-    ob.style.display = 'none';
+    if (ob) { ob.style.display = 'none'; ob.classList.add('hidden'); }
     const bd = document.getElementById('ob-backdrop');
-    if (bd) bd.style.display = 'none';
-    // 기존 프로필 로드 시 피드 리스너 바로 시작
-    setTimeout(() => {
-      if (window.GJ?.startFeedListener) window.GJ.startFeedListener();
-    }, 600);
+    if (bd) { bd.style.display = 'none'; }
+    document.body.style.overflow = '';
+    (function waitForGJ() {
+      if (window.GJ?.startFeedListener) {
+        window.GJ.startFeedListener();
+        setTimeout(() => { if(typeof buildWeeklyChallenges==='function') buildWeeklyChallenges(); }, 400);
+      } else {
+        setTimeout(waitForGJ, 200);
+      }
+    })();
   } catch(e) { console.warn('[거지방] 프로필 파싱 오류:', e); }
 }
 
 // ── AI 카테고리 조언 ──────────────────────────────────
-let _catAdviceTimer = null;
+var _catAdviceTimer = null;
+function _loadCachedReport() {
+  const el = document.getElementById('ai-report-text');
+  if (!el) return;
+  const cached = localStorage.getItem('gj_cached_report');
+  if (cached) {
+    el.textContent = cached;
+  } else {
+    el.textContent = '새 리포트 받기를 눌러 주간 분석을 받아보세요 📊';
+  }
+}
+
+function _loadCachedAdvice() {
+  // 캐시된 조언 있으면 표시, 없으면 안내 메시지
+  const el = document.getElementById('cat-advice-text');
+  if (!el) return;
+  const cached = localStorage.getItem('gj_cached_advice');
+  if (cached) {
+    el.textContent = cached;
+  } else {
+    el.textContent = '새로 받기를 눌러 AI 조언을 받아보세요 💡';
+  }
+}
+
 async function generateCatAdvice() {
   const el = document.getElementById('cat-advice-text');
   if (!el) return;
@@ -4357,12 +5387,14 @@ ${spendGoal ? '지출 목표: ' + spendGoal.toLocaleString() + '원 (남은 일�
 
 지출 목표가 있으면 하루 남은 예산도 계산해서 알려줘. 가장 많이 쓴 카테고리 위주로 2~3문장으로.`;
     try {
-      const r = await fetch('/api/roast', {
+      const r = await fetch('https://geojibang.vercel.app/api/roast', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: prompt, type: 'advice' })
       });
       const d = await r.json();
-      el.textContent = d?.text || '지출 데이터를 입력하면 AI 조언을 받을 수 있어요.';
+      const adviceText = d?.text || '지출 데이터를 입력하면 AI 조언을 받을 수 있어요.';
+      el.textContent = adviceText;
+      localStorage.setItem('gj_cached_advice', adviceText);
     } catch {
       el.textContent = total > 0 ? '잠시 후 다시 시도해봐요.' : '지출을 기록하면 AI 조언을 받을 수 있어요 💡';
     }
@@ -4371,14 +5403,35 @@ ${spendGoal ? '지출 목표: ' + spendGoal.toLocaleString() + '원 (남은 일�
 
 // ── 구독 취소 ──────────────────────────────────────────
 function cancelSubscribe() {
-  if (!confirm('구독을 취소할까요?\n다음 결제일까지는 계속 이용할 수 있어요.')) return;
-  isPremium = false;
-  document.getElementById('premium-panel').style.display = 'none';
-  document.getElementById('premium-card').style.display = 'block';
+  if (!confirm('구독을 취소할까요?\n이번 달 말까지는 계속 이용할 수 있어요.')) return;
+  // 실제 서비스 종료일 = 이번달 말일
+  const now = new Date();
+  const expiry = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59); // 이번달 말일
+  localStorage.setItem('gj_sub_expiry', expiry.getTime().toString());
+  // isPremium은 만료일까지 유지 (Firebase에만 취소 예약)
   if (window.GJ?.ready && myProfile.uid) {
     window.GJ.setSubscription(myProfile.uid, false).catch(()=>{});
   }
-  showToast('구독이 취소됐어요. 이용해주셔서 감사해요 🥫');
+  // UI에는 취소 예약됨 표시
+  const cancelBtn = document.getElementById('sub-cancel-area');
+  if (cancelBtn) cancelBtn.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:8px 0;">${now.getMonth()+1}월 ${expiry.getDate()}일까지 이용 가능 · 갱신 안 됨</div>`;
+  showToast('구독 취소 예약됐어요. 이번 달 말까지 이용 가능해요 🥫');
+}
+
+// 앱 시작 시 구독 만료 체크
+function checkSubExpiry() {
+  const expiry = localStorage.getItem('gj_sub_expiry');
+  if (!expiry) return;
+  if (Date.now() > parseInt(expiry)) {
+    // 만료됨 — 실제로 서비스 종료
+    isPremium = false;
+    localStorage.removeItem('gj_sub_expiry');
+    const pp = document.getElementById('premium-panel');
+    const pc = document.getElementById('premium-card');
+    if (pp) pp.style.display = 'none';
+    if (pc) pc.style.display = 'block';
+  }
+  // 만료 전이면 isPremium 유지 (아무것도 안 함)
 }
 
 // ── 카테고리 예산 직접 설정 ────────────────────────────
@@ -4454,11 +5507,12 @@ function buildCatBudgetList() {
 }
 
 // ── 주간 챌린지 ────────────────────────────────────────
+
 var WEEKLY_CHALLENGES = [
   { id:'record3',  actionType:'record',  icon:'✏️', title:'이번주 지출 3번 기록', target:3, reward:30, unit:'회' },
   { id:'feed1',    actionType:'feed',    icon:'📢', title:'피드에 지출 올리기',   target:1, reward:20, unit:'회' },
   { id:'comment1', actionType:'comment', icon:'💬', title:'댓글 달기',            target:1, reward:15, unit:'개' },
-  { id:'share1',   actionType:'share',   icon:'🔗', title:'앱 공유하기',          target:1, reward:25, unit:'회' },
+  { id:'map1',     actionType:'map',     icon:'🗺️', title:'거슐랭에 식당 추가',   target:1, reward:30, unit:'회' },
 ];
 
 function getChallengeKey(actionTypeOrId) {
@@ -4475,18 +5529,20 @@ function getChallengeProgress(actionTypeOrId) {
 }
 
 function addChallengeProgress(actionTypeOrId, add=1) {
+  if (typeof WEEKLY_CHALLENGES === 'undefined' || !WEEKLY_CHALLENGES) return;
   // actionType 또는 id로 챌린지 찾기 (둘 다 지원)
   const ch = WEEKLY_CHALLENGES.find(c=>c.actionType===actionTypeOrId || c.id===actionTypeOrId);
   if (!ch) return;
-  const id = ch.id; // 실제 id 사용
-  const cur = getChallengeProgress(id);
+  // 저장 키를 actionType 기반으로 통일 (읽기와 일치시키기)
+  const keyId = ch.actionType || ch.id;
+  const cur = getChallengeProgress(keyId);
   if (cur >= ch.target) return;
   const next = Math.min(ch.target, cur+add);
-  localStorage.setItem(getChallengeKey(id), String(next));
+  localStorage.setItem(getChallengeKey(keyId), String(next));
   if (next >= ch.target) {
     myMonthScore += ch.reward; myTotalScore += ch.reward;
     updateMyRankUI();
-    if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, ch.reward, ch.reward).catch(()=>{});
+    if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, ch.reward, ch.reward, 'challenge').catch(()=>{});
     showToast(`🎉 챌린지 달성! 거지력 +${ch.reward}점`);
   }
   buildWeeklyChallenges();
@@ -4496,8 +5552,12 @@ function toggleChallengeBanner() {
   const list = document.getElementById('challenge-list');
   const icon = document.getElementById('challenge-toggle-icon');
   if (!list) return;
+  if (!list.innerHTML.trim() && typeof buildWeeklyChallenges === 'function') {
+    buildWeeklyChallenges();
+  }
   const isOpen = list.style.display !== 'none';
   list.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) list.style.flexDirection = 'column';
   if (icon) {
     icon.style.transform = isOpen ? '' : 'rotate(90deg)';
   }
@@ -4505,6 +5565,7 @@ function toggleChallengeBanner() {
 
 function buildWeeklyChallenges() {
   if (typeof WEEKLY_CHALLENGES === 'undefined') return;
+  if (!window._challengeReady) return; // Firebase 로드 전 렌더링 차단
   const el = document.getElementById('challenge-list');
   if (!el) return;
   const now = new Date();
@@ -4532,7 +5593,10 @@ function buildWeeklyChallenges() {
       <div style="height:3px;background:var(--surface);border-radius:2px;">
         <div style="height:100%;width:${pct}%;background:${done?'var(--green)':'var(--pink)'};border-radius:2px;transition:width .3s;"></div>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${prog}/${ch.target}${ch.unit}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <div style="font-size:10px;color:var(--text3);">${prog}/${ch.target}${ch.unit}</div>
+        ${ch.actionType==='share' && !done ? `<button onclick="shareApp()" style="background:var(--pink);color:#fff;border:none;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🔗 공유하기</button>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -4547,26 +5611,33 @@ const GEOJI_LINES = [
   '저 진짜 거지력 최고예요💪','동전 하나에 제 인생이 걸렸어요',
   '오늘 운세가 대박이래요! 같이 받으세요🎰','구걸도 실력이에요 (진심)',
 ];
-let geojiTapCount = 0;
+var geojiTapCount = 0;
 const GEOJI_TAP_PER_AD = 5;
 
 function renderGeojiTab() {
   const section = document.getElementById('tab-geoji');
   if (!section) return;
-  const equippedRoom = myProfile.items?.equippedRoom || 'room_default';
-  const equippedChar = myProfile.items?.equippedChar || 'char_default';
-  const prog = Math.min(100, geojiTapCount/GEOJI_TAP_PER_AD*100);
+  if (typeof CHAR_ITEMS === 'undefined' || typeof ROOM_ITEMS === 'undefined') {
+    setTimeout(renderGeojiTab, 300); return;
+  }
+  const equippedRoom = myItems?.equippedRoom || myProfile.items?.equippedRoom || 'room_default';
+  const equippedChar = myItems?.equippedChar || myProfile.items?.equippedChar || 'char_default';
+  const _coins = typeof coins !== 'undefined' ? coins : 0;
+  const _myTotalScore = typeof myTotalScore !== 'undefined' ? myTotalScore : 0;
+  const _geojiTapCount = typeof geojiTapCount !== 'undefined' ? geojiTapCount : 0;
+  const prog = Math.min(100, _geojiTapCount/GEOJI_TAP_PER_AD*100);
   // roomBgs를 함수 내부에서 직접 정의
   const _roomBgs = {
-    room_default:'linear-gradient(180deg,#e8e0d0 0%,#d4c4a0 100%)',
+    room_default:'linear-gradient(180deg,#e8dfd0 0%,#d4c4a8 100%)',
     room_cave:'linear-gradient(180deg,#2a2438 0%,#1a1828 100%)',
     room_rooftop:'linear-gradient(180deg,#1a2840 0%,#243660 100%)',
-    room_gosiwon:'linear-gradient(180deg,#e8e0d4 0%,#d4c8b8 100%)',
-    room_park:'linear-gradient(180deg,#b8e4a8 0%,#8ac888 100%)',
+    room_gosiwon:'linear-gradient(180deg,#e8dfd4 0%,#d4c8b8 100%)',
+    room_park:'linear-gradient(180deg,#c0e8a8 0%,#98cc80 100%)',
   };
   section.innerHTML = `
     <div style="position:relative;background:${_roomBgs[equippedRoom]||_roomBgs.room_default};border-radius:var(--radius);margin-bottom:12px;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
-      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">동전 ${coins}개</div>
+      <div id="geoji-coin-badge" style="position:absolute;top:12px;right:12px;background:rgba(240,192,64,0.15);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold);font-weight:700;">🪙 ${_coins}개</div>
+      <div style="position:absolute;top:12px;left:12px;background:rgba(232,82,122,0.15);border:1px solid rgba(232,82,122,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--pink);font-weight:700;">⚡ ${_myTotalScore}점</div>
       <div id="geoji-bubble" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;padding:10px 16px;font-size:14px;color:var(--text);margin-bottom:12px;max-width:240px;text-align:center;">눌러서 구걸하세요 🙏</div>
       <!-- 실제 내 방+캐릭터 (renderRoom 사용) -->
       <div id="geoji-room-wrap" onclick="tapGeojiChar()" style="cursor:pointer;width:100%;max-width:320px;border-radius:12px;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;">
@@ -4575,7 +5646,7 @@ function renderGeojiTab() {
       <div style="margin-top:12px;width:200px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;">
           <span>구걸 중...</span>
-          <span id="geoji-tap-prog">${geojiTapCount}/${GEOJI_TAP_PER_AD}</span>
+          <span id="geoji-tap-prog">${_geojiTapCount}/${GEOJI_TAP_PER_AD}</span>
         </div>
         <div style="height:4px;background:var(--surface2);border-radius:2px;">
           <div id="geoji-tap-bar" style="height:100%;background:var(--pink);border-radius:2px;width:${prog}%;transition:width .2s;"></div>
@@ -4600,13 +5671,10 @@ function renderGeojiTab() {
       <div class="exc-info"><div class="exc-name">출석 복권</div><div class="exc-cost">오늘 1회 무료</div></div>
       <div class="exc-arr">›</div>
     </div>
-    <!-- 광고 배너 -->
-    <div class="ad-card" style="margin-bottom:16px;">
-      <div class="ad-sponsor">광고 자리 <span class="ad-tag">AD</span></div>
-      <div style="height:72px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:var(--radius-sm);">
-        <span style="font-size:12px;color:var(--text3);">광고가 여기에 표시됩니다</span>
-      </div>
-    </div>`;
+    <!-- 배너 광고 -->
+    <div class="ad-card" data-ad-slot="banner" id="geoji-ad-slot" style="margin-bottom:16px;width:100%;min-height:96px;overflow:hidden;"></div>`;
+  // 광고 부착 (동적 생성이라 별도 호출 필요)
+  setTimeout(() => { const el=document.getElementById('geoji-ad-slot'); if(el && typeof attachBannerToEl==='function') attachBannerToEl(el); }, 1500);
 }
 
 function tapGeojiChar() {
@@ -4736,7 +5804,6 @@ async function loadWeeklyChallengesFromDB() {
     if (snap?.weeklyChallenges && snap.weeklyChallenges.length > 0) {
       WEEKLY_CHALLENGES.length = 0;
       snap.weeklyChallenges.forEach(c => {
-        // actionType이 없는 구버전 데이터면 id에서 추정
         if (!c.actionType) {
           if (c.id.startsWith('record')) c.actionType = 'record';
           else if (c.id.startsWith('feed')) c.actionType = 'feed';
@@ -4744,15 +5811,44 @@ async function loadWeeklyChallengesFromDB() {
           else if (c.id.startsWith('share')) c.actionType = 'share';
           else if (c.id.startsWith('login')) c.actionType = 'login';
           else if (c.id.startsWith('reaction')) c.actionType = 'reaction';
+          else if (c.id.startsWith('map')) c.actionType = 'map';
           else c.actionType = c.id;
         }
         WEEKLY_CHALLENGES.push(c);
       });
-      buildWeeklyChallenges();
     }
-  } catch(e) { console.warn('[거지방] 챌린지 로드 실패:', e); }
+    // Firebase 로드 완료 → 렌더링 허용
+    window._challengeReady = true;
+    buildWeeklyChallenges();
+  } catch(e) {
+    console.warn('[거지방] 챌린지 로드 실패:', e);
+    // 실패해도 기본값으로 렌더링 허용
+    window._challengeReady = true;
+    buildWeeklyChallenges();
+  }
 }
 
+
+// ── 피드/댓글 아바타: 실제 drawCharSmall 활용 ──────────
+function makeMiniCharSvg(charId, size=36) {
+  const charList = typeof CHAR_ITEMS !== 'undefined' ? CHAR_ITEMS : [];
+  const char = charList.find(c => c.id === charId) || charList[0];
+  if (!char) return '';
+  // S=4, cx=20, groundY=80 기준 캐릭터 좌표:
+  //   머리카락 top: groundY - 19*S = 80-76 = 4
+  //   얼굴 top:     groundY - 17*S = 80-68 = 12
+  //   허리:         groundY - 8*S  = 80-32 = 48
+  //   발:           groundY        = 80
+  // viewBox를 머리(4)~허리(54)로 설정해서 얼굴+몸통 클로즈업
+  const S = 4;
+  const DRAW_W = 40;  // 10*S
+  const cx = DRAW_W / 2;
+  const groundY = 80;
+  const charSvg = drawCharSmall(char, cx, groundY);
+  // 머리카락 top=4, 보여줄 높이=50 (머리+몸통)
+  const vx = 0, vy = 2, vw = DRAW_W, vh = 52;
+  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges" style="display:block;">${charSvg}</svg>`;
+}
 // ── 거지력 현질 이스터에그 ─────────────────────────────
 function openGeojilryeokShop(amount) {
   const existing = document.getElementById('ov-geoji-shop');
@@ -4794,6 +5890,627 @@ function openGeojilryeokShop(amount) {
   </div>`;
   document.body.appendChild(ov);
 }
+
+// ── 거지맵 ────────────────────────────────────────────
+function escMap(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const NAVER_CLIENT_ID = '1st8ia1c3x';
+const MAP_CATEGORIES = ['전체','한식','중식','일식','분식','카페','편의점','기타'];
+const MAP_CAT_EMOJI = {'전체':'🗺️','한식':'🍚','중식':'🥢','일식':'🍱','분식':'🥟','카페':'☕','편의점':'🏪','기타':'🥫'};
+var _naverMapInited = false;
+var _geojiMap = null;
+var _mapMarkers = [];
+var _mapPlaces = [];
+var _mapCatFilter = '전체';
+var _mapScriptLoading = false;
+
+function renderGeojiMap() {
+  _mapPlaceViewCount = 0;
+  _mapAdShown = false;
+  const section = document.getElementById('tab-map');
+  if (!section) return;
+
+  section.innerHTML = `
+    <div style="position:relative;height:calc(100vh - 120px);display:flex;flex-direction:column;">
+      <!-- 거지맵 안내 배너 -->
+      <div style="background:linear-gradient(135deg,#fff5f7,#fff);border-bottom:2px solid var(--pink-dim2);padding:10px 16px;flex-shrink:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--pink);margin-bottom:2px;">🗺️ 거슐랭가이드 이용 안내</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">극한의 가성비 식당만 올려주세요 💰<br>가성비 낮은 식당은 검토 후 삭제될 수 있어요.<br><span style="color:var(--gold);font-weight:700;">✨ 거슐랭 1스타·2스타·3스타 선정 예정!</span></div>
+      </div>
+    <!-- 검색/필터 바 -->
+      <div style="background:#fff;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input id="map-search-input" placeholder="🔍 식당 이름 또는 주소 검색..." style="flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')searchMapPlace()">
+          <button onclick="searchMapPlace()" style="background:var(--pink);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">검색</button>
+        </div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;">
+          ${MAP_CATEGORIES.map(c=>`<button onclick="filterMapCat('${c}')" id="mapcat-${c}" style="flex-shrink:0;background:${c==='전체'?'var(--pink)':'var(--surface2)'};color:${c==='전체'?'#fff':'var(--text2)'};border:none;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;">${MAP_CAT_EMOJI[c]} ${c}</button>`).join('')}
+        </div>
+      </div>
+      <!-- 지도 -->
+      <div id="geoji-map-container" style="flex:1;position:relative;">
+        <div id="geoji-naver-map" style="width:100%;height:100%;"></div>
+        <!-- 내 위치 버튼 -->
+        <button onclick="moveToMyLocation()" style="position:absolute;bottom:130px;right:14px;z-index:10;background:#fff;border:1px solid var(--border);border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">📍</button>
+        <!-- 식당 추가 버튼 -->
+        <button onclick="openAddPlace()" style="position:absolute;bottom:70px;right:14px;z-index:10;background:var(--pink);color:#fff;border:none;border-radius:24px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(232,82,122,0.4);">+ 식당 추가</button>
+      </div>
+    </div>
+
+    <!-- 식당 추가 오버레이 -->
+    <div id="ov-add-place" class="overlay" onclick="closeOverlayOut(event,'ov-add-place')">
+      <div class="sheet" style="max-height:90vh;overflow-y:auto;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">🗺️ 가성비 식당 추가</div>
+        <div style="padding:0 16px 24px;display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">식당 이름 *</div>
+            <input id="place-name" placeholder="예) 김밥나라 강남점" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">식당 검색 *</div>
+            <div style="display:flex;gap:8px;">
+              <input id="place-search-query" placeholder="식당 이름으로 검색 (예: 김밥천국 강남)" style="flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')searchPlaceByName()">
+              <button onclick="searchPlaceByName()" style="background:var(--pink);color:#fff;border:1px solid var(--pink);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;font-weight:700;">🔍 검색</button>
+            </div>
+            <!-- 검색 결과 목록 -->
+            <div id="place-search-results" style="margin-top:6px;display:none;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;"></div>
+            <!-- 선택된 장소 -->
+            <div id="place-addr-result" style="font-size:12px;color:var(--pink);margin-top:4px;"></div>
+            <input type="hidden" id="place-addr">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">카테고리</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${MAP_CATEGORIES.filter(c=>c!=='전체').map(c=>`<button onclick="selectPlaceCat('${c}',this)" class="place-cat-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;">${MAP_CAT_EMOJI[c]} ${c}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">대표 메뉴 *</div>
+            <input id="place-menu" placeholder="예) 김밥, 라면, 순대국밥" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가격 * <span style="color:var(--text3);font-size:11px;">(대표 메뉴 기준)</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+              ${['1,000','2,000','3,000','4,000','5,000','6,000','7,000','8,000','9,000','10,000','12,000','15,000','20,000','25,000','30,000','기타직접입력'].map(p=>`<button type="button" onclick="selectPrice('${p}',this)" class="price-select-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;font-size:13px;cursor:pointer;font-family:inherit;">${p==='기타직접입력'?'✏️ 직접입력':p+'원'}</button>`).join('')}
+            </div>
+            <div id="price-custom-wrap" style="display:none;margin-top:6px;">
+              <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                <input id="place-price-custom" placeholder="예) 8,500~12,000" style="flex:1;border:none;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:transparent;" oninput="document.getElementById('place-price').value=this.value">
+                <span style="padding:10px 12px;font-size:14px;color:var(--text3);background:var(--surface2);border-left:1px solid var(--border);white-space:nowrap;">원</span>
+              </div>
+            </div>
+            <input type="hidden" id="place-price">
+            <div id="price-selected-display" style="font-size:12px;color:var(--pink);margin-top:4px;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">가성비 포인트</div>
+            <textarea id="place-desc" placeholder="예) 김밥 양이 어마어마함. 2000원에 이 퀄리티 실화?" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:none;height:80px;"></textarea>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">태그 (해당되는 것 선택)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              ${['#혼밥가능','#양많음','#런치특선','#포장가능','#현금할인','#학생할인','#24시간','#배달가능','#주차가능'].map(t=>`<button onclick="togglePlaceTag('${t}',this)" class="place-tag-btn" style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;">${t}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">거지력 평점 *</div>
+            <div style="display:flex;gap:8px;">
+              ${[1,2,3,4,5].map(i=>`<button onclick="selectPlaceRating(${i})" id="place-rating-${i}" style="font-size:24px;background:none;border:none;cursor:pointer;opacity:0.3;">🥫</button>`).join('')}
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">1🥫 = 그냥 저렴 / 5🥫 = 진짜 거지신</div>
+          </div>
+          <button onclick="submitPlace()" style="width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🗺️ 거지맵에 등록하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 식당 상세 오버레이 -->
+    <div id="ov-place-detail" class="overlay" onclick="closeOverlayOut(event,'ov-place-detail')">
+      <div class="sheet" style="max-height:90vh;overflow-y:auto;" id="place-detail-sheet"></div>
+    </div>
+  `;
+
+  // 네이버 지도 스크립트 로드
+  if (!window.naver?.maps) {
+    if (_mapScriptLoading) return;
+    _mapScriptLoading = true;
+    const script = document.createElement('script');
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_CLIENT_ID}`;
+    script.onload = () => { _mapScriptLoading = false; initNaverMap(); };
+    document.head.appendChild(script);
+  } else {
+    initNaverMap();
+  }
+}
+
+function initNaverMap() {
+  const container = document.getElementById('geoji-naver-map');
+  if (!container || !window.naver?.maps) return;
+
+  _geojiMap = new naver.maps.Map(container, {
+    center: new naver.maps.LatLng(37.5665, 126.9780), // 서울 기본
+    zoom: 14,
+    mapTypeControl: false,
+    scaleControl: false,
+    logoControl: false,
+    mapDataControl: false,
+  });
+
+  // 내 위치로 이동
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const loc = new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+      _geojiMap.setCenter(loc);
+      // 내 위치 마커
+      new naver.maps.Marker({
+        position: loc,
+        map: _geojiMap,
+        icon: {
+          content: '<div style="background:#0064ff;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(0,100,255,0.3);"></div>',
+          anchor: new naver.maps.Point(7, 7)
+        }
+      });
+    }, () => {});
+  }
+
+  loadMapPlaces();
+}
+
+async function loadMapPlaces() {
+  if (!window.GJ?.loadPlaces) return;
+  try {
+    _mapPlaces = await window.GJ.loadPlaces();
+    renderMapMarkers();
+  } catch(e) { console.warn('[거지맵]', e); }
+}
+
+function getMarkerContent(place, zoom) {
+  const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
+  if (zoom <= 11) {
+    // 많이 축소 - 이모지 점만
+    return `<div style="font-size:16px;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">${emoji}</div>`;
+  } else if (zoom <= 13) {
+    // 중간 - 이모지만
+    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,0.2);cursor:pointer;">${emoji}</div>`;
+  } else {
+    // 확대 - 이름+가격 전체
+    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:120px;">
+      <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${place.name}</div>
+      <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price ? (place.price+'원') : (place.menu||'')}</div>
+    </div>`;
+  }
+}
+
+function renderMapMarkers() {
+  if (!_geojiMap) return;
+  _mapMarkers.forEach(m => m.setMap(null));
+  _mapMarkers = [];
+
+  const filtered = _mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter);
+  const zoom = _geojiMap.getZoom();
+
+  filtered.forEach(place => {
+    if (!place.lat || !place.lng) return;
+    const marker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(place.lat, place.lng),
+      map: _geojiMap,
+      icon: {
+        content: getMarkerContent(place, zoom),
+        anchor: new naver.maps.Point(0, 0)
+      }
+    });
+    naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
+    _mapMarkers.push(marker);
+  });
+
+  // 줌 변경 시 마커 업데이트 (한 번만 등록)
+  if (!_geojiMap._zoomListenerAdded) {
+    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
+    _geojiMap._zoomListenerAdded = true;
+  }
+}
+
+function filterMapCat(cat) {
+  _mapCatFilter = cat;
+  MAP_CATEGORIES.forEach(c => {
+    const btn = document.getElementById('mapcat-' + c);
+    if (!btn) return;
+    btn.style.background = c === cat ? 'var(--pink)' : 'var(--surface2)';
+    btn.style.color = c === cat ? '#fff' : 'var(--text2)';
+  });
+  renderMapMarkers();
+}
+
+function moveToMyLocation() {
+  if (!navigator.geolocation || !_geojiMap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    _geojiMap.setCenter(new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+    _geojiMap.setZoom(15);
+  });
+}
+
+async function searchMapPlace() {
+  const q = document.getElementById('map-search-input')?.value?.trim();
+  if (!q) return;
+  // 이름 검색
+  const found = _mapPlaces.filter(p => p.name.includes(q) || p.address?.includes(q));
+  if (found.length > 0 && _geojiMap) {
+    _geojiMap.setCenter(new naver.maps.LatLng(found[0].lat, found[0].lng));
+    _geojiMap.setZoom(16);
+    openPlaceDetail(found[0].id);
+  } else {
+    showToast('검색 결과가 없어요 🥫');
+  }
+}
+
+// ── 식당 추가 ──
+let _addPlaceLat = null, _addPlaceLng = null, _addPlaceCat = '한식', _addPlaceRating = 3;
+const _addPlaceTags = new Set();
+
+function openAddPlace() {
+  _addPlaceLat = null; _addPlaceLng = null; _addPlaceCat = '한식'; _addPlaceRating = 3;
+  _addPlaceTags.clear();
+  openOverlay('ov-add-place');
+}
+
+function selectPlaceCat(cat, btn) {
+  _addPlaceCat = cat;
+  document.querySelectorAll('.place-cat-btn').forEach(b => {
+    b.style.background = 'var(--surface2)'; b.style.borderColor = 'var(--border)'; b.style.color = 'var(--text2)';
+  });
+  btn.style.background = 'var(--pink)'; btn.style.borderColor = 'var(--pink)'; btn.style.color = '#fff';
+}
+
+function selectPlaceRating(r) {
+  _addPlaceRating = r;
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.getElementById('place-rating-' + i);
+    if (btn) btn.style.opacity = i <= r ? '1' : '0.3';
+  }
+}
+
+function togglePlaceTag(tag, btn) {
+  if (_addPlaceTags.has(tag)) {
+    _addPlaceTags.delete(tag);
+    btn.style.background = 'var(--surface2)'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text2)';
+  } else {
+    _addPlaceTags.add(tag);
+    btn.style.background = 'rgba(232,82,122,0.1)'; btn.style.borderColor = 'var(--pink)'; btn.style.color = 'var(--pink)';
+  }
+}
+
+function selectPrice(val, btn) {
+  // 모든 버튼 초기화
+  document.querySelectorAll('.price-select-btn').forEach(b => {
+    b.style.background = 'var(--surface2)';
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--text2)';
+  });
+  // 선택된 버튼 강조
+  btn.style.background = 'var(--pink)';
+  btn.style.borderColor = 'var(--pink)';
+  btn.style.color = '#fff';
+
+  const customWrap = document.getElementById('price-custom-wrap');
+  const priceInput = document.getElementById('place-price');
+  const display = document.getElementById('price-selected-display');
+
+  if (val === '기타직접입력') {
+    if (customWrap) customWrap.style.display = 'block';
+    if (priceInput) priceInput.value = '';
+    if (display) display.textContent = '';
+  } else {
+    if (customWrap) customWrap.style.display = 'none';
+    if (priceInput) priceInput.value = val;
+    if (display) display.textContent = '✅ ' + val + '원 선택됨';
+  }
+}
+
+async function searchPlaceByName() {
+  const q = document.getElementById('place-search-query')?.value?.trim();
+  if (!q) return;
+  const resultEl = document.getElementById('place-addr-result');
+  const listEl = document.getElementById('place-search-results');
+  if (resultEl) resultEl.textContent = '검색 중...';
+  if (listEl) { listEl.style.display = 'none'; listEl.innerHTML = ''; }
+  try {
+    const res = await fetch(`https://geojibang.vercel.app/api/search-place?query=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.results?.length) {
+      if (resultEl) resultEl.textContent = '검색 결과가 없어요. 다른 이름으로 시도해보세요.';
+      return;
+    }
+    if (resultEl) resultEl.textContent = '';
+    // 결과 목록 표시
+    listEl.style.display = 'block';
+    listEl.innerHTML = data.results.map((r, i) => `
+      <div onclick="selectPlaceFromSearch(${i},'${encodeURIComponent(JSON.stringify(r))}')"
+        style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);"
+        onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${r.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.category ? r.category + ' · ' : ''}${r.address}</div>
+      </div>`).join('');
+  } catch(e) {
+    if (resultEl) resultEl.textContent = '검색 실패: ' + e.message;
+  }
+}
+
+function selectPlaceFromSearch(idx, encoded) {
+  const place = JSON.parse(decodeURIComponent(encoded));
+  // 네이버 mapx/mapy는 경위도 * 1e7
+  _addPlaceLat = parseFloat(place.mapy) / 1e7;
+  _addPlaceLng = parseFloat(place.mapx) / 1e7;
+  // 식당 이름 자동 채움
+  const nameInput = document.getElementById('place-name');
+  if (nameInput && !nameInput.value) nameInput.value = place.name;
+  // 주소 저장
+  document.getElementById('place-addr').value = place.address;
+  // 결과 목록 숨기고 선택 표시
+  const listEl = document.getElementById('place-search-results');
+  if (listEl) listEl.style.display = 'none';
+  const resultEl = document.getElementById('place-addr-result');
+  if (resultEl) resultEl.textContent = `✅ ${place.name} - ${place.address}`;
+  // 지도 이동
+  if (_geojiMap && _addPlaceLat && _addPlaceLng) {
+    _geojiMap.setCenter(new naver.maps.LatLng(_addPlaceLat, _addPlaceLng));
+    _geojiMap.setZoom(17);
+  }
+}
+
+async function geocodeAddress() {
+  // 하위 호환용 - searchPlaceByName 사용 권장
+  await searchPlaceByName();
+}
+
+async function submitPlace() {
+  const name = document.getElementById('place-name')?.value?.trim();
+  const addr = document.getElementById('place-addr')?.value?.trim();
+  const menu = document.getElementById('place-menu')?.value?.trim();
+  const price = document.getElementById('place-price')?.value?.trim();
+  const desc = document.getElementById('place-desc')?.value?.trim();
+
+  if (!name) { showToast('식당 이름을 입력해주세요'); return; }
+  if (!menu) { showToast('대표 메뉴를 입력해주세요'); return; }
+  if (!price) { showToast('가격을 입력해주세요'); return; }
+  if (!_addPlaceLat || !_addPlaceLng) { showToast('주소를 검색해서 위치를 확인해주세요'); return; }
+  if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
+
+  try {
+    await window.GJ.addPlace({
+      name, address: addr, menu, price: price || '', desc: desc || '',
+      category: _addPlaceCat,
+      tags: [..._addPlaceTags],
+      rating: _addPlaceRating,
+      lat: _addPlaceLat, lng: _addPlaceLng,
+      authorUid: myProfile.uid || '',
+      authorNick: myProfile.nick || '익명',
+      likes: 0, likedBy: [],
+    });
+    closeOverlay('ov-add-place');
+    // 거지력 +1점
+    myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
+    if (window.GJ?.ready && myProfile.uid) window.GJ.updateScore(myProfile.uid, 1, 1, 'map').catch(()=>{});
+    addChallengeProgress('map');
+    buildWeeklyChallenges();
+    showToast('🗺️ 거지맵에 등록됐어요! +1점 획득!');
+    await loadMapPlaces();
+    // 방금 추가한 곳으로 이동
+    if (_geojiMap) { _geojiMap.setCenter(new naver.maps.LatLng(_addPlaceLat, _addPlaceLng)); _geojiMap.setZoom(16); }
+  } catch(e) {
+    showToast('등록 실패: ' + e.message);
+  }
+}
+
+// ── 식당 상세 ──
+var _mapPlaceViewCount = 0;
+var _mapAdShown = false;
+
+async function openPlaceDetail(placeId) {
+  _mapPlaceViewCount++;
+  // 광고 아직 안 봤고 3번째 식당이면 광고 안내
+  if (_mapPlaceViewCount === 3 && !_mapAdShown) {
+    const sheet = document.getElementById('place-detail-sheet');
+    if (sheet) {
+      sheet.innerHTML = `
+        <div class="sheet-handle"></div>
+        <div style="padding:32px 20px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
+          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:8px;">가성비 식당 더 알아보기</div>
+          <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:24px;">짧은 광고를 보고<br>계속 거지맵을 탐험해보세요!<br><span style="font-size:12px;color:var(--text3);opacity:0.7;">광고 1회 시청 후 탭을 나가기 전까지 광고가 뜨지 않아요</span></div>
+          <button onclick="watchMapAd('${placeId}')" style="width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">📺 광고 보고 계속 보기</button>
+          <button onclick="_closeMapAdSheet()" style="width:100%;background:var(--surface2);color:var(--text3);border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:inherit;">닫기 (광고 없이 나가기)</button>
+        </div>`;
+      openOverlay('ov-place-detail');
+    }
+    return;
+  }
+  // 광고 봤거나 3번 미만이면 바로 상세 열기
+  await _openPlaceDetailInner(placeId);
+}
+
+
+async function loadPlaceComments(placeId) {
+  const el = document.getElementById('place-comments-' + placeId);
+  if (!el || !window.GJ?.ready) return;
+  try {
+    const comments = await window.GJ.loadPlaceComments(placeId);
+    if (!comments.length) {
+      el.innerHTML = '<div style="font-size:13px;color:var(--text3);text-align:center;padding:8px;">첫 댓글을 남겨보세요 🥫</div>';
+      return;
+    }
+    const _timeAgo = (date) => {
+      if (!date) return '방금 전';
+      const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diff < 60) return '방금 전';
+      if (diff < 3600) return Math.floor(diff/60) + '분 전';
+      if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+      return Math.floor(diff/86400) + '일 전';
+    };
+    el.innerHTML = comments.map(c => {
+      const timeStr = c.createdAt?.toDate ? _timeAgo(c.createdAt.toDate()) : '방금 전';
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:${c.authorBg||'#3a1520'};color:${c.authorColor||'#e8527a'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">${(c.authorNick||'익')[0]}</div>
+          <span style="font-size:12px;font-weight:700;color:var(--text);">${escMap(c.authorNick||'익명')}</span>
+          <span style="font-size:11px;color:var(--text3);">${timeStr}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);padding-left:28px;">${escMap(c.text)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.warn('[거슐랭 댓글]', e); }
+}
+
+async function submitPlaceComment(placeId) {
+  const input = document.getElementById('place-comment-input-' + placeId);
+  const text = input?.value?.trim();
+  if (!text) return;
+  if (!window.GJ?.ready) { showToast('잠시 후 다시 시도해주세요'); return; }
+  try {
+    await window.GJ.addPlaceComment(placeId, {
+      text,
+      authorNick: myProfile.nick || '익명',
+      authorUid: myProfile.uid || '',
+      authorBg: myProfile.bg || '#3a1520',
+      authorColor: myProfile.c || '#e8527a',
+    });
+    input.value = '';
+    loadPlaceComments(placeId);
+    // 댓글 챌린지 진행
+    addChallengeProgress('comment');
+    buildWeeklyChallenges();
+  } catch(e) { showToast('댓글 등록 실패'); }
+}
+
+window._closeMapAdSheet = function() {
+  // 닫기 누르면 카운트 2로 리셋 → 다음 식당 클릭 시 광고 안내 다시 뜸
+  _mapPlaceViewCount = 2;
+  closeOverlay('ov-place-detail');
+};
+
+window.watchMapAd = function(placeId) {
+  _mapAdShown = true;
+  closeOverlay('ov-place-detail');
+  showInterstitialAd(() => {
+    setTimeout(() => _openPlaceDetailInner(placeId), 400);
+  });
+};
+
+async function _openPlaceDetailInner(placeId) {
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const sheet = document.getElementById('place-detail-sheet');
+  if (!sheet) return;
+  const rating = place.rating || 1;
+  const ratingStr = '🥫'.repeat(rating) + '🫙'.repeat(5 - rating);
+  const myLiked = place.likedBy?.includes(myProfile.uid);
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div style="padding:16px 16px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px;">${MAP_CAT_EMOJI[place.category]||'🥫'} ${place.category||'기타'}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);">${escMap(place.name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">📍 ${escMap(place.address||'주소 없음')}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="likePlace('${placeId}')" style="background:${myLiked?'rgba(232,82,122,0.1)':'var(--surface2)'};border:1px solid ${myLiked?'var(--pink)':'var(--border)'};border-radius:20px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:${myLiked?'var(--pink)':'var(--text3)'};" id="like-btn-${placeId}">
+            👍 ${place.likes||0}
+          </button>
+          <button onclick="dislikePlace('${placeId}')" style="background:${(place.dislikedBy||[]).includes(myProfile.uid)?'rgba(100,100,100,0.15)':'var(--surface2)'};border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text3);" id="dislike-btn-${placeId}">
+            👎 ${place.dislikes||0}
+          </button>
+          <button onclick="reportPlace('${placeId}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text3);">
+            🚨 신고
+          </button>
+        </div>
+      </div>
+      <div style="font-size:14px;margin-bottom:8px;">${ratingStr}</div>
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">대표 메뉴</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">🍽️ ${escMap(place.menu||'')}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:3px;">가격</div>
+            <div style="font-size:14px;font-weight:700;color:var(--pink);">💰 ${escMap(place.price||'')}원</div>
+          </div>
+        </div>
+      </div>
+      ${place.desc ? `<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${escMap(place.desc)}</div>` : ''}
+      ${place.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${place.tags.map(t=>`<span style="background:rgba(232,82,122,0.08);color:var(--pink);border-radius:12px;padding:3px 8px;font-size:11px;">${t}</span>`).join('')}</div>` : ''}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">✍️ ${escMap(place.authorNick||'익명')}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding:14px 16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 댓글</div>
+      <div id="place-comments-${placeId}" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="place-comment-input-${placeId}" placeholder="거지력 넘치는 댓글 남기기..." style="flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')submitPlaceComment('${placeId}')">
+        <button onclick="submitPlaceComment('${placeId}')" style="background:var(--pink);color:#fff;border:none;border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;">등록</button>
+      </div>
+    </div>`;
+  openOverlay('ov-place-detail');
+  setTimeout(() => loadPlaceComments(placeId), 150);
+}
+
+async function dislikePlace(placeId) {
+  if (!window.GJ?.ready || !myProfile.uid) return;
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const dislikedBy = place.dislikedBy || [];
+  const myDisliked = dislikedBy.includes(myProfile.uid);
+  const newDislikedBy = myDisliked ? dislikedBy.filter(u => u !== myProfile.uid) : [...dislikedBy, myProfile.uid];
+  try {
+    await window.GJ.updatePlaceDislike(placeId, newDislikedBy);
+    place.dislikes = newDislikedBy.length; place.dislikedBy = newDislikedBy;
+    const btn = document.getElementById('dislike-btn-' + placeId);
+    if (btn) {
+      btn.textContent = '👎 ' + newDislikedBy.length;
+      btn.style.background = myDisliked ? 'var(--surface2)' : 'rgba(100,100,100,0.15)';
+    }
+  } catch(e) { showToast('오류가 발생했어요'); }
+}
+
+async function reportPlace(placeId) {
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const reasons = ['홍보성 광고 의심', '가짜 정보', '실제 가성비 아님', '폐업/이전', '기타'];
+  const reason = prompt('신고 사유를 선택해주세요:\n' + reasons.map((r,i)=>`${i+1}. ${r}`).join('\n') + '\n\n번호를 입력하세요 (1-5):');
+  if (!reason) return;
+  const idx = parseInt(reason) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= reasons.length) { showToast('올바른 번호를 입력해주세요'); return; }
+  try {
+    await addDoc(window.GJ._placeReportsCol(placeId), {
+      reason: reasons[idx],
+      reporterUid: myProfile.uid || '',
+      reporterNick: myProfile.nick || '익명',
+      placeName: place.name,
+      createdAt: serverTimestamp(),
+    });
+    showToast('🚨 신고가 접수됐어요. 검토 후 처리돼요.');
+  } catch(e) { showToast('신고 실패: ' + e.message); }
+}
+
+async function likePlace(placeId) {
+  if (!window.GJ?.ready || !myProfile.uid) return;
+  const place = _mapPlaces.find(p => p.id === placeId);
+  if (!place) return;
+  const likedBy = place.likedBy || [];
+  const myLiked = likedBy.includes(myProfile.uid);
+  const newLikedBy = myLiked ? likedBy.filter(u => u !== myProfile.uid) : [...likedBy, myProfile.uid];
+  try {
+    await window.GJ.updatePlaceLike(placeId, newLikedBy);
+    place.likes = newLikedBy.length; place.likedBy = newLikedBy;
+    const btn = document.getElementById('like-btn-' + placeId);
+    if (btn) {
+      btn.textContent = '👍 ' + newLikedBy.length;
+      btn.style.background = myLiked ? 'var(--surface2)' : 'rgba(232,82,122,0.1)';
+      btn.style.borderColor = myLiked ? 'var(--border)' : 'var(--pink)';
+      btn.style.color = myLiked ? 'var(--text3)' : 'var(--pink)';
+    }
+  } catch(e) { showToast('좋아요 실패'); }
+}
+
 </script>
 </body>
 </html>
