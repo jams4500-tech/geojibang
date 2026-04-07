@@ -450,7 +450,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
           </div>
           <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);">🗺️</div>
-            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거지맵</div><div style="font-size:12px;color:#888;">가성비 식당 공유하고 거지력 쌓아요</div></div>
+            <div><div style="font-size:14px;font-weight:700;color:#191919;margin-bottom:2px;">거슐랭 가이드</div><div style="font-size:12px;color:#888;">가성비 식당 공유하고 거지력 쌓아요</div></div>
           </div>
         </div>
         <!-- 토스 로그인 버튼 -->
@@ -1431,7 +1431,7 @@ console.log('[거지방] Firebase 연동 완료 — geojibang-5254c');
 
 // ── 거지맵 Firebase 메서드 ──
 window.GJ.loadPlaces = async () => {
-  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc'), limit(100)));
+  const snap = await getDocs(query(collection(db,'geojimap_places'), orderBy('createdAt','desc'), limit(5000)));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 window.GJ.addPlace = async (data) => {
