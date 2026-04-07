@@ -6070,17 +6070,15 @@ async function loadMapPlaces() {
 
 function getMarkerContent(place, zoom) {
   const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
-  if (zoom <= 11) {
-    // 많이 축소 - 이모지 점만
-    return `<div style="font-size:16px;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">${emoji}</div>`;
-  } else if (zoom <= 13) {
-    // 중간 - 이모지만
-    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,0.2);cursor:pointer;">${emoji}</div>`;
+  const price = place.price ? (place.price + '원') : '';
+  if (zoom <= 12) {
+    // 축소 - 이모지만
+    return `<div style="font-size:20px;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));">${emoji}</div>`;
   } else {
-    // 확대 - 이름+가격 전체
-    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:120px;">
-      <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${place.name}</div>
-      <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price ? (place.price+'원') : (place.menu||'')}</div>
+    // 확대 - 이모지 + 가격
+    return `<div style="background:#fff;border:1.5px solid #e8527a;border-radius:20px;padding:4px 8px;box-shadow:0 1px 4px rgba(0,0,0,0.18);cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;">
+      <span style="font-size:13px;">${emoji}</span>
+      <span style="font-size:11px;font-weight:700;color:#e8527a;">${price}</span>
     </div>`;
   }
 }
