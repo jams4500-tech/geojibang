@@ -6101,9 +6101,22 @@ function renderMapMarkers() {
   clearTimeout(_renderMarkerTimer);
   _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 200);
 
-  // 줌 리스너 한 번만 등록
+  // 줌 리스너 한 번만 등록 - 줌 변경 시 마커 재생성 대신 아이콘만 업데이트
   if (!_geojiMap._zoomListenerAdded) {
-    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
+    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => {
+      const zoom = _geojiMap.getZoom();
+      if (Math.abs(zoom - _lastRenderedZoom) < 2) {
+        // 줌 변화 작으면 아이콘만 업데이트
+        _mapMarkers.forEach((marker, i) => {
+          const place = _mapPlaces[i];
+          if (place) marker.setIcon({ content: getMarkerContent(place, zoom), anchor: new naver.maps.Point(0, 0) });
+        });
+        _lastRenderedZoom = zoom;
+      } else {
+        // 줌 변화 크면 전체 재렌더링
+        renderMapMarkers();
+      }
+    });
     _geojiMap._zoomListenerAdded = true;
   }
 }
