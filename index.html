@@ -6055,17 +6055,26 @@ function initNaverMap() {
   loadMapPlaces();
 }
 
+var _mapPlacesLastLoaded = 0;
+var _mapPlacesLoading = false;
+
 async function loadMapPlaces() {
   if (!window.GJ?.loadPlaces) return;
-  // 이미 로드됐으면 캐시 사용
-  if (_mapPlaces.length > 0) {
+  const now = Date.now();
+  // 캐시: 2분 이내면 재사용
+  if (_mapPlaces.length > 0 && (now - _mapPlacesLastLoaded) < 120000) {
     renderMapMarkers();
     return;
   }
+  // 중복 로딩 방지
+  if (_mapPlacesLoading) return;
+  _mapPlacesLoading = true;
   try {
     _mapPlaces = await window.GJ.loadPlaces();
+    _mapPlacesLastLoaded = Date.now();
     renderMapMarkers();
-  } catch(e) { console.warn('[거지맵]', e); }
+  } catch(e) { console.warn('[거슐랭]', e); }
+  finally { _mapPlacesLoading = false; }
 }
 
 function getMarkerContent(place, zoom) {
