@@ -6116,8 +6116,9 @@ function renderMapMarkers() {
   clearTimeout(_renderMarkerTimer);
   _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 300);
   if (!_geojiMap._zoomListenerAdded) {
-    // idle 제거 - 지도 이동마다 재렌더링 하지 않음
     naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
+    // 드래그 끝날 때만 재렌더링 (이동 중엔 X)
+    naver.maps.Event.addListener(_geojiMap, 'dragend', () => renderMapMarkers());
     _geojiMap._zoomListenerAdded = true;
   }
 }
@@ -6141,7 +6142,18 @@ function _doRenderMapMarkers() {
   _mapMarkers = [];
 
   if (zoom >= 14) {
-    filtered.forEach(place => {
+    // 현재 뷰포트 범위만 렌더링
+    const bounds = _geojiMap.getBounds();
+    const sw = bounds.getSW();
+    const ne = bounds.getNE();
+    // 뷰포트보다 약간 넓게 (이동 시 바로 보이도록)
+    const latPad = (ne.lat() - sw.lat()) * 0.3;
+    const lngPad = (ne.lng() - sw.lng()) * 0.3;
+    const visible = filtered.filter(p =>
+      p.lat >= sw.lat() - latPad && p.lat <= ne.lat() + latPad &&
+      p.lng >= sw.lng() - lngPad && p.lng <= ne.lng() + lngPad
+    );
+    visible.forEach(place => {
       const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
       const price = place.price ? (place.price + '원') : '';
       const marker = new naver.maps.Marker({
