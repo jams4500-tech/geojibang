@@ -6114,10 +6114,10 @@ var _markerClusterer = null;
 function renderMapMarkers() {
   if (!_geojiMap) return;
   clearTimeout(_renderMarkerTimer);
-  _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 150);
+  _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 300);
   if (!_geojiMap._zoomListenerAdded) {
+    // idle 제거 - 지도 이동마다 재렌더링 하지 않음
     naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
-    naver.maps.Event.addListener(_geojiMap, 'idle', () => renderMapMarkers());
     _geojiMap._zoomListenerAdded = true;
   }
 }
@@ -6159,26 +6159,17 @@ function _doRenderMapMarkers() {
     return;
   }
 
-  const gridSize = zoom <= 10 ? 120 : zoom <= 12 ? 80 : 50;
-  const used = new Set();
-  const clusters = [];
-  const proj = _geojiMap.getProjection();
-
-  filtered.forEach((place, i) => {
-    if (used.has(i)) return;
-    const pt = proj.fromCoordToOffset(new naver.maps.LatLng(place.lat, place.lng));
-    const cluster = { places: [place], cx: pt.x, cy: pt.y };
-    used.add(i);
-    filtered.forEach((other, j) => {
-      if (used.has(j)) return;
-      const opt = proj.fromCoordToOffset(new naver.maps.LatLng(other.lat, other.lng));
-      if (Math.abs(opt.x - pt.x) < gridSize && Math.abs(opt.y - pt.y) < gridSize) {
-        cluster.places.push(other);
-        used.add(j);
-      }
-    });
-    clusters.push(cluster);
+  // 그리드 기반 클러스터링 (위경도 기준으로 O(n) 처리)
+  const gridDeg = zoom <= 10 ? 0.15 : zoom <= 12 ? 0.05 : 0.02;
+  const gridMap = {};
+  filtered.forEach(place => {
+    const gx = Math.floor(place.lat / gridDeg);
+    const gy = Math.floor(place.lng / gridDeg);
+    const key = gx + '_' + gy;
+    if (!gridMap[key]) gridMap[key] = [];
+    gridMap[key].push(place);
   });
+  const clusters = Object.values(gridMap).map(places => ({ places }));
 
   clusters.forEach(cluster => {
     const avgLat = cluster.places.reduce((s,p) => s + p.lat, 0) / cluster.places.length;
