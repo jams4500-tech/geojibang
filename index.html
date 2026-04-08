@@ -1599,6 +1599,13 @@ window.GJ.initProfile = async () => {
       myTotalScore = remote.totalScore || 0;
       window.myMonthScore = myMonthScore;
       window.myTotalScore = myTotalScore;
+      // 반응 기록 복원 (rxn_xxx 키)
+      Object.keys(remote).forEach(k => {
+        if (k.startsWith('rxn_')) {
+          const pid = k.replace('rxn_', '');
+          localStorage.setItem('gj_rxn_' + pid, String(remote[k]));
+        }
+      });
       window.myProfile = { ...window.myProfile, ...remote };
       // Firebase에 저장된 아이템 불러오기
       if (remote.items) {
@@ -2236,6 +2243,11 @@ function getSavedRxn(pid) {
 }
 function saveRxn(pid, idx) {
   localStorage.setItem(getRxnKey(pid), String(idx));
+  // Firebase에도 저장 (앱 재시작 후 복원용)
+  if (window.GJ?.ready && myProfile.uid) {
+    const uid = myProfile.uid;
+    window.GJ.saveUser(uid, { [`rxn_${pid}`]: idx }).catch(()=>{});
+  }
 }
 
 function castRxn(btn,id,idx) {
@@ -2534,8 +2546,11 @@ function addToFeed(where,amount,memo) {
   const empty = document.getElementById('feed-empty');
   if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
-  // 글 쓰면 거지력 +1점 (UI만 - Firebase는 publishPost에서 처리)
+  // 글 쓰면 거지력 +1점
   myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
+  if (window.GJ?.ready && myProfile.uid) {
+    window.GJ.updateScore(myProfile.uid, 1, 1, 'feed').catch(()=>{});
+  }
   // 챌린지 진행
   addChallengeProgress('record');
   addChallengeProgress('feed');
