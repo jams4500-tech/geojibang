@@ -3407,9 +3407,9 @@ function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert');
 // ── 토스 프로모션 코드 ──────────────────────────────────
 const PROMO_COIN_EXCHANGE  = '01KMYJQ3EGJZ3PHCXZYZFBD8Z2'; // 동전5개→5P
 const PROMO_GEOSCHLENG    = '01KNPHWK9MBV7V4B1CN2N54VDG'; // 거슐랭 첫 조회 50P
-const PROMO_KING_1ST       = 'TEST_01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
-const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
-const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
+const PROMO_KING_1ST       = '01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
+const PROMO_KING_2ND       = '01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
+const PROMO_KING_3TO5      = '01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
 
 async function giveTossPoints(userKey, promotionCode, amount) {
   const cleanKey = String(userKey).replace(/[^0-9]/g, '');
