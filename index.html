@@ -2646,25 +2646,18 @@ function buildRank() {
 /* ── 거지왕 발표 로직 ── */
 function getNextAnnouncementDate() {
   const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
+  const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  let add = (8 - day) % 7; // 다음 월요일까지 남은 일수
+  if (add === 0) add = 7;  // 오늘이 월요일이면 차주 월요일
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + add, 8, 0, 0);
   return next;
 }
 
 function updateRankCountdown() {
   const el = document.getElementById('rank-countdown');
   if (!el) return;
-  const now = new Date();
   const next = getNextAnnouncementDate();
-  const diff = next - now;
-  if (diff <= 0) {
-    triggerKingAnnouncement();
-    return;
-  }
-  const days = Math.floor(diff / (1000*60*60*24));
-  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
-  const secs = Math.floor((diff % (1000*60)) / 1000);
-  el.textContent = days + '일 ' + String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  el.textContent = (next.getMonth() + 1) + '월 ' + next.getDate() + '일';
 }
 
 const RANK_REWARDS = [100000, 30000, 10000, 10000, 10000];
