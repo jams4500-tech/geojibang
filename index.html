@@ -490,11 +490,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       <div class="header-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
     </div>
     <div class="tabs" style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
-      <div class="tab active" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
+      <div class="tab active" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
+      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
+      <div class="tab" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
       <div class="tab" onclick="showTab('mine')" style="flex-shrink:0;">내 지출</div>
       <div class="tab" onclick="showTab('rank')" style="flex-shrink:0;">거지 랭킹</div>
-      <div class="tab" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
-      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
@@ -513,7 +513,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       <div id="challenge-list" style="display:none;padding:0 16px 12px;flex-direction:column;gap:8px;"></div>
     </div>
     <div class="content">
-      <div id="tab-feed" class="section active"></div>
+      <!-- 내 거지 탭 -->
+      <div id="tab-geoji" class="section active"></div>
+      <div id="tab-map" class="section" style="padding:0;"></div>
+      <div id="tab-feed" class="section"></div>
       <div id="tab-mine" class="section">
         <!-- 배너 광고 -->
         <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
@@ -798,9 +801,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 
       </div>
     </div>
-      <!-- 내 거지 탭 -->
-      <div id="tab-geoji" class="section"></div>
-      <div id="tab-map" class="section" style="padding:0;"></div>
   </div>
 
   <!-- Begging can page -->
@@ -5675,11 +5675,11 @@ function renderGeojiTab() {
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;">
       <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">🥫 동전으로 구걸하기</div>
+      <div class="exc-row" onclick="doExchange('point5',5)"><div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div><div class="exc-info"><div class="exc-name">토스포인트 5P</div><div class="exc-cost">동전 5개 → 토스포인트 5P</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('fortune',1)"><div class="exc-ico" style="background:#2e2a1a;">🗣️</div><div class="exc-info"><div class="exc-name">구걸 멘트 뽑기</div><div class="exc-cost">동전 1개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('lotto',2)"><div class="exc-ico" style="background:#3a1520;">🎟</div><div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('letter',3)"><div class="exc-ico" style="background:#1a2030;">🧑‍⚕️</div><div class="exc-info"><div class="exc-name">거지 고민상담소</div><div class="exc-cost">동전 3개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('score',5)"><div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+10</div><div class="exc-info"><div class="exc-name">거지력 +10점</div><div class="exc-cost">동전 5개</div></div><div class="exc-arr">›</div></div>
-      <div class="exc-row" onclick="doExchange('point5',5)"><div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div><div class="exc-info"><div class="exc-name">토스포인트 5P</div><div class="exc-cost">동전 5개 → 토스포인트 5P</div></div><div class="exc-arr">›</div></div>
     </div>
     <div class="exc-row" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;" onclick="openOverlay('ov-lottery')">
       <div class="exc-ico" style="background:#2a1a3a;">🎰</div>

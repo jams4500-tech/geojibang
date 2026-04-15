@@ -491,11 +491,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       <div class="header-sub">매일 매시 매초 본인이 거지임을 잊지마세요</div>
     </div>
     <div class="tabs" style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
-      <div class="tab active" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
+      <div class="tab active" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
+      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
+      <div class="tab" onclick="showTab('feed')" style="flex-shrink:0;">피드</div>
       <div class="tab" onclick="showTab('mine')" style="flex-shrink:0;">내 지출</div>
       <div class="tab" onclick="showTab('rank')" style="flex-shrink:0;">거지 랭킹</div>
-      <div class="tab" onclick="showTab('geoji')" style="flex-shrink:0;">내 거지</div>
-      <div class="tab" onclick="showTab('map')" style="flex-shrink:0;">🗺️ 거슐랭</div>
     </div>
 
     <!-- 이주의 거지 챌린지 (접히는 배너) -->
@@ -514,7 +514,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
       <div id="challenge-list" style="display:none;padding:0 16px 12px;flex-direction:column;gap:8px;"></div>
     </div>
     <div class="content">
-      <div id="tab-feed" class="section active"></div>
+      <!-- 내 거지 탭 -->
+      <div id="tab-geoji" class="section active"></div>
+      <div id="tab-map" class="section" style="padding:0;"></div>
+      <div id="tab-feed" class="section"></div>
       <div id="tab-mine" class="section">
         <!-- 배너 광고 -->
         <div class="ad-card" data-ad-slot="banner" style="margin-bottom:12px;width:100%;min-height:96px;overflow:hidden;"></div>
@@ -799,9 +802,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #e8e6e3; color: var(
 
       </div>
     </div>
-      <!-- 내 거지 탭 -->
-      <div id="tab-geoji" class="section"></div>
-      <div id="tab-map" class="section" style="padding:0;"></div>
   </div>
 
   <!-- Begging can page -->
@@ -1600,6 +1600,13 @@ window.GJ.initProfile = async () => {
       myTotalScore = remote.totalScore || 0;
       window.myMonthScore = myMonthScore;
       window.myTotalScore = myTotalScore;
+      // 반응 기록 복원 (rxn_xxx 키)
+      Object.keys(remote).forEach(k => {
+        if (k.startsWith('rxn_')) {
+          const pid = k.replace('rxn_', '');
+          localStorage.setItem('gj_rxn_' + pid, String(remote[k]));
+        }
+      });
       window.myProfile = { ...window.myProfile, ...remote };
       // Firebase에 저장된 아이템 불러오기
       if (remote.items) {
@@ -2085,10 +2092,10 @@ function makePost(p) {
 
 // TossAds 초기화 (앱 로드 시 1회)
 let _tossAdsReady = false;
-const BANNER_AD_ID = 'ait-ad-test-banner-id';           // 배너 리스트형
-const NATIVE_AD_ID = 'ait-ad-test-native-image-id';     // 배너 피드형
-const INTERSTITIAL_AD_ID = 'ait-ad-test-interstitial-id'; // 전면형
-const REWARDED_AD_ID = 'ait-ad-test-rewarded-id';        // 리워드형
+const BANNER_AD_ID = 'ait.v2.live.b6e29dd670a3407a';           // 배너 리스트형
+const NATIVE_AD_ID = 'ait.v2.live.b6e29dd670a3407a';     // 배너 피드형
+const INTERSTITIAL_AD_ID = 'ait.v2.live.90ac6dfc954646eb'; // 전면형
+const REWARDED_AD_ID = 'ait.v2.live.d1f4b897469b4db3';        // 리워드형
 
 function initTossAds() {
   // TossAds 배너 SDK
@@ -2237,6 +2244,11 @@ function getSavedRxn(pid) {
 }
 function saveRxn(pid, idx) {
   localStorage.setItem(getRxnKey(pid), String(idx));
+  // Firebase에도 저장 (앱 재시작 후 복원용)
+  if (window.GJ?.ready && myProfile.uid) {
+    const uid = myProfile.uid;
+    window.GJ.saveUser(uid, { [`rxn_${pid}`]: idx }).catch(()=>{});
+  }
 }
 
 function castRxn(btn,id,idx) {
@@ -2535,8 +2547,11 @@ function addToFeed(where,amount,memo) {
   const empty = document.getElementById('feed-empty');
   if (empty) empty.remove();
   feed.insertBefore(makePost(p),feed.children[1]); genRoast(pid,`${memo||''} ${where} ${amount}원`);
-  // 글 쓰면 거지력 +1점 (UI만 - Firebase는 publishPost에서 처리)
+  // 글 쓰면 거지력 +1점
   myMonthScore += 1; myTotalScore += 1; updateMyRankUI();
+  if (window.GJ?.ready && myProfile.uid) {
+    window.GJ.updateScore(myProfile.uid, 1, 1, 'feed').catch(()=>{});
+  }
   // 챌린지 진행
   addChallengeProgress('record');
   addChallengeProgress('feed');
@@ -3391,10 +3406,11 @@ async function viewUserProfileByUid(uid, nick, bg, c, monthScore, hintRoom, hint
 
 function openConvert() { updatePiggy(); closePiggy(); openOverlay('ov-convert'); }
 // ── 토스 프로모션 코드 ──────────────────────────────────
-const PROMO_COIN_EXCHANGE  = 'TEST_01KMYJQ3EGJZ3PHCXZYZFBD8Z2'; // 동전5개→5P
-const PROMO_KING_1ST       = 'TEST_01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
-const PROMO_KING_2ND       = 'TEST_01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
-const PROMO_KING_3TO5      = 'TEST_01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
+const PROMO_COIN_EXCHANGE  = '01KMYJQ3EGJZ3PHCXZYZFBD8Z2'; // 동전5개→5P
+const PROMO_GEOSCHLENG    = '01KNPHWK9MBV7V4B1CN2N54VDG'; // 거슐랭 첫 조회 50P
+const PROMO_KING_1ST       = '01KMYJWMM1X1G5RM04ETKGVDDD'; // 거지왕 1위 5000P
+const PROMO_KING_2ND       = '01KMYJXS7T39P4PF9QSBXJ0R3E'; // 거지왕 2위 3000P
+const PROMO_KING_3TO5      = '01KMYK09R7DM3081PZ0NSDPHGX'; // 거지왕 3~5위 1000P
 
 async function giveTossPoints(userKey, promotionCode, amount) {
   const cleanKey = String(userKey).replace(/[^0-9]/g, '');
@@ -5660,11 +5676,11 @@ function renderGeojiTab() {
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;">
       <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">🥫 동전으로 구걸하기</div>
+      <div class="exc-row" onclick="doExchange('point5',5)"><div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div><div class="exc-info"><div class="exc-name">토스포인트 5P</div><div class="exc-cost">동전 5개 → 토스포인트 5P</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('fortune',1)"><div class="exc-ico" style="background:#2e2a1a;">🗣️</div><div class="exc-info"><div class="exc-name">구걸 멘트 뽑기</div><div class="exc-cost">동전 1개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('lotto',2)"><div class="exc-ico" style="background:#3a1520;">🎟</div><div class="exc-info"><div class="exc-name">오늘의 구걸 운세</div><div class="exc-cost">동전 2개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('letter',3)"><div class="exc-ico" style="background:#1a2030;">🧑‍⚕️</div><div class="exc-info"><div class="exc-name">거지 고민상담소</div><div class="exc-cost">동전 3개</div></div><div class="exc-arr">›</div></div>
       <div class="exc-row" onclick="doExchange('score',5)"><div class="exc-ico" style="background:#2a1520;font-weight:900;color:#e8527a;font-size:13px;">+10</div><div class="exc-info"><div class="exc-name">거지력 +10점</div><div class="exc-cost">동전 5개</div></div><div class="exc-arr">›</div></div>
-      <div class="exc-row" onclick="doExchange('point5',5)"><div class="exc-ico" style="background:#163a16;font-weight:900;color:#44cc88;font-size:14px;">P</div><div class="exc-info"><div class="exc-name">토스포인트 5P</div><div class="exc-cost">동전 5개 → 토스포인트 5P</div></div><div class="exc-arr">›</div></div>
     </div>
     <div class="exc-row" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;" onclick="openOverlay('ov-lottery')">
       <div class="exc-ico" style="background:#2a1a3a;">🎰</div>
@@ -6056,58 +6072,150 @@ function initNaverMap() {
   loadMapPlaces();
 }
 
+var _mapPlacesLastLoaded = 0;
+var _mapPlacesLoading = false;
+
 async function loadMapPlaces() {
   if (!window.GJ?.loadPlaces) return;
+  const now = Date.now();
+  // 캐시: 2분 이내면 재사용
+  if (_mapPlaces.length > 0 && (now - _mapPlacesLastLoaded) < 120000) {
+    renderMapMarkers();
+    return;
+  }
+  // 중복 로딩 방지
+  if (_mapPlacesLoading) return;
+  _mapPlacesLoading = true;
   try {
     _mapPlaces = await window.GJ.loadPlaces();
+    _mapPlacesLastLoaded = Date.now();
     renderMapMarkers();
-  } catch(e) { console.warn('[거지맵]', e); }
+  } catch(e) { console.warn('[거슐랭]', e); }
+  finally { _mapPlacesLoading = false; }
 }
 
 function getMarkerContent(place, zoom) {
   const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
-  if (zoom <= 11) {
-    // 많이 축소 - 이모지 점만
-    return `<div style="font-size:16px;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">${emoji}</div>`;
-  } else if (zoom <= 13) {
-    // 중간 - 이모지만
-    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,0.2);cursor:pointer;">${emoji}</div>`;
+  const price = place.price ? (place.price + '원') : '';
+  if (zoom <= 12) {
+    // 축소 - 이모지만
+    return `<div style="font-size:20px;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));">${emoji}</div>`;
   } else {
-    // 확대 - 이름+가격 전체
-    return `<div style="background:#fff;border:2px solid #e8527a;border-radius:10px;padding:5px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;text-align:center;max-width:120px;">
-      <div style="font-size:12px;font-weight:700;color:#e8527a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${place.name}</div>
-      <div style="font-size:11px;color:#555;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place.price ? (place.price+'원') : (place.menu||'')}</div>
+    // 확대 - 이모지 + 가격
+    return `<div style="background:#fff;border:1.5px solid #e8527a;border-radius:20px;padding:4px 8px;box-shadow:0 1px 4px rgba(0,0,0,0.18);cursor:pointer;display:flex;align-items:center;gap:3px;white-space:nowrap;">
+      <span style="font-size:13px;">${emoji}</span>
+      <span style="font-size:11px;font-weight:700;color:#e8527a;">${price}</span>
     </div>`;
   }
 }
 
+var _renderMarkerTimer = null;
+var _lastRenderedZoom = -1;
+var _markerClusterer = null;
+
 function renderMapMarkers() {
   if (!_geojiMap) return;
+  clearTimeout(_renderMarkerTimer);
+  _renderMarkerTimer = setTimeout(_doRenderMapMarkers, 300);
+  if (!_geojiMap._zoomListenerAdded) {
+    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
+    // 드래그 끝날 때만 재렌더링 (이동 중엔 X)
+    naver.maps.Event.addListener(_geojiMap, 'dragend', () => renderMapMarkers());
+    _geojiMap._zoomListenerAdded = true;
+  }
+}
+
+function _makeClusterIcon(count) {
+  const size = count >= 20 ? 48 : count >= 10 ? 42 : 36;
+  return {
+    content: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#e8527a;border:3px solid #fff;box-shadow:0 2px 6px rgba(232,82,122,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:${count>=20?14:12}px;font-weight:500;cursor:pointer;">${count}</div>`,
+    size: new naver.maps.Size(size, size),
+    anchor: new naver.maps.Point(size/2, size/2)
+  };
+}
+
+function _doRenderMapMarkers() {
+  if (!_geojiMap) return;
+  const zoom = _geojiMap.getZoom();
+  const filtered = (_mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter))
+    .filter(p => p.lat && p.lng);
+
   _mapMarkers.forEach(m => m.setMap(null));
   _mapMarkers = [];
 
-  const filtered = _mapCatFilter === '전체' ? _mapPlaces : _mapPlaces.filter(p => p.category === _mapCatFilter);
-  const zoom = _geojiMap.getZoom();
-
-  filtered.forEach(place => {
-    if (!place.lat || !place.lng) return;
-    const marker = new naver.maps.Marker({
-      position: new naver.maps.LatLng(place.lat, place.lng),
-      map: _geojiMap,
-      icon: {
-        content: getMarkerContent(place, zoom),
-        anchor: new naver.maps.Point(0, 0)
-      }
+  if (zoom >= 14) {
+    // 현재 뷰포트 범위만 렌더링
+    const bounds = _geojiMap.getBounds();
+    const sw = bounds.getSW();
+    const ne = bounds.getNE();
+    // 뷰포트보다 약간 넓게 (이동 시 바로 보이도록)
+    const latPad = (ne.lat() - sw.lat()) * 0.3;
+    const lngPad = (ne.lng() - sw.lng()) * 0.3;
+    const visible = filtered.filter(p =>
+      p.lat >= sw.lat() - latPad && p.lat <= ne.lat() + latPad &&
+      p.lng >= sw.lng() - lngPad && p.lng <= ne.lng() + lngPad
+    );
+    visible.forEach(place => {
+      const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
+      const price = place.price ? (place.price + '원') : '';
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(place.lat, place.lng),
+        map: _geojiMap,
+        icon: {
+          content: `<div style="background:#fff;border:1.5px solid #e8527a;border-radius:16px;padding:3px 8px;font-size:11px;font-weight:700;color:#e8527a;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.15);cursor:pointer;">${emoji} ${price}</div>`,
+          anchor: new naver.maps.Point(0, 0)
+        }
+      });
+      naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
+      _mapMarkers.push(marker);
     });
-    naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
-    _mapMarkers.push(marker);
-  });
-
-  // 줌 변경 시 마커 업데이트 (한 번만 등록)
-  if (!_geojiMap._zoomListenerAdded) {
-    naver.maps.Event.addListener(_geojiMap, 'zoom_changed', () => renderMapMarkers());
-    _geojiMap._zoomListenerAdded = true;
+    _lastRenderedZoom = zoom;
+    return;
   }
+
+  // 그리드 기반 클러스터링 (위경도 기준으로 O(n) 처리)
+  const gridDeg = zoom <= 10 ? 0.15 : zoom <= 12 ? 0.05 : 0.02;
+  const gridMap = {};
+  filtered.forEach(place => {
+    const gx = Math.floor(place.lat / gridDeg);
+    const gy = Math.floor(place.lng / gridDeg);
+    const key = gx + '_' + gy;
+    if (!gridMap[key]) gridMap[key] = [];
+    gridMap[key].push(place);
+  });
+  const clusters = Object.values(gridMap).map(places => ({ places }));
+
+  clusters.forEach(cluster => {
+    const avgLat = cluster.places.reduce((s,p) => s + p.lat, 0) / cluster.places.length;
+    const avgLng = cluster.places.reduce((s,p) => s + p.lng, 0) / cluster.places.length;
+    const count = cluster.places.length;
+    if (count === 1) {
+      const place = cluster.places[0];
+      const emoji = MAP_CAT_EMOJI[place.category] || '🥫';
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(place.lat, place.lng),
+        map: _geojiMap,
+        icon: {
+          content: `<div style="font-size:22px;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));">${emoji}</div>`,
+          anchor: new naver.maps.Point(11, 11)
+        }
+      });
+      naver.maps.Event.addListener(marker, 'click', () => openPlaceDetail(place.id));
+      _mapMarkers.push(marker);
+    } else {
+      const icon = _makeClusterIcon(count);
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(avgLat, avgLng),
+        map: _geojiMap,
+        icon
+      });
+      naver.maps.Event.addListener(marker, 'click', () => {
+        _geojiMap.morph(new naver.maps.LatLng(avgLat, avgLng), Math.min(zoom + 3, 16));
+      });
+      _mapMarkers.push(marker);
+    }
+  });
+  _lastRenderedZoom = zoom;
 }
 
 function filterMapCat(cat) {
@@ -6400,6 +6508,18 @@ async function _openPlaceDetailInner(placeId) {
   if (!place) return;
   const sheet = document.getElementById('place-detail-sheet');
   if (!sheet) return;
+
+  // 거슐랭 첫 조회 프로모션 - 1회만 지급
+  const promoKey = 'gj_geoschleng_promo_done';
+  if (!localStorage.getItem(promoKey)) {
+    localStorage.setItem(promoKey, '1');
+    const userKey = myProfile.uid;
+    if (userKey && typeof giveTossPoints === 'function') {
+      giveTossPoints(userKey, PROMO_GEOSCHLENG, 50)
+        .then(ok => { if (ok) showToast('🎉 거슐랭 첫 탐험! 토스포인트 50P 지급됐어요!'); })
+        .catch(() => {});
+    }
+  }
   const rating = place.rating || 1;
   const ratingStr = '🥫'.repeat(rating) + '🫙'.repeat(5 - rating);
   const myLiked = place.likedBy?.includes(myProfile.uid);
