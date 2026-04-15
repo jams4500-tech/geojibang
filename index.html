@@ -1979,7 +1979,7 @@ function submitWriteManual() {
 
 /* FAB show only on feed tab */
 function showTab(n) {
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['feed','mine','rank','geoji','map'][i]===n));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['geoji','map','feed','mine','rank'][i]===n));
   document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('fab-write').classList.toggle('hidden', n !== 'feed');
