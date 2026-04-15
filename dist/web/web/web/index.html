@@ -5238,7 +5238,7 @@ async function generateReport() {
   }
 }
 
-buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData(); showTab('geoji');
+buildFeed(); buildRank(); updatePiggy(); updateMyRankUI(); restoreSpendData();
 
 // 딥링크 처리 - intoss://geojibang/geoschleng
 (function() {
@@ -6630,6 +6630,9 @@ async function likePlace(placeId) {
     }
   } catch(e) { showToast('좋아요 실패'); }
 }
+
+// 기본 탭(내 거지) 초기 렌더링 — 모든 const 선언 이후에 호출해야 TDZ 에러를 피할 수 있음
+showTab('geoji');
 
 </script>
 </body>
